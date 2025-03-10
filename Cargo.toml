@@ -1,0 +1,9 @@
+[package]
+name = "YY-check-battery-rs"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tauri-winrt-notification = "0.7.1"
+toml = "0.8.20"
+windows = "0.60.0"
