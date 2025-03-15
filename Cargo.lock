@@ -3,19 +3,6 @@
 version = 4
 
 [[package]]
-name = "YY-check-battery-rs"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "clap",
- "colored",
- "serde",
- "tauri-winrt-notification",
- "toml",
- "windows",
-]
-
-[[package]]
 name = "addr2line"
 version = "0.24.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -602,4 +589,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0e97b544156e9bebe1a0ffbc03484fc1ffe3100cbce3ffb17eac35f7cdd7ab36"
 dependencies = [
  "memchr",
+]
+
+[[package]]
+name = "yy-battery-notifier-rs"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "colored",
+ "serde",
+ "tauri-winrt-notification",
+ "toml",
+ "windows",
 ]
