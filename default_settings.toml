@@ -1,0 +1,5 @@
+check_interval = 10
+
+[[notifications]]
+percentage = 90
+message = "Your PC is now fully charged. Remove the plug"
