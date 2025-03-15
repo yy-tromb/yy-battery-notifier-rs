@@ -1,5 +1,5 @@
 [package]
-name = "YY-check-battery-rs"
+name = "yy-battery-notifier-rs"
 description = "Check battery level & Notify you!"
 version = "0.1.0"
 edition = "2024"
