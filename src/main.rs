@@ -8,7 +8,6 @@ mod common;
 #[derive(clap::Parser, Debug)]
 #[clap(
     name = env!("CARGO_PKG_NAME"),
-    about,
     version,
     about,
     author = "yy-tromb",
