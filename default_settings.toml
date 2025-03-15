@@ -3,3 +3,7 @@ check_interval = 10
 [[notifications]]
 percentage = 90
 message = "Your PC is now fully charged. Remove the plug"
+
+[[notifications]]
+percentage = 50
+message = "The battery level of Your PC is low. Plug in."
