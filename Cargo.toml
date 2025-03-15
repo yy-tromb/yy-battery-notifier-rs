@@ -4,12 +4,15 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-serde = {version="1.0.219",features = ["derive"]}
+anyhow = {version="1.0.97",features = ["backtrace"]}
+serde = { version = "1.0.219", features = ["derive"] }
 tauri-winrt-notification = "0.7.1"
 toml = "0.8.20"
 
 [dependencies.windows]
-version="0.60.0"
+version = "0.60.0"
 features = [
-    "System_Power","Devices_Power"
+    "System_Power",
+    "Devices_Power",
+    "Win32_System_Power",
 ]
