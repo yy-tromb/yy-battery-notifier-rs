@@ -1,4 +1,4 @@
-check_interval = 10
+check_interval = 60
 
 [[notifications]]
 percentage = "90+"
@@ -7,7 +7,7 @@ title = "Remove the plug!"
 message = "Your PC is now fully charged. Remove the plug"
 
 [[notifications]]
-percentage = "50-"
+percentage = "45-"
 power_supply = "None"
 title = "Plug in!"
 message = "The battery level of Your PC is low. Plug in."
