@@ -1,5 +1,5 @@
 > [!IMPORTANT]
-> This application is now for ***windows 10,11 only***. This is because of using WinRT API( Windows.Devices.Power.Battery, Windows.System.Power.PowerManager ) and [https://doc.rust-lang.org/beta/rustc/platform-support.html](the Rust's platform support).
+> This application is now for ***windows 10,11 only***. This is because of using WinRT API( Windows.Devices.Power.Battery, Windows.System.Power.PowerManager ) and [the Rust's platform support](https://doc.rust-lang.org/beta/rustc/platform-support.html).
 
 # yy-battery-notifier-rs
 check battery level and notify you
