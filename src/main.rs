@@ -19,7 +19,7 @@ struct AppArgs {
         short = 's',
         long = "settings",
         value_name = "path to settings.toml",
-        default_value_t = String::from(".\\settings.toml")
+        default_value_t = String::from(".\\default_settings.toml")
     )]
     settings_toml_path: String,
 }
