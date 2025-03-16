@@ -13,7 +13,7 @@ fn notify_winrt_toast(
     message: &str,
 ) -> anyhow::Result<()> {
     use tauri_winrt_notification::{Duration, Toast};
-    Toast::new("yy-battery-notifier-rs")
+    Toast::new("yy-tromb.yy-battery-notifier-rs")
         .title(title)
         .text1(message)
         .show()
