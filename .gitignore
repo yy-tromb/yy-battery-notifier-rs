@@ -22,3 +22,5 @@ target/
 # Added by cargo
 
 /target
+
+settings.toml
