@@ -26,20 +26,18 @@ struct AppArgs {
 }
 fn main() -> anyhow::Result<()> {
     let app = AppArgs::parse();
-    let toml_settings = std::fs::read_to_string(&app.toml_settings_path).map_err(|e| {
+    let toml_settings = std::fs::read_to_string(&app.toml_settings_path).inspect_err(|_e| {
         eprintln!(
             "{}",
             format!("Failed to read file '{}'.", &app.toml_settings_path).red()
         );
-        e
     })?;
     let toml_settings: crate::common::TOMLSettings =
-        toml::from_str(&toml_settings).map_err(|e| {
+        toml::from_str(&toml_settings).inspect_err(|_e| {
             eprintln!(
                 "{}",
                 format!("Failed to interpret '{}' as TOML.", &app.toml_settings_path).red()
             );
-            e
         })?;
     crate::cli::Cli::new(toml_settings)?.start()
 }

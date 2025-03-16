@@ -1,5 +1,4 @@
 use colored::Colorize;
-use windows::{UI::Notifications::Notification, Win32::Foundation::ERROR_NO_RADIUS_SERVERS};
 
 pub struct Cli {
     settings: crate::common::Settings,
@@ -41,13 +40,16 @@ impl Cli {
                     ));
                 }
             };
-            let percentage_int: u32 = percentage[0..percentage.len() - 1].parse().map_err(|e| {
-                eprintln!(
-                    "{}",
-                    format!("Failed to interpret '{}' as percentage value.", &percentage).red()
-                );
-                e
-            })?;
+            let percentage_int: u32 =
+                percentage[0..percentage.len() - 1]
+                    .parse()
+                    .inspect_err(|_e| {
+                        eprintln!(
+                            "{}",
+                            format!("Failed to interpret '{}' as percentage value.", &percentage)
+                                .red()
+                        );
+                    })?;
             let power_supply: crate::battery::PowerSupply = match notification_toml_setting
                 .power_supply
                 .as_str()
@@ -88,9 +90,8 @@ impl Cli {
     pub fn start(&self) -> anyhow::Result<()> {
         let duration = std::time::Duration::from_secs(self.settings.check_interval);
         loop {
-            let battery_report = crate::battery::battery_check().map_err(|e| {
+            let battery_report = crate::battery::battery_check().inspect_err(|_e| {
                 eprintln!("{}", "Failed to check battery information.".red());
-                e
             })?;
             for notification_setting in &self.settings.notifications {
                 match notification_setting.percentage_symbol {
