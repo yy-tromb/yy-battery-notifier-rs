@@ -5,7 +5,7 @@ pub struct BatteryReport {
     pub power_supply: PowerSupply,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PowerSupply {
     Adequate,
     InAdequate,

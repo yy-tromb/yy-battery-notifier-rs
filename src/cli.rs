@@ -96,7 +96,9 @@ impl Cli {
             for notification_setting in &self.settings.notifications {
                 match notification_setting.percentage_symbol {
                     crate::common::PercentageSymbol::Excess => {
-                        if battery_report.percentage > notification_setting.percentage_int {
+                        if (battery_report.percentage > notification_setting.percentage_int)
+                            && (battery_report.power_supply == notification_setting.power_supply)
+                        {
                             crate::notify::notify(
                                 &battery_report,
                                 &notification_setting.title,
@@ -105,7 +107,9 @@ impl Cli {
                         }
                     }
                     crate::common::PercentageSymbol::Under => {
-                        if battery_report.percentage < notification_setting.percentage_int {
+                        if (battery_report.percentage < notification_setting.percentage_int)
+                            && (battery_report.power_supply == notification_setting.power_supply)
+                        {
                             crate::notify::notify(
                                 &battery_report,
                                 &notification_setting.title,
