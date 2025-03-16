@@ -4,6 +4,7 @@ use colored::Colorize;
 mod battery;
 mod cli;
 mod common;
+mod notify;
 
 #[derive(clap::Parser, Debug)]
 #[clap(
@@ -21,23 +22,24 @@ struct AppArgs {
         value_name = "path to settings.toml",
         default_value_t = String::from(".\\default_settings.toml")
     )]
-    settings_toml_path: String,
+    toml_settings_path: String,
 }
 fn main() -> anyhow::Result<()> {
     let app = AppArgs::parse();
-    let settings = std::fs::read_to_string(&app.settings_toml_path).map_err(|e| {
+    let toml_settings = std::fs::read_to_string(&app.toml_settings_path).map_err(|e| {
         eprintln!(
             "{}",
-            format!("Failed to read file '{}'.", &app.settings_toml_path).red()
+            format!("Failed to read file '{}'.", &app.toml_settings_path).red()
         );
         e
     })?;
-    let settings: crate::common::Settings = toml::from_str(&settings).map_err(|e| {
-        eprintln!(
-            "{}",
-            format!("Failed to interpret '{}' as TOML.", &app.settings_toml_path).red()
-        );
-        e
-    })?;
-    crate::cli::Cli::new(settings).start()
+    let toml_settings: crate::common::TOMLSettings =
+        toml::from_str(&toml_settings).map_err(|e| {
+            eprintln!(
+                "{}",
+                format!("Failed to interpret '{}' as TOML.", &app.toml_settings_path).red()
+            );
+            e
+        })?;
+    crate::cli::Cli::new(toml_settings)?.start()
 }

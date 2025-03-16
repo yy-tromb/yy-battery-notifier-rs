@@ -1,19 +1,43 @@
-struct BatteryReport {
-    percentage: u32,
-    seconds: u32,
+#[derive(Debug, Clone)]
+pub struct BatteryReport {
+    pub percentage: u32,
+    pub remaining_seconds: u64,
+    pub power_supply: PowerSupply,
 }
 
-impl BatteryReport {
-    fn report_windows_notification(&self) -> anyhow::Result<()> {
-        // do something
-        anyhow::Ok(())
+#[derive(Debug, Clone)]
+pub enum PowerSupply {
+    Adequate,
+    InAdequate,
+    None,
+}
+
+impl From<windows::System::Power::PowerSupplyStatus> for PowerSupply {
+    fn from(value: windows::System::Power::PowerSupplyStatus) -> Self {
+        use windows::System::Power::PowerSupplyStatus;
+        match value {
+            PowerSupplyStatus::Adequate => PowerSupply::Adequate,
+            PowerSupplyStatus::Inadequate => PowerSupply::InAdequate,
+            PowerSupplyStatus::NotPresent => PowerSupply::None,
+            _ => unreachable!(),
+        }
     }
 }
 
-fn battery_check_winrt() -> BatteryReport {
+#[inline]
+pub fn battery_check() -> anyhow::Result<BatteryReport> {
+    battery_check_winrt()
+}
+
+fn battery_check_winrt() -> anyhow::Result<BatteryReport> {
+    use windows::System::Power::PowerManager;
+    let percentage = PowerManager::RemainingChargePercent()? as u32;
+    let remaining_seconds = PowerManager::RemainingDischargeTime()?.Duration as u64;
+    let power_supply: PowerSupply = PowerManager::PowerSupplyStatus()?.into();
     // do something
-    BatteryReport {
-        percentage: 0,
-        seconds: 0,
-    }
+    Ok(BatteryReport {
+        percentage,
+        remaining_seconds,
+        power_supply,
+    })
 }
