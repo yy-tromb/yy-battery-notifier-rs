@@ -5,7 +5,7 @@
 check battery level and notify you
 
 ## Usage
-`$ yy-battery-notifier-rs.exe -s "path to settings.toml"`
+`yy-battery-notifier-rs.exe -s "path to settings.toml"`
 
 ### Options:
 - -s, --settings : path to settings.toml<br>[default: .\default_settings.toml]
