@@ -24,3 +24,7 @@ target/
 /target
 
 settings.toml
+*.wixpdb
+*.msi
+
+/obj

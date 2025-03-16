@@ -1,0 +1,54 @@
+<Wix
+    xmlns='http://wixtoolset.org/schemas/v4/wxs'
+    xmlns:ui='http://wixtoolset.org/schemas/v4/wxs/ui'
+>
+    <Package
+        Name='yy-battery-notifier-rs'
+        Manufacturer='yy-tromb'
+        Version='0.1.0'
+        Compressed='yes'
+        UpgradeCode='503CC79E-ACAD-4C3B-ADB4-AAD1E5B6E686'
+    >
+        <SummaryInformation Description='check battery level and notify you!' />
+        <MediaTemplate EmbedCab='yes' />
+        <StandardDirectory Id='ProgramFiles6432Folder'>
+            <Directory Id='yy_tromb' Name='yy-tromb'>
+                <Directory Id='INSTALLDIR' Name='yy-battery-notifier-rs'>
+                    <File
+                        Id='PROGRAM'
+                        Source='./target/release/yy-battery-notifier-rs.exe'
+                    />
+                    <File Source='default_settings.toml' />
+                    <File Source='README.md' />
+                    <File Source='LICENSE' />
+                </Directory>
+            </Directory>
+        </StandardDirectory>
+
+        <Component
+            Id='RegistryEntries'
+            Guid='AF2A1066-9761-4C6A-914A-D401133911D6'
+            Directory='TARGETDIR'
+        >
+            <RegistryKey
+                Root='HKLM'
+                Key='SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs'
+            >
+                <RegistryValue
+                    Type='string'
+                    Name='DisplayName'
+                    Value='yy-battery-notifier-rs'
+                />
+                <RegistryValue
+                    Type='string'
+                    Name='IconUri'
+                    Value='[INSTALLDIR]\yy-battery-notifier-rs.exe'
+                />
+            </RegistryKey>
+        </Component>
+        <Property Id='WIXUI_INSTALLDIR' Value='INSTALLDIR' />
+        <ui:WixUI Id='WixUI_InstallDir' />
+        <WixVariable Id="WixUILicenseRtf" Value="LICENSE.rtf" />
+        <UIRef Id='WixUI_ErrorProgressText' />
+    </Package>
+</Wix>
