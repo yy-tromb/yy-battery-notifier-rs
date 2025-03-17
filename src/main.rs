@@ -5,6 +5,8 @@ mod battery;
 mod cli;
 mod common;
 mod notify;
+mod registry;
+mod startup;
 
 #[derive(clap::Parser, Debug)]
 #[command(
@@ -25,6 +27,7 @@ struct AppArgs {
         default_value_t = String::from(".\\settings.toml")
     )]
     toml_settings_path: String,
+
     #[arg(
         short = 'd',
         long = "default_settings",
@@ -32,9 +35,47 @@ struct AppArgs {
         required = false
     )]
     default_settings: bool,
+
+    #[command(subcommand)]
+    subcommands: Option<SubCommand>,
+}
+#[derive(Debug, clap::Subcommand)]
+enum SubCommand {
+    Registry {
+        #[command(subcommand)]
+        subcommands: RegistrySubCommand,
+    },
+    Startup {
+        #[command(subcommand)]
+        subcommands: StartupSubCommand,
+    },
+}
+
+#[derive(Debug, clap::Subcommand)]
+enum RegistrySubCommand {
+    Register,
+    Delete,
+}
+
+#[derive(Debug, clap::Subcommand)]
+enum StartupSubCommand {
+    Register,
+    Delete,
 }
 fn main() -> anyhow::Result<()> {
     let app_args = AppArgs::parse();
+    if app_args.subcommands.is_some() {
+        match app_args.subcommands.unwrap() {
+            SubCommand::Registry { subcommands } => match subcommands {
+                RegistrySubCommand::Register => return crate::registry::register(),
+                RegistrySubCommand::Delete => return crate::registry::delete(),
+            },
+            SubCommand::Startup { subcommands } => match subcommands {
+                StartupSubCommand::Register => return crate::startup::register(),
+                StartupSubCommand::Delete => return crate::startup::delete(),
+            },
+        }
+    }
     let toml_settings_path = if app_args.default_settings {
         std::env::current_exe()
             .inspect_err(|_e| eprintln!("{}", "Failed to get current execution file path.".red()))?
@@ -60,5 +101,5 @@ fn main() -> anyhow::Result<()> {
                 .red()
             );
         })?;
-    crate::cli::Cli::new(toml_settings)?.start()
+    crate::cli::Cli::new(crate::common::Settings::try_from(toml_settings)?)?.run()
 }
