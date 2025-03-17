@@ -2,6 +2,8 @@
 name = "yy-battery-notifier-rs"
 description = "Check battery level & Notify you!"
 authors = ["yy-tromb"]
+license = "MIT"
+license-file = "LICENSE"
 version = "0.1.0"
 edition = "2024"
 
@@ -20,3 +22,13 @@ features = [
     "Devices_Power",
     "Win32_System_Power",
 ]
+
+[profile.dev]
+opt-level = 0
+lto="off"
+strip = "none"
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+strip="debuginfo"
