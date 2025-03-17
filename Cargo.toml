@@ -3,7 +3,6 @@ name = "yy-battery-notifier-rs"
 description = "Check battery level & Notify you!"
 authors = ["yy-tromb"]
 license = "MIT"
-license-file = "LICENSE"
 version = "0.1.0"
 edition = "2024"
 
