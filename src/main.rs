@@ -59,7 +59,16 @@ enum RegistrySubCommand {
 
 #[derive(Debug, clap::Subcommand)]
 enum StartupSubCommand {
-    Register,
+    Register {
+        #[arg(short = 's', long = "settings", value_name = "path to settings.toml")]
+        toml_settings_path: Option<String>,
+        #[arg(
+            short = 'i',
+            long = "input_mode",
+            value_name = "Whether you input path of settings.toml in terminal or not."
+        )]
+        input_mode: bool,
+    },
     Delete,
 }
 fn main() -> anyhow::Result<()> {
@@ -71,7 +80,10 @@ fn main() -> anyhow::Result<()> {
                 RegistrySubCommand::Delete => return crate::registry::delete(),
             },
             SubCommand::Startup { subcommands } => match subcommands {
-                StartupSubCommand::Register => return crate::startup::register(),
+                StartupSubCommand::Register {
+                    toml_settings_path,
+                    input_mode,
+                } => return crate::startup::register_cli(toml_settings_path, input_mode),
                 StartupSubCommand::Delete => return crate::startup::delete(),
             },
         }

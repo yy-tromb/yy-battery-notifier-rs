@@ -10,7 +10,8 @@ pub fn register() -> anyhow::Result<()> {
     key.set_string("DisplayName", "yy-battery-notifier-rs").inspect_err(|_e|{
             eprintln!("{}", r"Failed to set registry 'HKEY_LOCAL_MACHINE\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs\DisplayName'.".red());
         })?;
-    let icon_uri = std::env::current_exe()?;
+    let icon_uri = std::env::current_exe()
+        .inspect_err(|_e| eprintln!("{}", "Failed to get current exe".red()))?;
     let icon_uri = icon_uri
         .to_str()
         .unwrap_or(r"C:\Program Files\yy-tromb\yy-battery-notifier-rs\\yy-battery-notifier-rs.exe");
@@ -87,7 +88,7 @@ pub fn delete() -> anyhow::Result<()> {
             ));
         }
         Err(e) => {
-            if e.code() == windows::core::HRESULT(-2147024894 /*0x80070002*/) {
+            if e.code() == windows::core::HRESULT::from_win32(0x80070002) {
                 // do nothing
             } else {
                 eprintln!("{} {}", r"Failed to read registry 'HKEY_LOCAL_MACHINE\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs\DisplayName' for .".red(),"NOT REASON OF REMOVED".bold().red());
@@ -103,7 +104,7 @@ pub fn delete() -> anyhow::Result<()> {
             ));
         }
         Err(e) => {
-            if e.code() == windows::core::HRESULT(-2147024894 /*0x80070002*/) {
+            if e.code() == windows::core::HRESULT::from_win32(0x80070002) {
                 // do nothing
             } else {
                 eprintln!("{} {}", r"Failed to read registry 'HKEY_LOCAL_MACHINE\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs\IconUri' for .".red(),"NOT REASON OF REMOVED".bold().red());
