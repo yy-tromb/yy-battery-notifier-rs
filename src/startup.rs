@@ -59,6 +59,13 @@ fn register(toml_settings_path: String) -> anyhow::Result<()> {
             return anyhow::Result::Err(error.into());
         }
     }
+    let key = CURRENT_USER.create(&TASK_MANAGER_OVERRIDE_REGKEY).inspect_err(|_e| {
+            eprintln!("{}", r"Failed to open registry 'HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run\'.".red());
+        })?;
+    key.get_string("yy-tromb.yy-battery-notifier-rs").inspect_err(|_e| {
+            eprintln!("{}", r"Failed to open registry 'HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run\yy-tromb.yy-battery-notifier-rs'.".red());
+        })?;
+
     println!("{}", "register sucuessed!".green().on_black());
     anyhow::Ok(())
 }
