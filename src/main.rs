@@ -36,6 +36,9 @@ struct AppArgs {
     )]
     default_settings: bool,
 
+    #[arg(short, long = "gui", value_name = "enable GUI", required = false)]
+    enable_gui: bool,
+
     #[command(subcommand)]
     subcommands: Option<SubCommand>,
 }

@@ -60,12 +60,25 @@ fn register(toml_settings_path: String) -> anyhow::Result<()> {
         }
     }
     let key = CURRENT_USER.create(&TASK_MANAGER_OVERRIDE_REGKEY).inspect_err(|_e| {
-            eprintln!("{}", r"Failed to open registry 'HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run\'.".red());
+            eprintln!("{}", r"Failed to open registry 'HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run'.".red());
         })?;
-    key.get_string("yy-tromb.yy-battery-notifier-rs").inspect_err(|_e| {
-            eprintln!("{}", r"Failed to open registry 'HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run\yy-tromb.yy-battery-notifier-rs'.".red());
-        })?;
-
+    let mut reg_app_approved_value: Vec<u8> = vec![0 ; 256];
+    dbg!(&reg_app_approved_value.len());
+    let reg_app_approved = unsafe {
+        key.raw_get_bytes(windows::core::w!("yy-tromb.yy-battery-notifier-rs"),&mut reg_app_approved_value).inspect_err(|_e| {
+            eprintln!("{}", r"Failed to get registry 'HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run\yy-tromb.yy-battery-notifier-rs'.".red());
+        })?
+    };
+    if reg_app_approved.1 != TASK_MANAGER_OVERRIDE_ENABLED_VALUE {
+        return anyhow::Result::Err(anyhow::anyhow!(
+            "{}",
+            format!(
+                "Failed to set correct value to registry. found: '{}'",
+                reg_app
+            )
+            .red()
+        ));
+    }
     println!("{}", "register sucuessed!".green().on_black());
     anyhow::Ok(())
 }
