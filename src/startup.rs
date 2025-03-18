@@ -4,7 +4,15 @@ fn register(toml_settings_path: String) -> anyhow::Result<()> {
     //use windows::ApplicationModel::{StartupTask, StartupTaskState};
     dbg!(&toml_settings_path);
     // registry version
+    use windows::core::HRESULT;
     use windows_registry::CURRENT_USER;
+    const TASK_MANAGER_OVERRIDE_REGKEY: &str =
+        r"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run";
+    const TASK_MANAGER_OVERRIDE_ENABLED_VALUE: [u8; 12] = [
+        0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    ];
+    const E_ACCESSDENIED: HRESULT = HRESULT::from_win32(0x80070005_u32);
+    const E_FILENOTFOUND: HRESULT = HRESULT::from_win32(0x80070002_u32);
     let key = CURRENT_USER.create(r"Software\Microsoft\Windows\CurrentVersion\Run").inspect_err(|_e| {
             eprintln!("{}", r"Failed to open registry 'HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run'.".red());
         })?;
@@ -13,13 +21,43 @@ fn register(toml_settings_path: String) -> anyhow::Result<()> {
     let current_exe = current_exe.to_str().ok_or_else(|| {
         anyhow::anyhow!("oath to current exe is empty. Unknown error may occured.")
     })?;
+    let run_cmd = format!("{} -s {}", current_exe, toml_settings_path);
     key.set_string(
         "yy-tromb.yy-battery-notifier-rs",
-        format!("{} -s {}", current_exe, toml_settings_path),
+        &run_cmd,
     ).inspect_err(|_e| {
             eprintln!("{}", r"Failed to set registry 'HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run\yy-tromb.yy-battery-notifier-rs'.".red());
     })?;
-
+    let reg_app =key.get_string("yy-tromb.yy-battery-notifier-rs").inspect_err(|_e| {
+            eprintln!("{}", r"Failed to get registry 'HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run\yy-tromb.yy-battery-notifier-rs'.".red());
+    })?;
+    if reg_app != run_cmd {
+        return anyhow::Result::Err(anyhow::anyhow!(
+            "{}",
+            format!(
+                "Failed to set correct value to registry. found: '{}'",
+                reg_app
+            )
+            .red()
+        ));
+    }
+    // Approve
+    match CURRENT_USER
+        .options()
+        .write()
+        .open(TASK_MANAGER_OVERRIDE_REGKEY)
+    {
+        Ok(key) => key.set_bytes(
+            "yy-tromb.yy-battery-notifier-rs",
+            windows_registry::Type::Bytes,
+            &TASK_MANAGER_OVERRIDE_ENABLED_VALUE,
+        )?,
+        Err(error) => {
+            eprintln!("{}", r"Failed to set registry 'HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run\yy-tromb.yy-battery-notifier-rs'. Not Found.".red());
+            return anyhow::Result::Err(error.into());
+        }
+    }
+    println!("{}", "register sucuessed!".green().on_black());
     anyhow::Ok(())
 }
 
