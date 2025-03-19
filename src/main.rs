@@ -36,8 +36,13 @@ struct AppArgs {
     )]
     default_settings: bool,
 
-    #[arg(short, long = "gui", value_name = "enable GUI", required = false)]
-    enable_gui: bool,
+    #[arg(
+        long = "msgbox",
+        value_name = "enable message box",
+        required = false,
+        global = true
+    )]
+    msgbox: bool,
 
     #[command(subcommand)]
     subcommands: Option<SubCommand>,
@@ -71,24 +76,37 @@ enum StartupSubCommand {
             value_name = "Whether you input path of settings.toml in terminal or not."
         )]
         input_mode: bool,
+        #[arg(
+            short = 'd',
+            long = "default_settings",
+            value_name = "use default_settings.toml",
+            required = false
+        )]
+        default_settings: bool,
     },
     Delete,
 }
 fn main() -> anyhow::Result<()> {
     let app_args = AppArgs::parse();
     if app_args.subcommands.is_some() {
-        match app_args.subcommands.unwrap() {
+        let subcommand = match app_args.subcommands.unwrap() {
             SubCommand::Registry { subcommands } => match subcommands {
-                RegistrySubCommand::Register => return crate::registry::register(),
-                RegistrySubCommand::Delete => return crate::registry::delete(),
+                RegistrySubCommand::Register => crate::registry::register(),
+                RegistrySubCommand::Delete => crate::registry::delete(),
             },
             SubCommand::Startup { subcommands } => match subcommands {
                 StartupSubCommand::Register {
                     toml_settings_path,
                     input_mode,
-                } => return crate::startup::register_cli(toml_settings_path, input_mode),
-                StartupSubCommand::Delete => return crate::startup::delete(),
+                    default_settings,
+                } => crate::startup::register_cli(toml_settings_path, input_mode, default_settings),
+                StartupSubCommand::Delete => crate::startup::delete(),
             },
+        };
+        if app_args.msgbox {
+            return subcommand.or_else(|e| crate::common::msgbox(&e));
+        } else {
+            return subcommand;
         }
     }
     let toml_settings_path = if app_args.default_settings {
@@ -116,5 +134,11 @@ fn main() -> anyhow::Result<()> {
                 .red()
             );
         })?;
-    crate::cli::Cli::new(crate::common::Settings::try_from(toml_settings)?)?.run()
+    if app_args.msgbox {
+        crate::cli::Cli::new(crate::common::Settings::try_from(toml_settings)?)?
+            .run()
+            .or_else(|e| crate::common::msgbox(&e))
+    } else {
+        crate::cli::Cli::new(crate::common::Settings::try_from(toml_settings)?)?.run()
+    }
 }

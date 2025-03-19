@@ -22,7 +22,8 @@ features = [
     # "Devices_Power",
     # "Win32_System_Power",
     "Win32_System_Registry",
-    # "ApplicationModel"
+    # "ApplicationModel",
+    "Win32_UI_WindowsAndMessaging"
 ]
 
 [profile.dev]
