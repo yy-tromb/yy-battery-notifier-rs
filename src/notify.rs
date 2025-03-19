@@ -17,8 +17,8 @@ fn notify_winrt_toast(
         .title(title)
         .text1(message)
         .show()
-        .map_err(|tauri_error| match tauri_error {
-            tauri_winrt_notification::Error::Os(e) => anyhow::anyhow!("Windows Error"), // ToDo
-            tauri_winrt_notification::Error::Io(e) => anyhow::anyhow!("IO Error"),      // ToDo
+        .map_err(|error| match error {
+            tauri_winrt_notification::Error::Os(e) => anyhow::Error::from(e),
+            tauri_winrt_notification::Error::Io(e) => anyhow::Error::from(e),
         })
 }
