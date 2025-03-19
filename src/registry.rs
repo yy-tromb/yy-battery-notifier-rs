@@ -83,7 +83,7 @@ pub fn delete() -> anyhow::Result<()> {
     match key.get_string("DisplayName") {
         Ok(v) => {
             return anyhow::Result::Err(anyhow::anyhow!(
-                r"Failed to remove registry key 'HKEY_LOCAL_MACHINE\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs\DisplayName'. Found: {}",
+                r"Failed to delete registry key 'HKEY_LOCAL_MACHINE\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs\DisplayName'. Found: {}",
                 v
             ));
         }
@@ -99,7 +99,7 @@ pub fn delete() -> anyhow::Result<()> {
     match key.get_string("IconUri") {
         Ok(v) => {
             return anyhow::Result::Err(anyhow::anyhow!(
-                r"Failed to remove registry key 'HKEY_LOCAL_MACHINE\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs\IconUri'. Found: {}",
+                r"Failed to delete registry key 'HKEY_LOCAL_MACHINE\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs\IconUri'. Found: {}",
                 v
             ));
         }
