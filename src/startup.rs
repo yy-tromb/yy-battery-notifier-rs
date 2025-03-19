@@ -117,7 +117,7 @@ pub fn register_cli(toml_settings_path: Option<String>, input_mode: bool) -> any
 pub fn delete() -> anyhow::Result<()> {
     let key = CURRENT_USER.create(r"Software\Microsof
 t\Windows\CurrentVersion\Run").inspect_err(|_e| {                eprintln!("{}", r"Failed to open registry 'HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run'.".red());                                      })?;
-    key.remove_tree(                                          "yy-tromb.yy-battery-notifier-rs").inspect_err(|_e| {                                         eprintln!("{}", r"Failed to remove  registry 'HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run\yy-tromb.yy-battery-notifier-rs'.".red());
+    key.remove_value(                                          "yy-tromb.yy-battery-notifier-rs").inspect_err(|_e| {                                         eprintln!("{}", r"Failed to remove  registry 'HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run\yy-tromb.yy-battery-notifier-rs'.".red());
     })?;
     anyhow::Ok(())
 }
