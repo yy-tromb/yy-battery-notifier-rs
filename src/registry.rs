@@ -1,14 +1,14 @@
 use colored::Colorize;
-use windows_registry::LOCAL_MACHINE;
+use windows_registry::CURRENT_USER;
 
 pub fn register() -> anyhow::Result<()> {
-    let key = LOCAL_MACHINE
+    let key = CURRENT_USER
         .create(r"SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs")
         .inspect_err(|_e| {
-            eprintln!("{}", r"Failed to open registry 'HKEY_LOCAL_MACHINE\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs'.".red());
+            eprintln!("{}", r"Failed to open registry 'HKEY_CURRENT_USER\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs'.".red());
         })?;
     key.set_string("DisplayName", "yy-battery-notifier-rs").inspect_err(|_e|{
-            eprintln!("{}", r"Failed to set registry 'HKEY_LOCAL_MACHINE\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs\DisplayName'.".red());
+            eprintln!("{}", r"Failed to set registry 'HKEY_CURRENT_USER\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs\DisplayName'.".red());
         })?;
     let icon_uri = std::env::current_exe()
         .inspect_err(|_e| eprintln!("{}", "Failed to get current exe".red()))?;
@@ -16,13 +16,13 @@ pub fn register() -> anyhow::Result<()> {
         .to_str()
         .unwrap_or(r"C:\Program Files\yy-tromb\yy-battery-notifier-rs\\yy-battery-notifier-rs.exe");
     key.set_string("IconUri", icon_uri).inspect_err(|_e|{
-            eprintln!("{}", r"Failed to set registry 'HKEY_LOCAL_MACHINE\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs\IconUri'.".red());
+            eprintln!("{}", r"Failed to set registry 'HKEY_CURRENT_USER\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs\IconUri'.".red());
         })?;
     let reg_display_name = key.get_string("DisplayName").inspect_err(|_e| {
-        eprintln!("{}", r"Failed to read registry 'HKEY_LOCAL_MACHINE\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs\DisplayName'.".red());
+        eprintln!("{}", r"Failed to read registry 'HKEY_CURRENT_USER\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs\DisplayName'.".red());
     })?;
     let reg_icon_uri = key.get_string("IconUri").inspect_err(|_e| {
-        eprintln!("{}", r"Failed to read registry 'HKEY_LOCAL_MACHINE\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs\IconUri'.".red());
+        eprintln!("{}", r"Failed to read registry 'HKEY_CURRENT_USER\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs\IconUri'.".red());
     })?;
     if &reg_display_name == "yy-battery-notifier-rs" && reg_icon_uri == icon_uri {
         println!("{}", "register sucuessed!".green().on_black());
@@ -33,12 +33,12 @@ pub fn register() -> anyhow::Result<()> {
 }
 
 pub fn delete() -> anyhow::Result<()> {
-    let key = LOCAL_MACHINE
+    let key = CURRENT_USER
         .create(r"SOFTWARE\Classes\AppUserModelId")
         .inspect_err(|_e| {
             eprintln!(
                 "{}",
-                r"Failed to open registry 'HKEY_LOCAL_MACHINE\SOFTWARE\Classes\AppUserModelId'."
+                r"Failed to open registry 'HKEY_CURRENT_USER\SOFTWARE\Classes\AppUserModelId'."
                     .red()
             );
         })?;
@@ -46,7 +46,7 @@ pub fn delete() -> anyhow::Result<()> {
         .inspect_err(|_e| {
             eprintln!(
                 "{}",
-                r"Failed to remove registry key tree 'HKEY_LOCAL_MACHINE\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs'."
+                r"Failed to remove registry key tree 'HKEY_CURRENT_USER\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs'."
                     .red()
             )
         })?;
@@ -55,35 +55,35 @@ pub fn delete() -> anyhow::Result<()> {
         dbg!("ここ");
         eprintln!(
             "{}",
-            r"Failed to remove registry key tree 'HKEY_LOCAL_MACHINE\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs'."
+            r"Failed to remove registry key tree 'HKEY_CURRENT_USER\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs'."
                 .red()
         )
     })?;
-    match LOCAL_MACHINE
+    match CURRENT_USER
         .create(r"SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs")
     {
         Ok(_) =>  anyhow::Result::Err(anyhow::anyhow!(
             "{}",
-            r"Failed to remove registry key 'HKEY_LOCAL_MACHINE\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs'. Key surving.".red()
+            r"Failed to remove registry key 'HKEY_CURRENT_USER\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs'. Key surving.".red()
         )),
         Err(e) => {
             if e.code() == windows::core::HRESULT(-2147024894 /*0x80070002*/) {
                 anyhow::Result::Ok(())
             } else {
-                eprintln!("{}", r"Failed to read registry 'HKEY_LOCAL_MACHINE\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs\DisplayName'.".red());
+                eprintln!("{}", r"Failed to read registry 'HKEY_CURRENT_USER\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs\DisplayName'.".red());
                 anyhow::Result::Err(anyhow::Error::from(e))
             }
         }
     }*/
-    let key = LOCAL_MACHINE
+    let key = CURRENT_USER
         .create(r"SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs")
         .inspect_err(|_e| {
-            eprintln!("{}", r"Failed to open registry 'HKEY_LOCAL_MACHINE\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs'.".red());
+            eprintln!("{}", r"Failed to open registry 'HKEY_CURRENT_USER\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs'.".red());
         })?;
     match key.get_string("DisplayName") {
         Ok(v) => {
             return anyhow::Result::Err(anyhow::anyhow!(
-                r"Failed to delete registry key 'HKEY_LOCAL_MACHINE\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs\DisplayName'. Found: {}",
+                r"Failed to delete registry key 'HKEY_CURRENT_USER\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs\DisplayName'. Found: {}",
                 v
             ));
         }
@@ -91,7 +91,7 @@ pub fn delete() -> anyhow::Result<()> {
             if e.code() == windows::core::HRESULT::from_win32(0x80070002) {
                 // do nothing
             } else {
-                eprintln!("{} {}", r"Failed to read registry 'HKEY_LOCAL_MACHINE\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs\DisplayName' for .".red(),"NOT REASON OF REMOVED".bold().red());
+                eprintln!("{} {}", r"Failed to read registry 'HKEY_CURRENT_USER\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs\DisplayName' for .".red(),"NOT REASON OF REMOVED".bold().red());
                 return anyhow::Result::Err(anyhow::Error::from(e));
             }
         }
@@ -99,7 +99,7 @@ pub fn delete() -> anyhow::Result<()> {
     match key.get_string("IconUri") {
         Ok(v) => {
             return anyhow::Result::Err(anyhow::anyhow!(
-                r"Failed to delete registry key 'HKEY_LOCAL_MACHINE\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs\IconUri'. Found: {}",
+                r"Failed to delete registry key 'HKEY_CURRENT_USER\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs\IconUri'. Found: {}",
                 v
             ));
         }
@@ -107,7 +107,7 @@ pub fn delete() -> anyhow::Result<()> {
             if e.code() == windows::core::HRESULT::from_win32(0x80070002) {
                 // do nothing
             } else {
-                eprintln!("{} {}", r"Failed to read registry 'HKEY_LOCAL_MACHINE\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs\IconUri' for .".red(),"NOT REASON OF REMOVED".bold().red());
+                eprintln!("{} {}", r"Failed to read registry 'HKEY_CURRENT_USER\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs\IconUri' for .".red(),"NOT REASON OF REMOVED".bold().red());
                 return anyhow::Result::Err(anyhow::Error::from(e));
             }
         }
