@@ -26,7 +26,8 @@ pub fn register_cli(
                 anyhow::Result::Err(anyhow::anyhow!(
                     "{} If you want to enable input mode, you can use --input",
                     format!(
-                        "This session is nor {} and {}. But {}.",
+                        "This session is nor {} and {}.\n\
+                        But {}.",
                         "input mode".bold(),
                         "using default_settings".bold(),
                         "not given settings.toml".bold()
@@ -50,17 +51,20 @@ pub fn register_cli(
                 }
                 anyhow::Ok(toml_settings_path_input)
             } else if (!input_mode) & default_settings {
-                let current_exe = std::env::current_exe()
-                    .inspect_err(|_e| eprintln!("{}", "Failed to get current exe".red()))?;
-                let current_exe = current_exe.to_str().ok_or_else(|| {
-                    anyhow::anyhow!("path to current exe is empty. Unknown error may occured.")
-                })?;
-                anyhow::Ok(current_exe.to_string())
+                let default_toml_settings_path = std::env::current_exe()
+                    .inspect_err(|_e| eprintln!("{}", "Failed to get current exe".red()))?
+                    .with_file_name("default_settings.toml");
+                let default_toml_settings_path =
+                    default_toml_settings_path.to_str().ok_or_else(|| {
+                        anyhow::anyhow!("path to current exe is empty. Unknown error may occured.")
+                    })?;
+                anyhow::Ok(default_toml_settings_path.to_string())
             } else {
                 anyhow::Result::Err(anyhow::anyhow!(
                     "{} If you want to enable input mode, you can use --input",
                     format!(
-                        "This session is {} and {}. {}.",
+                        "This session is {} and {}.\n\
+                        {}.",
                         "input mode".bold(),
                         "using default_settings".bold(),
                         "Use one option".bold()
