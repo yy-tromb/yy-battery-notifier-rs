@@ -17,8 +17,9 @@
                     <File
                         Id='PROGRAM'
                         Source='./target/release/yy-battery-notifier-rs.exe'
-                    />
-                    <File Source='default_settings.toml' />
+                        Checksum="yes"/>
+                    <File Source='default_settings.toml' 
+                    Checksum="yes"/>
                     <File Source='README.md' />
                     <File Source='LICENSE' />
                 </Directory>
@@ -46,6 +47,17 @@
                 />
             </RegistryKey>
         </Component>
+
+        <Component>
+            <StandardDirectory Id="ProgramMenuFolder">
+                <Directory Id="ApplicationStartMenuShortcut" Name="yy-battery-notifier-rs">
+                    <Shortcut Id="ApplicationStartMenuShortcut" Directory="ApplicationStartMenuShortcut" Advertise="yes" WorkingDirectory="INSTALLFOLDER" Name="Register as Startup" Description="Register yy-battery-notifier-rs as startup" Icon="Icon.exe">
+                        <Icon Id="Icon.exe"/>
+                    </Shortcut>
+                </Directory>
+            </StandardDirectory>
+        </Component>
+
         <Property Id='WIXUI_INSTALLDIR' Value='INSTALLDIR' />
         <ui:WixUI Id='WixUI_InstallDir' />
         <WixVariable Id="WixUILicenseRtf" Value="LICENSE.rtf" />
