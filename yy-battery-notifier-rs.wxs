@@ -5,24 +5,82 @@
     <Package
         Name='yy-battery-notifier-rs'
         Manufacturer='yy-tromb'
-        Version='0.1.0'
+        Version='0.2.0'
         Compressed='yes'
-        UpgradeCode='503CC79E-ACAD-4C3B-ADB4-AAD1E5B6E686'
+        UpgradeCode='ACBAAEB7-1712-4332-8723-204EFF40A48D'
     >
         <SummaryInformation Description='check battery level and notify you!' />
         <MediaTemplate EmbedCab='yes' />
+
+        <Property Id='WIXUI_INSTALLDIR' Value='INSTALLDIR' />
+        <ui:WixUI Id='WixUI_InstallDir' />
+        <WixVariable Id='WixUILicenseRtf' Value='LICENSE.rtf' />
+        <UIRef Id='WixUI_ErrorProgressText' />
+
         <StandardDirectory Id='ProgramFiles6432Folder'>
             <Directory Id='yy_tromb' Name='yy-tromb'>
                 <Directory Id='INSTALLDIR' Name='yy-battery-notifier-rs'>
                     <File
                         Id='PROGRAM'
                         Source='./target/release/yy-battery-notifier-rs.exe'
-                        Checksum="yes"/>
-                    <File Source='default_settings.toml' 
-                    Checksum="yes"/>
-                    <File Source='README.md' />
-                    <File Source='LICENSE' />
+                        Checksum='yes'
+                    />
+                    <File
+                        Id='PROGRAM_DEBUG'
+                        Source='target/release-debug-assertions/yy-battery-notifier-rs.exe'
+                        Name='yy-battery-notifier-rs_debug-assertions.exe'
+                        Checksum='yes'
+                    />
+                    <File Source='default_settings.toml' Checksum='yes' />
+                    <File Source='README.md' Checksum='yes' />
+                    <File Source='LICENSE' Checksum='yes' />
                 </Directory>
+            </Directory>
+        </StandardDirectory>
+
+        <StandardDirectory Id='ProgramMenuFolder'>
+            <Directory
+                Id='ApplicationStartMenuFolder'
+                Name='yy-battery-notifier-rs'
+            >
+                <Component
+                    Id='StartMenu'
+                    Guid='{819C2B57-A159-4EEC-8A1B-B28366CD6667}'
+                >
+                    <Shortcut
+                        Id='ApplicationStartMenuShortcutStartupRegister'
+                        Directory='ApplicationStartMenuFolder'
+                        Advertise='no'
+                        Target='[INSTALLDIR]\yy-battery-notifier-rs_debug-assertions.exe'
+                        Arguments='--msgbox startup register --input'
+                        WorkingDirectory='INSTALLDIR'
+                        Name='Register as Startup'
+                        Description='Register yy-battery-notifier-rs as startup'
+                    />
+                    <Shortcut
+                        Id='ApplicationStartMenuShortcutStartupDelete'
+                        Directory='ApplicationStartMenuFolder'
+                        Advertise='no'
+                        Target='[INSTALLDIR]\yy-battery-notifier-rs.exe'
+                        Arguments='--msgbox startup delete'
+                        WorkingDirectory='INSTALLDIR'
+                        Name='Delete Startup'
+                        Description='Delete yy-battery-notifier-rs startup'
+                    />
+                    <RemoveFolder
+                        Id='CleanUpShortCut'
+                        Directory='ApplicationStartMenuFolder'
+                        On='uninstall'
+                    />
+                    <RegistryValue
+                        Root='HKCU'
+                        Key='Software\yy-tromb\yy-battery-notifier-rs'
+                        Name='installed'
+                        Type='integer'
+                        Value='1'
+                        KeyPath='yes'
+                    />
+                </Component>
             </Directory>
         </StandardDirectory>
 
@@ -32,7 +90,7 @@
             Directory='TARGETDIR'
         >
             <RegistryKey
-                Root='HKLM'
+                Root='HKCU'
                 Key='SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs'
             >
                 <RegistryValue
@@ -46,21 +104,12 @@
                     Value='[INSTALLDIR]\yy-battery-notifier-rs.exe'
                 />
             </RegistryKey>
+            <RemoveRegistryKey
+                Action='removeOnUninstall'
+                Id='RemoveRegistryKey'
+                Root='HKCU'
+                Key='SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs'
+            />
         </Component>
-
-        <Component>
-            <StandardDirectory Id="ProgramMenuFolder">
-                <Directory Id="ApplicationStartMenuShortcut" Name="yy-battery-notifier-rs">
-                    <Shortcut Id="ApplicationStartMenuShortcut" Directory="ApplicationStartMenuShortcut" Advertise="yes" WorkingDirectory="INSTALLFOLDER" Name="Register as Startup" Description="Register yy-battery-notifier-rs as startup" Icon="Icon.exe">
-                        <Icon Id="Icon.exe"/>
-                    </Shortcut>
-                </Directory>
-            </StandardDirectory>
-        </Component>
-
-        <Property Id='WIXUI_INSTALLDIR' Value='INSTALLDIR' />
-        <ui:WixUI Id='WixUI_InstallDir' />
-        <WixVariable Id="WixUILicenseRtf" Value="LICENSE.rtf" />
-        <UIRef Id='WixUI_ErrorProgressText' />
     </Package>
 </Wix>

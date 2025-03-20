@@ -11,6 +11,7 @@ help:
 
 build-installer arch:
     cargo build --release
+    cargo build --profile release-debug-assertions
     wix build yy-battery-notifier-rs.wxs -arch {{arch}} -ext WixToolset.UI.wixext -o yy-battery-notifier-rs_{{arch}}.msi
 
 clean:

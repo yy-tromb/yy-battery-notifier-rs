@@ -101,7 +101,8 @@ fn register(toml_settings_path: String) -> anyhow::Result<()> {
 
     // registry version
     let current_exe = std::env::current_exe()
-        .inspect_err(|_e| eprintln!("{}", "Failed to get current exe".red()))?;
+        .inspect_err(|_e| eprintln!("{}", "Failed to get current exe".red()))?
+        .with_file_name("yy-battery-notifier-rs.exe");
     let current_exe = current_exe.to_str().ok_or_else(|| {
         anyhow::anyhow!("path to current exe is empty. Unknown error may occured.")
     })?;
