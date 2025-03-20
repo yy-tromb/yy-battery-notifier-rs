@@ -29,3 +29,4 @@ settings.toml
 
 /obj
 expand.rs
+expand_s.rs
