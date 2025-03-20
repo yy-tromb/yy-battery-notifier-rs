@@ -74,7 +74,7 @@ enum StartupSubCommand {
         toml_settings_path: Option<String>,
         #[arg(
             short = 'i',
-            long = "input_mode",
+            long = "input",
             value_name = "Whether you input path of settings.toml in terminal or not."
         )]
         input_mode: bool,
