@@ -37,7 +37,10 @@ pub fn register_cli(
             } else if input_mode & (!default_settings) {
                 let mut toml_settings_path_input = String::with_capacity(256);
                 loop {
-                    println!("Input path to settings.toml:");
+                    println!(
+                        "Input or Paste the path to settings.toml\n\
+                    (like C:\\Users\\Documents\\yy-battery-notifier-rs\\settings.toml):"
+                    );
                     match std::io::stdin().read_line(&mut toml_settings_path_input) {
                         Ok(len) => {
                             if len == 0 || toml_settings_path_input.trim().is_empty() {
@@ -92,7 +95,9 @@ pub fn register_cli(
         "Now start register. settings.toml file: '{}'",
         toml_settings_path_absolute //for remove "\\?\" prefix: &toml_settings_path_absolute[4..]
     );
-    register(toml_settings_path_absolute.to_string())
+    let register_result = register(toml_settings_path_absolute.to_string());
+    std::thread::sleep(std::time::Duration::from_millis(500));
+    register_result
 }
 
 fn register(toml_settings_path: String) -> anyhow::Result<()> {
@@ -102,7 +107,7 @@ fn register(toml_settings_path: String) -> anyhow::Result<()> {
     // registry version
     let current_exe = std::env::current_exe()
         .inspect_err(|_e| eprintln!("{}", "Failed to get current exe".red()))?
-        .with_file_name("yy-battery-notifier-rs.exe");
+        .with_file_name("yy-battery-notifier-rs_gui.exe");
     let current_exe = current_exe.to_str().ok_or_else(|| {
         anyhow::anyhow!("path to current exe is empty. Unknown error may occured.")
     })?;
