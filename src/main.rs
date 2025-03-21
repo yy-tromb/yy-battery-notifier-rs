@@ -91,7 +91,7 @@ enum StartupSubCommand {
 
 fn main() -> anyhow::Result<()> {
     let app_args = AppArgs::parse();
-    //Try enable console if profile is release
+    //Try enable console if feature is gui
     #[cfg(feature = "gui")]
     {
         use windows::Win32::System::Console::{ATTACH_PARENT_PROCESS, AttachConsole, FreeConsole};
