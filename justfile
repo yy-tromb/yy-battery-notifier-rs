@@ -10,8 +10,9 @@ help:
     just --list
 
 build-installer arch:
+    cargo build --release --features gui
+    copy target\release\yy-battery-notifier-rs.exe target\release\yy-battery-notifier-rs_gui.exe
     cargo build --release
-    cargo build --profile release-debug-assertions
     wix build yy-battery-notifier-rs.wxs -arch {{arch}} -ext WixToolset.UI.wixext -o yy-battery-notifier-rs_{{arch}}.msi
 
 clean:

@@ -27,6 +27,9 @@ features = [
     "Win32_System_Console"
 ]
 
+[features]
+default = []
+gui = []
 
 [profile.dev]
 opt-level = 0
@@ -37,7 +40,3 @@ strip = "none"
 opt-level = 3
 lto = "fat"
 strip="debuginfo"
-
-[profile.release-debug-assertions]
-inherits="release"
-debug-assertions = true

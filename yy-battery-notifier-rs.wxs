@@ -26,9 +26,8 @@
                         Checksum='yes'
                     />
                     <File
-                        Id='PROGRAM_DEBUG'
-                        Source='target/release-debug-assertions/yy-battery-notifier-rs.exe'
-                        Name='yy-battery-notifier-rs_debug-assertions.exe'
+                        Id='PROGRAM_GUI'
+                        Source='./target/release/yy-battery-notifier-rs_gui.exe'
                         Checksum='yes'
                     />
                     <File Source='default_settings.toml' Checksum='yes' />
@@ -51,7 +50,7 @@
                         Id='ApplicationStartMenuShortcutStartupRegister'
                         Directory='ApplicationStartMenuFolder'
                         Advertise='no'
-                        Target='[INSTALLDIR]\yy-battery-notifier-rs_debug-assertions.exe'
+                        Target='[INSTALLDIR]\yy-battery-notifier-rs.exe'
                         Arguments='--msgbox startup register --input'
                         WorkingDirectory='INSTALLDIR'
                         Name='Register as Startup'
