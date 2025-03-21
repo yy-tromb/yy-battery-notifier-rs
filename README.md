@@ -15,7 +15,7 @@ check battery level and notify you
 
 ### Options:
   -s, --settings <path to settings.toml>  \[default: .\settings.toml]  
-  -d, --default_settings  
-      --msgbox  
-  -h, --help                              Print help  
-  -V, --version                           Print version  
+  -d, --default_settings : Use [default_settings.toml](https://github.com/yy-tromb/yy-battery-notifier-rs/blob/main/default_settings.toml)  
+      --msgbox : When error occurs, let you know by messagebox  
+  -h, --help : Print help  
+  -V, --version : Print version  
