@@ -1,4 +1,4 @@
-#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+#![cfg_attr(feature = "gui", windows_subsystem = "windows")]
 
 use clap::Parser;
 use colored::Colorize;
@@ -92,7 +92,7 @@ enum StartupSubCommand {
 fn main() -> anyhow::Result<()> {
     let app_args = AppArgs::parse();
     //Try enable console if profile is release
-    #[cfg(not(debug_assertions))]
+    #[cfg(feature = "gui")]
     {
         use windows::Win32::System::Console::{ATTACH_PARENT_PROCESS, AttachConsole, FreeConsole};
         use windows::Win32::UI::WindowsAndMessaging::{
