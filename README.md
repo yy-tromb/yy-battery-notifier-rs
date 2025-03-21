@@ -7,14 +7,19 @@
 check battery level and notify you
 
 ## Usage
+
+### Start notify with specified settings.toml
 `yy-battery-notifier-rs.exe -s "path to settings.toml"`
 
+### Start notify with default settings
+`yy-battery-notifier-rs.exe -d`
+
 ### Commands:
-  registry - register,delete  
-  startup - register,delete  
+  registry - register,delete : register or delete Application User Model Id (used to notify as toast) on Windows Registry  
+  startup - register,delete : register or delete this app as startup app. Even if you register twice or more, settings will be overrided.  
 
 ### Options:
-  -s, --settings <path to settings.toml>  \[default: .\settings.toml]  
+  -s, --settings "path to settings.toml"  \[default: .\settings.toml]  
   -d, --default_settings : Use [default_settings.toml](https://github.com/yy-tromb/yy-battery-notifier-rs/blob/main/default_settings.toml)  
       --msgbox : When error occurs, let you know by messagebox  
   -h, --help : Print help  
