@@ -15,6 +15,7 @@ About TOML format, try google this...
 default_settings.toml:
 ```default_settings.toml
 check_interval = 60
+# interval seconds(integer) for check battery level.
 
 [[notifications]]
 percentage = "90+"
