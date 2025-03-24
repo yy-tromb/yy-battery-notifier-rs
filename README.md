@@ -11,8 +11,27 @@ You can install [from here](https://github.com/yy-tromb/yy-battery-notifier-rs/r
 I recommend MSI installer.
 
 ## About settings.toml
+About TOML format, try google this...  
+default_settings.toml:
+```default_settings.toml
+check_interval = 60
 
-## Usage
+[[notifications]]
+percentage = "90+"
+power_supply = "Adequate"
+title = "Remove the plug!"
+message = "Your PC is now fully charged. Remove the plug"
+
+[[notifications]]
+percentage = "45-"
+power_supply = "None"
+title = "Plug in!"
+message = "The battery level of Your PC is low. Plug in."
+```
+
+## Usage on GUI
+
+## Usage on CLI
 
 ### Start notify with specified settings.toml
 `yy-battery-notifier-rs.exe -s "path to settings.toml"`
