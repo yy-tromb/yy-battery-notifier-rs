@@ -7,7 +7,10 @@
 check battery level and notify you
 
 ## Installation
-You can install [from here](https://github.com/yy-tromb/yy-battery-notifier-rs/releases)
+You can install [from here](https://github.com/yy-tromb/yy-battery-notifier-rs/releases).  
+I recommend MSI installer.
+
+## About settings.toml
 
 ## Usage
 
