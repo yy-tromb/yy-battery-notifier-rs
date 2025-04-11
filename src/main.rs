@@ -90,7 +90,8 @@ enum StartupSubCommand {
 }
 
 fn main() -> anyhow::Result<()> {
-    let app_args = AppArgs::parse();
+    #[cfg(feature = "gui")]
+    let mut attach_console_error = windows::core::Result::Ok(());
     //Try enable console if feature is gui
     #[cfg(feature = "gui")]
     {
@@ -101,24 +102,32 @@ fn main() -> anyhow::Result<()> {
         use windows::core::w;
         match unsafe { FreeConsole().and_then(|_| AttachConsole(ATTACH_PARENT_PROCESS)) } {
             Ok(_) => println!("Enabled console"),
-            Err(_e) => {
-                if !app_args.msgbox
-                    && unsafe {
-                        MessageBoxW(
-                            None,
-                            w!("You execute this app not on terminal\n\
-                                But there are not --msgbox flag"),
-                            w!("yy-battery-notifier-rs"),
-                            MB_ICONWARNING,
-                        )
-                    } == MESSAGEBOX_RESULT(0)
-                {
-                    let error = anyhow::Error::from(windows::core::Error::from_win32());
-                    eprintln!("{}", error.to_string().red());
-                    crate::common::msgbox(&error)
-                        .inspect_err(|e| eprintln!("{}", e.to_string().red()))?;
-                }
+            Err(e) => {
+                attach_console_error = windows::core::Result::Err(e);
             }
+        }
+    }
+    let app_args = AppArgs::parse();
+    #[cfg(feature = "gui")]
+    if let windows::core::Result::Err(_e) = attach_console_error {
+        use windows::Win32::UI::WindowsAndMessaging::{
+            MB_ICONWARNING, MESSAGEBOX_RESULT, MessageBoxW,
+        };
+        use windows::core::w;
+        if !app_args.msgbox
+            && unsafe {
+                MessageBoxW(
+                    None,
+                    w!("You execute this app not on terminal\n\
+                                But there are not --msgbox flag"),
+                    w!("yy-battery-notifier-rs"),
+                    MB_ICONWARNING,
+                )
+            } == MESSAGEBOX_RESULT(0)
+        {
+            let error = anyhow::Error::from(windows::core::Error::from_win32());
+            eprintln!("{}", error.to_string().red());
+            crate::common::msgbox(&error).inspect_err(|e| eprintln!("{}", e.to_string().red()))?;
         }
     }
     if app_args.subcommands.is_some() {

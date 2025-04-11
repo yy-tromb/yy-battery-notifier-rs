@@ -5,9 +5,9 @@
     <Package
         Name='yy-battery-notifier-rs'
         Manufacturer='yy-tromb'
-        Version='0.2.0'
+        Version='0.3.0'
         Compressed='yes'
-        UpgradeCode='ACBAAEB7-1712-4332-8723-204EFF40A48D'
+        UpgradeCode='38C684A9-3FCB-4F7F-95DB-8675CBD0B4FA'
     >
         <SummaryInformation Description='check battery level and notify you!' />
         <MediaTemplate EmbedCab='yes' />
