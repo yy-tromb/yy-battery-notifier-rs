@@ -53,14 +53,24 @@
                         Target='[INSTALLDIR]\yy-battery-notifier-rs.exe'
                         Arguments='--msgbox startup register --input'
                         WorkingDirectory='INSTALLDIR'
-                        Name='Register as Startup'
+                        Name='Register Startup'
                         Description='Register yy-battery-notifier-rs as startup'
+                    />
+                    <Shortcut
+                        Id='ApplicationStartMenuShortcutStartupRegisterDefault'
+                        Directory='ApplicationStartMenuFolder'
+                        Advertise='no'
+                        Target='[INSTALLDIR]\yy-battery-notifier-rs_gui.exe'
+                        Arguments='--msgbox startup register -d'
+                        WorkingDirectory='INSTALLDIR'
+                        Name='Register Startup with default settings'
+                        Description='Register yy-battery-notifier-rs as startup with default settings'
                     />
                     <Shortcut
                         Id='ApplicationStartMenuShortcutStartupDelete'
                         Directory='ApplicationStartMenuFolder'
                         Advertise='no'
-                        Target='[INSTALLDIR]\yy-battery-notifier-rs.exe'
+                        Target='[INSTALLDIR]\yy-battery-notifier-rs_gui.exe'
                         Arguments='--msgbox startup delete'
                         WorkingDirectory='INSTALLDIR'
                         Name='Delete Startup'

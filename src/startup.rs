@@ -96,7 +96,17 @@ pub fn register_cli(
         toml_settings_path_absolute //for remove "\\?\" prefix: &toml_settings_path_absolute[4..]
     );
     let register_result = register(toml_settings_path_absolute.to_string());
-    std::thread::sleep(std::time::Duration::from_millis(500));
+    #[cfg(feature = "gui")]
+    {
+        use windows::core::w;
+        use windows::Win32::UI::WindowsAndMessaging::{MessageBoxW,MB_OK};
+        unsafe {MessageBoxW(
+        None,
+        w!("register sucuessed!"),
+        w!("yy-battery-notifier-rs"),
+        MB_OK,
+        ); }
+   }
     register_result
 }
 
@@ -370,6 +380,17 @@ pub fn delete() -> anyhow::Result<()> {
         Err(e) => {
             if e.code() == E_FILENOTFOUND {
                 println!("{}", "delete sucuessed!".green().on_black());
+                #[cfg(feature = "gui")]
+                {
+                    use windows::core::w;
+                    use windows::Win32::UI::WindowsAndMessaging::{MessageBoxW,MB_OK};
+                    unsafe { MessageBoxW(
+                    None,
+                    w!("delete sucuessed!"),
+                    w!("yy-battery-notifier-rs"),
+                    MB_OK,
+                ); }
+                }
                 anyhow::Ok(())
             } else {
                 eprintln!(
