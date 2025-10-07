@@ -136,7 +136,7 @@ pub fn msgbox(error: &anyhow::Error) -> anyhow::Result<()> {
 
     match unsafe { MessageBoxW(None, &content, &title, MB_ICONERROR) } {
         MESSAGEBOX_RESULT(0) => {
-            anyhow::Result::Err(anyhow::Error::from(windows::core::Error::from_win32()))
+            anyhow::Result::Err(anyhow::Error::from(windows::core::Error::from_thread()))
         }
         _ => anyhow::Ok(()),
     }

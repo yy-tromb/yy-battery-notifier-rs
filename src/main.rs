@@ -125,7 +125,7 @@ fn main() -> anyhow::Result<()> {
                 )
             } == MESSAGEBOX_RESULT(0)
         {
-            let error = anyhow::Error::from(windows::core::Error::from_win32());
+            let error = anyhow::Error::from(windows::core::Error::from_thread());
             eprintln!("{}", error.to_string().red());
             crate::common::msgbox(&error).inspect_err(|e| eprintln!("{}", e.to_string().red()))?;
         }
