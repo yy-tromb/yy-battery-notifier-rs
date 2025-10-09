@@ -133,8 +133,8 @@ fn main() -> anyhow::Result<()> {
     if app_args.subcommands.is_some() {
         let subcommand = match app_args.subcommands.unwrap() {
             SubCommand::Registry { subcommands } => match subcommands {
-                RegistrySubCommand::Register => crate::registry::register_aumid(),
-                RegistrySubCommand::Delete => crate::registry::delete_aumid(),
+                RegistrySubCommand::Register => crate::registry::register_and_check_aumid(),
+                RegistrySubCommand::Delete => crate::registry::delete_and_check_aumid(),
             },
             SubCommand::Startup { subcommands } => match subcommands {
                 StartupSubCommand::Register {
