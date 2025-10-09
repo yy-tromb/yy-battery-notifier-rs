@@ -1,5 +1,6 @@
 use colored::Colorize;
-use windows_registry::{CURRENT_USER, LOCAL_MACHINE};
+
+pub use windows_registry::{CURRENT_USER, LOCAL_MACHINE};
 
 enum RegistryValue {
     String(String),
@@ -11,13 +12,65 @@ const WINDOWS_REGISTRY_ERROR_FILE_NOT_FOUND: windows::core::HRESULT =
 
 #[inline]
 fn str_to_wide(s: &str) -> windows::core::PCWSTR {
-    windows::core::PCWSTR::from_raw(s.encode_utf16().chain(std::iter::once(0)).collect::<Vec<u16>>().as_ptr())
+    windows::core::PCWSTR::from_raw(
+        s.encode_utf16()
+            .chain(std::iter::once(0))
+            .collect::<Vec<u16>>()
+            .as_ptr(),
+    )
+}
+
+#[inline]
+pub fn register_and_check_aumid(root: &windows_registry::Key) -> anyhow::Result<()> {
+    let keys_and_values = vec![
+        ("DisplayName", RegistryValue::String("yy-battery-notifier-rs".to_string())),
+        ("IconUri", RegistryValue::String(
+            std::env::current_exe()
+                .inspect_err(|_e| eprintln!("{}", "Failed to get current exe".red()))?
+                .to_str()
+                .unwrap_or(r"C:\Program Files\yy-tromb\yy-battery-notifier-rs\\yy-battery-notifier-rs.exe")
+                .to_string()
+        )),
+    ];
+    //register
+    register(
+        root,
+        r"SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs",
+        &keys_and_values,
+    )?;
+
+    //check
+    check_registered(
+        root,
+        r"SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs",
+        &keys_and_values,
+    )?;
+    println!("{}", "register sucuessed!".green().on_black());
+    anyhow::Ok(())
+}
+
+#[inline]
+pub fn delete_and_check_aumid(root: &windows_registry::Key) -> anyhow::Result<()> {
+    let keys = vec!["DisplayName", "IconUri"];
+    //delete
+    delete(
+        root,
+        r"SOFTWARE\Classes\AppUserModelId",
+        "yy-tromb.yy-battery-notifier-rs",
+    )?;
+    check_deleted(
+        root,
+        r"SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs",
+        &keys,
+    )?;
+    println!("{}", "delete sucuessed!".green().on_black());
+    anyhow::Ok(())
 }
 
 pub fn register(
     root: &windows_registry::Key,
     path: &str,
-    keys_and_values: &[(&str, &RegistryValue)],
+    keys_and_values: &[(&str, RegistryValue)],
 ) -> anyhow::Result<()> {
     let tree = root
         .create(path)
@@ -85,7 +138,7 @@ pub fn register(
 fn check_registered(
     root: &windows_registry::Key,
     path: &str,
-    keys_and_values: &[(&str, &RegistryValue)],
+    keys_and_values: &[(&str, RegistryValue)],
 ) -> anyhow::Result<()> {
     let tree = root
         .create(path)
@@ -131,27 +184,28 @@ fn check_registered(
                 let mut buffer: Vec<u8> = vec![0; 260];
                 let key_wide = str_to_wide(key);
                 let read_value_info = unsafe {
-                    tree.raw_get_bytes(&key_wide, &mut buffer).inspect_err(|_e| {
-                        if root.as_raw() == windows_registry::LOCAL_MACHINE.as_raw() {
-                            eprintln!(
-                                "{}",
-                                format!(
-                                    r"Failed to read registry 'HKEY_LOCAL_MACHINE\{}\{}'.",
-                                    path, key
-                                )
-                                .red()
-                            );
-                        } else {
-                            eprintln!(
-                                "{}",
-                                format!(
-                                    r"Failed to read registry 'HKEY_CURRENT_USER\{}\{}'.",
-                                    path, key
-                                )
-                                .red()
-                            );
-                        }
-                    })?
+                    tree.raw_get_bytes(&key_wide, &mut buffer)
+                        .inspect_err(|_e| {
+                            if root.as_raw() == windows_registry::LOCAL_MACHINE.as_raw() {
+                                eprintln!(
+                                    "{}",
+                                    format!(
+                                        r"Failed to read registry 'HKEY_LOCAL_MACHINE\{}\{}'.",
+                                        path, key
+                                    )
+                                    .red()
+                                );
+                            } else {
+                                eprintln!(
+                                    "{}",
+                                    format!(
+                                        r"Failed to read registry 'HKEY_CURRENT_USER\{}\{}'.",
+                                        path, key
+                                    )
+                                    .red()
+                                );
+                            }
+                        })?
                 };
                 if read_value_info.0 != windows_registry::Type::Bytes
                     || read_value_info.1 != value_bytes.as_slice()
@@ -163,10 +217,7 @@ fn check_registered(
                                 r"'HKEY_LOCAL_MACHINE\{}\{}' has unexpected value.\n\
                     Except: {:?} \n\
                     But Found {:?}",
-                                path,
-                                key,
-                                value_bytes,
-                                &read_value_info.1
+                                path, key, value_bytes, &read_value_info.1
                             )
                             .red()
                         ));
@@ -177,10 +228,7 @@ fn check_registered(
                                 r"'HKEY_CURRENT_USER\{}\{}' has unexpected value.\n\
                     Except: {:?} \n\
                     But Found {:?}",
-                                path,
-                                key,
-                                value_bytes,
-                                &read_value_info.1
+                                path, key, value_bytes, &read_value_info.1
                             )
                             .red()
                         ));
@@ -206,35 +254,31 @@ fn delete(
                 eprintln!("{}", format!(r"Failed to open registry 'HKEY_CURRENT_USER\{}'.",parent_path).red());
             }
         })?;
-        tree.remove_tree(target_tree).inspect_err(|_e| {
-            if root.as_raw() == windows_registry::LOCAL_MACHINE.as_raw() {
-                eprintln!(
-                    "{}",
-                    format!(
-                        r"Failed to remove registry key 'HKEY_LOCAL_MACHINE\{}\{}'.",
-                        parent_path, target_tree
-                    )
-                    .red()
-                );
-            } else {
-                eprintln!(
-                    "{}",
-                    format!(
-                        r"Failed to remove registry key 'HKEY_CURRENT_USER\{}\{}'.",
-                        parent_path, target_tree
-                    )
-                    .red()
-                );
-            }
-        })?;
+    tree.remove_tree(target_tree).inspect_err(|_e| {
+        if root.as_raw() == windows_registry::LOCAL_MACHINE.as_raw() {
+            eprintln!(
+                "{}",
+                format!(
+                    r"Failed to remove registry key 'HKEY_LOCAL_MACHINE\{}\{}'.",
+                    parent_path, target_tree
+                )
+                .red()
+            );
+        } else {
+            eprintln!(
+                "{}",
+                format!(
+                    r"Failed to remove registry key 'HKEY_CURRENT_USER\{}\{}'.",
+                    parent_path, target_tree
+                )
+                .red()
+            );
+        }
+    })?;
     anyhow::Ok(())
 }
 
-fn check_deleted(
-    root: &windows_registry::Key,
-    path: &str,
-    keys: &[&str],
-) -> anyhow::Result<()> {
+fn check_deleted(root: &windows_registry::Key, path: &str, keys: &[&str]) -> anyhow::Result<()> {
     let tree = root
         .create(path)
         .inspect_err(|_e| {
@@ -298,119 +342,4 @@ fn check_deleted(
     anyhow::Ok(())
 }
 
-pub fn register_and_check_aumid() -> anyhow::Result<()> {
-    let key = CURRENT_USER
-        .create(r"SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs")
-        .inspect_err(|_e| {
-            eprintln!("{}", r"Failed to open registry 'HKEY_CURRENT_USER\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs'.".red());
-        })?;
-    key.set_string("DisplayName", "yy-battery-notifier-rs").inspect_err(|_e|{
-            eprintln!("{}", r"Failed to set registry 'HKEY_CURRENT_USER\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs\DisplayName'.".red());
-        })?;
-    let icon_uri = std::env::current_exe()
-        .inspect_err(|_e| eprintln!("{}", "Failed to get current exe".red()))?;
-    let icon_uri = icon_uri
-        .to_str()
-        .unwrap_or(r"C:\Program Files\yy-tromb\yy-battery-notifier-rs\\yy-battery-notifier-rs.exe");
-    key.set_string("IconUri", icon_uri).inspect_err(|_e|{
-            eprintln!("{}", r"Failed to set registry 'HKEY_CURRENT_USER\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs\IconUri'.".red());
-        })?;
 
-    //check
-    let reg_display_name = key.get_string("DisplayName").inspect_err(|_e| {
-        eprintln!("{}", r"Failed to read registry 'HKEY_CURRENT_USER\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs\DisplayName'.".red());
-    })?;
-    let reg_icon_uri = key.get_string("IconUri").inspect_err(|_e| {
-        eprintln!("{}", r"Failed to read registry 'HKEY_CURRENT_USER\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs\IconUri'.".red());
-    })?;
-    if &reg_display_name == "yy-battery-notifier-rs" && reg_icon_uri == icon_uri {
-        println!("{}", "register sucuessed!".green().on_black());
-        anyhow::Ok(())
-    } else {
-        anyhow::Result::Err(anyhow::anyhow!("Failed to set correct string to registry."))
-    }
-}
-
-pub fn delete_and_check_aumid() -> anyhow::Result<()> {
-    let key = CURRENT_USER
-        .create(r"SOFTWARE\Classes\AppUserModelId")
-        .inspect_err(|_e| {
-            eprintln!(
-                "{}",
-                r"Failed to open registry 'HKEY_CURRENT_USER\SOFTWARE\Classes\AppUserModelId'."
-                    .red()
-            );
-        })?;
-    key.remove_tree("yy-tromb.yy-battery-notifier-rs")
-        .inspect_err(|_e| {
-            eprintln!(
-                "{}",
-                r"Failed to remove registry key tree 'HKEY_CURRENT_USER\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs'."
-                    .red()
-            )
-        })?;
-    /*key.remove_key("yy-tromb.yy-battery-notifier-rs")
-    .inspect_err(|_e| {
-        dbg!("ここ");
-        eprintln!(
-            "{}",
-            r"Failed to remove registry key tree 'HKEY_CURRENT_USER\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs'."
-                .red()
-        )
-    })?;
-    match CURRENT_USER
-        .create(r"SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs")
-    {
-        Ok(_) =>  anyhow::Result::Err(anyhow::anyhow!(
-            "{}",
-            r"Failed to remove registry key 'HKEY_CURRENT_USER\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs'. Key surving.".red()
-        )),
-        Err(e) => {
-            if e.code() == windows::core::HRESULT(-2147024894 /*0x80070002*/) {
-                anyhow::Result::Ok(())
-            } else {
-                eprintln!("{}", r"Failed to read registry 'HKEY_CURRENT_USER\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs\DisplayName'.".red());
-                anyhow::Result::Err(anyhow::Error::from(e))
-            }
-        }
-    }*/
-    let key = CURRENT_USER
-        .create(r"SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs")
-        .inspect_err(|_e| {
-            eprintln!("{}", r"Failed to open registry 'HKEY_CURRENT_USER\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs'.".red());
-        })?;
-    match key.get_string("DisplayName") {
-        Ok(v) => {
-            return anyhow::Result::Err(anyhow::anyhow!(
-                r"Failed to delete registry key 'HKEY_CURRENT_USER\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs\DisplayName'. Found: {}",
-                v
-            ));
-        }
-        Err(e) => {
-            if e.code() == windows::core::HRESULT::from_win32(0x80070002) {
-                // do nothing
-            } else {
-                eprintln!("{} {}", r"Failed to read registry 'HKEY_CURRENT_USER\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs\DisplayName' for .".red(),"NOT REASON OF REMOVED".bold().red());
-                return anyhow::Result::Err(anyhow::Error::from(e));
-            }
-        }
-    };
-    match key.get_string("IconUri") {
-        Ok(v) => {
-            return anyhow::Result::Err(anyhow::anyhow!(
-                r"Failed to delete registry key 'HKEY_CURRENT_USER\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs\IconUri'. Found: {}",
-                v
-            ));
-        }
-        Err(e) => {
-            if e.code() == windows::core::HRESULT::from_win32(0x80070002) {
-                // do nothing
-            } else {
-                eprintln!("{} {}", r"Failed to read registry 'HKEY_CURRENT_USER\SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs\IconUri' for .".red(),"NOT REASON OF REMOVED".bold().red());
-                return anyhow::Result::Err(anyhow::Error::from(e));
-            }
-        }
-    };
-    println!("{}", "delete sucuessed!".green().on_black());
-    anyhow::Ok(())
-}

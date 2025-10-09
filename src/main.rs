@@ -10,6 +10,8 @@ mod notify;
 mod registry;
 mod startup;
 
+use registry::{CURRENT_USER, LOCAL_MACHINE};
+
 #[derive(clap::Parser, Debug)]
 #[command(
     name = env!("CARGO_PKG_NAME"),
@@ -133,8 +135,8 @@ fn main() -> anyhow::Result<()> {
     if app_args.subcommands.is_some() {
         let subcommand = match app_args.subcommands.unwrap() {
             SubCommand::Registry { subcommands } => match subcommands {
-                RegistrySubCommand::Register => crate::registry::register_and_check_aumid(),
-                RegistrySubCommand::Delete => crate::registry::delete_and_check_aumid(),
+                RegistrySubCommand::Register => crate::registry::register_and_check_aumid(&CURRENT_USER),
+                RegistrySubCommand::Delete => crate::registry::delete_and_check_aumid(&CURRENT_USER),
             },
             SubCommand::Startup { subcommands } => match subcommands {
                 StartupSubCommand::Register {
