@@ -10,6 +10,7 @@ mod notify;
 mod registry;
 mod aumid;
 mod startup;
+mod settings;
 
 use registry::{CURRENT_USER, LOCAL_MACHINE};
 
@@ -168,7 +169,7 @@ fn main() -> anyhow::Result<()> {
             format!("Failed to read file '{}'.", &toml_settings_path.display()).red()
         );
     })?;
-    let toml_settings: crate::common::TOMLSettings =
+    let toml_settings: crate::settings::TOMLSettings =
         toml::from_str(&toml_settings).inspect_err(|_e| {
             eprintln!(
                 "{}",
@@ -180,10 +181,10 @@ fn main() -> anyhow::Result<()> {
             );
         })?;
     if app_args.msgbox {
-        crate::cli::Cli::new(crate::common::Settings::try_from(toml_settings)?)?
+        crate::cli::Cli::new(crate::settings::Settings::try_from(toml_settings)?)?
             .run()
             .or_else(|e| crate::common::msgbox(&e))
     } else {
-        crate::cli::Cli::new(crate::common::Settings::try_from(toml_settings)?)?.run()
+        crate::cli::Cli::new(crate::settings::Settings::try_from(toml_settings)?)?.run()
     }
 }
