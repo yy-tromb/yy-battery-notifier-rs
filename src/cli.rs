@@ -1,11 +1,11 @@
 use colored::Colorize;
 
 pub struct Cli {
-    settings: crate::common::Settings,
+    settings: crate::settings::Settings,
 }
 
 impl Cli {
-    pub fn new(settings: crate::common::Settings) -> anyhow::Result<Self> {
+    pub fn new(settings: crate::settings::Settings) -> anyhow::Result<Self> {
         Ok(Self { settings })
     }
 
