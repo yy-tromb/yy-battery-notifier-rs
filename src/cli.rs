@@ -15,6 +15,7 @@ impl Cli {
             let battery_report = crate::battery::battery_check().inspect_err(|_e| {
                 eprintln!("{}", "Failed to check battery information.".red());
             })?;
+            dbg!(&battery_report);
             for notification_setting in &self.settings.notifications {
                 match notification_setting.percentage_symbol {
                     crate::common::PercentageSymbol::Excess => {

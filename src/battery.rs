@@ -1,7 +1,7 @@
 #[derive(Debug, Clone)]
 pub struct BatteryReport {
     pub percentage: u32,
-    pub remaining_seconds: u64,
+    pub remaining_seconds: Option<u64>,
     pub power_supply: PowerSupply,
 }
 
@@ -32,7 +32,14 @@ pub fn battery_check() -> anyhow::Result<BatteryReport> {
 fn battery_check_winrt() -> anyhow::Result<BatteryReport> {
     use windows::System::Power::PowerManager;
     let percentage = PowerManager::RemainingChargePercent()? as u32;
-    let remaining_seconds = PowerManager::RemainingDischargeTime()?.Duration as u64 / 1000_1000_1000_1000;
+    let remaining_seconds = {
+        let remaining_100_nano_seconds = PowerManager::RemainingDischargeTime()?.Duration;
+        if remaining_100_nano_seconds == i64::MAX {
+            None
+        } else {
+            Some((remaining_100_nano_seconds / 10_000_000) as u64)
+        }
+    };
     let power_supply: PowerSupply = PowerManager::PowerSupplyStatus()?.into();
     // do something
     Ok(BatteryReport {

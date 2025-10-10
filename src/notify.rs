@@ -13,12 +13,21 @@ fn notify_winrt_toast(
     message: &str,
 ) -> anyhow::Result<()> {
     use tauri_winrt_notification::{Duration, Progress, Toast};
-    let progress = Progress {
-        tag: "tag".to_string(),
-        title: "Now Battery Level:".to_string(),
-        status: format!("{}:{}:{} left", battery_report.remaining_seconds / 3600, (battery_report.remaining_seconds % 3600) / 60, battery_report.remaining_seconds % 60),
-        value: battery_report.percentage as f32 / 100.0,
-        value_string: format!("{}%", battery_report.percentage),
+    let progress = match battery_report.remaining_seconds {
+        Some(remaining_seconds) => Progress {
+            tag: "tag".to_string(),
+            title: "Now Battery Level:".to_string(),
+            status: format!("{}:{}:{} remaining", remaining_seconds / 3600, (remaining_seconds % 3600) / 60, remaining_seconds % 60),
+            value: battery_report.percentage as f32 / 100.0,
+            value_string: format!("{}%", battery_report.percentage),
+        },
+        None => Progress {
+            tag: "tag".to_string(),
+            title: "Now Battery Level:".to_string(),
+            status: "N/A".to_string(),
+            value: battery_report.percentage as f32 / 100.0,
+            value_string: format!("{}%", battery_report.percentage),
+        },
     };
     Toast::new("yy-tromb.yy-battery-notifier-rs")
         .title(title)
