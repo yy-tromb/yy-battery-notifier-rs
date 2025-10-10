@@ -1,7 +1,13 @@
-use colored::Colorize;
-use windows::core::HRESULT;
+use std::{collections::btree_map::Keys, thread::current};
 
-use windows_registry::CURRENT_USER;
+use colored::Colorize;
+use windows::{Win32::UI::WindowsAndMessaging::KBDLLHOOKSTRUCT, core::HRESULT};
+
+use crate::registry::{
+    CURRENT_USER, LOCAL_MACHINE, RegistryValue, check_deleted, check_registered, delete_values,
+    register,
+};
+
 const REG_STARTUP_KEY: &str = r"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
 const REG_STARTUP_NAME: &str = "yy-tromb.yy-battery-notifier-rs";
 const REG_STARTUP_NAME_PCWSTR: windows::core::PCWSTR =
@@ -95,22 +101,25 @@ pub fn register_cli(
         "Now start register. settings.toml file: '{}'",
         toml_settings_path_absolute //for remove "\\?\" prefix: &toml_settings_path_absolute[4..]
     );
-    let register_result = register(toml_settings_path_absolute.to_string());
+    let register_result = register_and_check_startup(toml_settings_path_absolute.to_string());
     #[cfg(feature = "gui")]
     {
+        use windows::Win32::UI::WindowsAndMessaging::{MB_OK, MessageBoxW};
         use windows::core::w;
-        use windows::Win32::UI::WindowsAndMessaging::{MessageBoxW,MB_OK};
-        unsafe {MessageBoxW(
-        None,
-        w!("register sucuessed!"),
-        w!("yy-battery-notifier-rs"),
-        MB_OK,
-        ); }
-   }
+        unsafe {
+            MessageBoxW(
+                None,
+                w!("register sucuessed!"),
+                w!("yy-battery-notifier-rs"),
+                MB_OK,
+            );
+        }
+    }
     register_result
 }
 
-fn register(toml_settings_path: String) -> anyhow::Result<()> {
+#[inline]
+fn register_and_check_startup(toml_settings_path: String) -> anyhow::Result<()> {
     //use windows::ApplicationModel::{StartupTask, StartupTaskState};
     dbg!(&toml_settings_path);
 
@@ -122,287 +131,56 @@ fn register(toml_settings_path: String) -> anyhow::Result<()> {
         anyhow::anyhow!("path to current exe is empty. Unknown error may occured.")
     })?;
     let run_cmd = format!(r#""{}" --msgbox -s "{}""#, current_exe, toml_settings_path);
-    //set
-    let key = CURRENT_USER.create(REG_STARTUP_KEY).inspect_err(|_e| {
-        eprintln!(
-            "{}",
-            format!(
-                r"Failed to open registry 'HKEY_CURRENT_USER\{}'.",
-                REG_STARTUP_KEY
-            )
-            .red()
-        );
-    })?;
-    key.set_string(REG_STARTUP_NAME, &run_cmd)
-        .inspect_err(|_e| {
-            eprintln!(
-                "{}",
-                format!(
-                    r"Failed to set registry 'HKEY_CURRENT_USER\{}\{}'.",
-                    REG_STARTUP_KEY, REG_STARTUP_NAME
-                )
-                .red()
-            );
-        })?;
 
-    //check
-    let reg_startup = key.get_string(REG_STARTUP_NAME).inspect_err(|_e| {
-        eprintln!(
-            "{}",
-            format!(
-                r"Failed to get registry 'HKEY_CURRENT_USER\{}\{}'.",
-                REG_STARTUP_KEY, REG_STARTUP_NAME
-            )
-            .red()
-        );
-    })?;
-    if reg_startup != run_cmd {
-        return anyhow::Result::Err(anyhow::anyhow!(
-            "{}",
-            format!(
-                "Failed to set correct value to registry.\n Except: '{}' but Found: '{}'",
-                run_cmd, reg_startup
-            )
-            .red()
-        ));
-    }
+    //register startup
+    let keys_and_values = vec![(REG_STARTUP_NAME, RegistryValue::String(run_cmd))];
+    register(CURRENT_USER, REG_STARTUP_KEY, &keys_and_values)?;
 
-    // Approve
-    let tx = windows_registry::Transaction::new().inspect_err(|_e| {
-        eprintln!(
-            "{}",
-            format!(
-                r"Failed to open registry 'HKEY_CURRENT_USER\{}'. Not Found.",
-                REG_STARTUP_APPROVED_KEY
-            )
-            .red()
-        )
-    })?;
-    match CURRENT_USER
-        .options()
-        .write()
-        .create()
-        .open(REG_STARTUP_APPROVED_KEY)
-    {
-        Ok(key) => key
-            .set_bytes(
-                REG_STARTUP_NAME,
-                windows_registry::Type::Bytes,
-                &REG_STARTUP_APPROVED_VALUE,
-            )
-            .inspect_err(|_e| {
-                eprintln!(
-                    "{}",
-                    format!(
-                        r"Failed to set registry 'HKEY_CURRENT_USER\{}\{}'.",
-                        REG_STARTUP_APPROVED_KEY, REG_STARTUP_NAME
-                    )
-                    .red()
-                );
-            })?,
-        Err(error) => {
-            eprintln!(
-                "{}",
-                format!(
-                    r"Failed to open registry 'HKEY_CURRENT_USER\{}'. Not Found.",
-                    REG_STARTUP_APPROVED_KEY
-                )
-                .red()
-            );
-            return anyhow::Result::Err(error.into());
-        }
-    }
-    tx.commit().inspect_err(|_e| {
-        eprintln!(
-            "{}",
-            format!(
-                r"Failed to set registry 'HKEY_CURRENT_USER\{}\{}'.",
-                REG_STARTUP_APPROVED_KEY, REG_STARTUP_NAME
-            )
-            .red()
-        );
-    })?;
+    //check startup
+    check_registered(CURRENT_USER, REG_STARTUP_NAME, &keys_and_values)?;
+
+    //register approved
+    let keys_and_values = vec![(
+        REG_STARTUP_NAME,
+        RegistryValue::Bytes(&REG_STARTUP_APPROVED_VALUE),
+    )];
+    register(CURRENT_USER, REG_STARTUP_APPROVED_KEY, &keys_and_values)?;
 
     //approved check
-    let key = CURRENT_USER
-        .create(REG_STARTUP_APPROVED_KEY)
-        .inspect_err(|_e| {
-            eprintln!(
-                "{}",
-                format!(
-                    r"Failed to open registry 'HKEY_CURRENT_USER\{}'.",
-                    REG_STARTUP_APPROVED_KEY
-                )
-                .red()
-            );
-        })?;
-    let mut reg_app_approved_value: Vec<u8> = vec![0; 260];
-    let reg_app_approved = unsafe {
-        key.raw_get_bytes(REG_STARTUP_NAME_PCWSTR, &mut reg_app_approved_value)
-            .inspect_err(|_e| {
-                eprintln!(
-                    "{}",
-                    format!(
-                        r"Failed to get registry 'HKEY_CURRENT_USER\{}\{}'.",
-                        REG_STARTUP_APPROVED_KEY, REG_STARTUP_NAME
-                    )
-                    .red()
-                );
-            })?
-    };
-    if reg_app_approved.1 != REG_STARTUP_APPROVED_VALUE {
-        return anyhow::Result::Err(anyhow::anyhow!(
-            "{}",
-            format!(
-                r"Failed to set registry 'HKEY_CURRENT_USER\{}\{}'.\n\
-                    Except: {:?} \n\
-                    But Found {:?}",
-                REG_STARTUP_APPROVED_KEY,
-                REG_STARTUP_NAME,
-                REG_STARTUP_APPROVED_VALUE,
-                &reg_app_approved.1[..REG_STARTUP_APPROVED_VALUE.len()]
-            )
-            .red()
-        ));
-    }
+    check_registered(CURRENT_USER, REG_STARTUP_APPROVED_KEY, &keys_and_values)?;
     println!("{}", "register sucuessed!".green().on_black());
     anyhow::Ok(())
 }
 
-pub fn delete() -> anyhow::Result<()> {
-    let key = CURRENT_USER.create(REG_STARTUP_KEY).inspect_err(|_e| {
-        //ToDo
-        eprintln!(
-            "{}",
-            format!(
-                r"Failed to open registry 'HKEY_CURRENT_USER\{}'.",
-                REG_STARTUP_KEY
-            )
-            .red()
-        );
-    })?;
-    key.remove_value(REG_STARTUP_NAME).or_else(|e| {
-        if e.code() == E_FILENOTFOUND {
-            println!(
-                r"Maybe already deleted registry 'HKEY_CURRENT_USER\{}\{}'",
-                REG_STARTUP_KEY, REG_STARTUP_NAME
-            );
-            anyhow::Ok(())
-        } else {
-            eprintln!(
-                "{}",
-                format!(
-                    r"Failed to delete registry 'HKEY_CURRENT_USER\{}\{}'.",
-                    REG_STARTUP_KEY, REG_STARTUP_NAME
-                )
-                .red()
-            );
-            anyhow::Result::Err(anyhow::Error::from(e))
-        }
-    })?;
+#[inline]
+pub fn delete_and_check_startup() -> anyhow::Result<()> {
+    //delete startup
+    let keys = vec![REG_STARTUP_NAME];
+    delete_values(CURRENT_USER, REG_STARTUP_KEY, &keys)?;
 
-    //check
-    match key.get_string(REG_STARTUP_NAME) {
-        Ok(v) => {
-            return anyhow::Result::Err(anyhow::anyhow!(
-                "{}",
-                format!(
-                    r"Failed to delete delete registry 'HKEY_CURRENT_USER\{}\{}'. Found: {}",
-                    REG_STARTUP_KEY, REG_STARTUP_NAME, v
-                )
-            ));
-        }
-        Err(e) => {
-            if e.code() == E_FILENOTFOUND {
-                //do nothing
-            } else {
-                eprintln!(
-                    "{}",
-                    format!(
-                        r"Failed to read registry 'HKEY_CURRENT_USER\{}\{}' for strange reason.",
-                        REG_STARTUP_KEY, REG_STARTUP_NAME
-                    )
-                    .red()
-                );
-                return anyhow::Result::Err(anyhow::Error::from(e));
-            }
-        }
-    }
+    //check deleted startup
+    check_deleted(CURRENT_USER, REG_STARTUP_KEY, &keys)?;
 
-    //approved
-    let key = CURRENT_USER
-        .create(REG_STARTUP_APPROVED_KEY)
-        .inspect_err(|_e| {
-            //ToDo
-            eprintln!(
-                "{}",
-                format!(
-                    r"Failed to open registry 'HKEY_CURRENT_USER\{}'.",
-                    REG_STARTUP_APPROVED_KEY
-                )
-                .red()
-            );
-        })?;
-    key.remove_value(REG_STARTUP_NAME).or_else(|e| {
-        if e.code() == E_FILENOTFOUND {
-            println!(
-                r"Maybe already deleted registry 'HKEY_CURRENT_USER\{}\{}'",
-                REG_STARTUP_APPROVED_KEY, REG_STARTUP_NAME
-            );
-            anyhow::Ok(())
-        } else {
-            eprintln!(
-                "{}",
-                format!(
-                    r"Failed to delete registry 'HKEY_CURRENT_USER\{}\{}'.",
-                    REG_STARTUP_APPROVED_KEY, REG_STARTUP_NAME
-                )
-                .red()
-            );
-            anyhow::Result::Err(anyhow::Error::from(e))
-        }
-    })?;
+    //delete approved
+    //let Keys = vec![REG_STARTUP_NAME];
+    delete_values(CURRENT_USER, REG_STARTUP_APPROVED_KEY, &keys)?;
 
     //approved check
-    let mut reg_app_approved_value: Vec<u8> = vec![0; 260];
-    match unsafe { key.raw_get_bytes(REG_STARTUP_NAME_PCWSTR, &mut reg_app_approved_value) } {
-        Ok(v) => anyhow::Result::Err(anyhow::anyhow!(
-            "{}",
-            format!(
-                r"Failed to delete registry 'HKEY_CURRENT_USER\{}\{}'.\n\
-                    Found {:?}",
-                REG_STARTUP_APPROVED_KEY,
-                REG_STARTUP_NAME,
-                &v.1[..REG_STARTUP_APPROVED_VALUE.len()]
-            )
-            .red()
-        )),
-        Err(e) => {
-            if e.code() == E_FILENOTFOUND {
-                println!("{}", "delete sucuessed!".green().on_black());
-                #[cfg(feature = "gui")]
-                {
-                    use windows::core::w;
-                    use windows::Win32::UI::WindowsAndMessaging::{MessageBoxW,MB_OK};
-                    unsafe { MessageBoxW(
-                    None,
-                    w!("delete sucuessed!"),
-                    w!("yy-battery-notifier-rs"),
-                    MB_OK,
-                ); }
-                }
-                anyhow::Ok(())
-            } else {
-                eprintln!(
-                    "{}",
-                    format!(
-                        r"Failed to read registry 'HKEY_CURRENT_USER\{}\{}' for strange reason.",
-                        REG_STARTUP_KEY, REG_STARTUP_NAME
-                    )
-                    .red()
-                );
-                anyhow::Result::Err(anyhow::Error::from(e))
-            }
+    check_deleted(CURRENT_USER, REG_STARTUP_APPROVED_KEY, &keys)?;
+
+    println!("{}", "delete sucuessed!".green().on_black());
+    #[cfg(feature = "gui")]
+    {
+        use windows::Win32::UI::WindowsAndMessaging::{MB_OK, MessageBoxW};
+        use windows::core::w;
+        unsafe {
+            MessageBoxW(
+                None,
+                w!("delete sucuessed!"),
+                w!("yy-battery-notifier-rs"),
+                MB_OK,
+            );
         }
     }
+    anyhow::Ok(())
 }

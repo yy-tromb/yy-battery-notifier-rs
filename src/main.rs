@@ -145,7 +145,7 @@ fn main() -> anyhow::Result<()> {
                     input_mode,
                     default_settings,
                 } => crate::startup::register_cli(toml_settings_path, input_mode, default_settings),
-                StartupSubCommand::Delete => crate::startup::delete(),
+                StartupSubCommand::Delete => crate::startup::delete_and_check_startup(),
             },
         };
         if app_args.msgbox {

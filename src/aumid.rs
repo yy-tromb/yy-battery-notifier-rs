@@ -1,4 +1,4 @@
-use crate::registry::{check_deleted, check_registered, delete, register, RegistryValue};
+use crate::registry::{check_deleted, check_registered, delete_tree, register, RegistryValue};
 use colored::Colorize;
 
 #[inline]
@@ -34,7 +34,7 @@ pub fn register_and_check_aumid(root: &windows_registry::Key) -> anyhow::Result<
 pub fn delete_and_check_aumid(root: &windows_registry::Key) -> anyhow::Result<()> {
     let keys = vec!["DisplayName", "IconUri"];
     //delete
-    delete(
+    delete_tree(
         root,
         r"SOFTWARE\Classes\AppUserModelId",
         "yy-tromb.yy-battery-notifier-rs",

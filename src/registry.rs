@@ -1,12 +1,12 @@
 use colored::Colorize;
 
 pub use windows_registry::{CURRENT_USER, LOCAL_MACHINE};
-pub enum RegistryValue {
+pub enum RegistryValue<'a> {
     String(String),
-    Bytes(Vec<u8>),
+    Bytes(&'a [u8]),
 }
 
-const WINDOWS_REGISTRY_ERROR_FILE_NOT_FOUND: windows::core::HRESULT =
+const WIN32_ERROR_E_FILENOTFOUND: windows::core::HRESULT =
     windows::core::HRESULT::from_win32(0x80070002);
 
 #[inline]
@@ -160,7 +160,7 @@ pub fn check_registered(
                         })?
                 };
                 if read_value_info.0 != windows_registry::Type::Bytes
-                    || read_value_info.1 != value_bytes.as_slice()
+                    || read_value_info.1 != *value_bytes
                 {
                     if root.as_raw() == windows_registry::LOCAL_MACHINE.as_raw() {
                         return anyhow::Result::Err(anyhow::anyhow!(
@@ -192,7 +192,7 @@ pub fn check_registered(
     anyhow::Ok(())
 }
 
-pub fn delete(
+pub fn delete_tree(
     root: &windows_registry::Key,
     parent_path: &str,
     target_tree: &str,
@@ -211,7 +211,7 @@ pub fn delete(
             eprintln!(
                 "{}",
                 format!(
-                    r"Failed to remove registry key 'HKEY_LOCAL_MACHINE\{}\{}'.",
+                    r"Failed to remove registry tree 'HKEY_LOCAL_MACHINE\{}\{}'.",
                     parent_path, target_tree
                 )
                 .red()
@@ -220,7 +220,7 @@ pub fn delete(
             eprintln!(
                 "{}",
                 format!(
-                    r"Failed to remove registry key 'HKEY_CURRENT_USER\{}\{}'.",
+                    r"Failed to remove registry tree 'HKEY_CURRENT_USER\{}\{}'.",
                     parent_path, target_tree
                 )
                 .red()
@@ -230,7 +230,47 @@ pub fn delete(
     anyhow::Ok(())
 }
 
-pub fn check_deleted(root: &windows_registry::Key, path: &str, keys: &[&str]) -> anyhow::Result<()> {
+pub fn delete_values(root: &windows_registry::Key, path: &str, keys: &[&str]) -> anyhow::Result<()> {
+    let tree = root
+        .create(path)
+        .inspect_err(|_e| {
+            if root.as_raw() == windows_registry::LOCAL_MACHINE.as_raw() {
+                eprintln!("{}", format!(r"Failed to open registry 'HKEY_LOCAL_MACHINE\{}'. You may need to run as administrator.",path).red());
+            } else {
+                eprintln!("{}", format!(r"Failed to open registry 'HKEY_CURRENT_USER\{}'.",path).red());
+            }
+        })?;
+    for key in keys {
+        tree.remove_value(key).inspect_err(|_e| {
+            if root.as_raw() == windows_registry::LOCAL_MACHINE.as_raw() {
+                eprintln!(
+                    "{}",
+                    format!(
+                        r"Failed to remove registry key 'HKEY_LOCAL_MACHINE\{}\{}'.",
+                        path, key
+                    )
+                    .red()
+                );
+            } else {
+                eprintln!(
+                    "{}",
+                    format!(
+                        r"Failed to remove registry key 'HKEY_CURRENT_USER\{}\{}'.",
+                        path, key
+                    )
+                    .red()
+                );
+            }
+        })?;
+    }
+    anyhow::Ok(())
+}
+
+pub fn check_deleted(
+    root: &windows_registry::Key,
+    path: &str,
+    keys: &[&str],
+) -> anyhow::Result<()> {
     let tree = root
         .create(path)
         .inspect_err(|_e| {
@@ -264,7 +304,7 @@ pub fn check_deleted(root: &windows_registry::Key, path: &str, keys: &[&str]) ->
                 }
             }
             Err(e) => {
-                if e.code() == WINDOWS_REGISTRY_ERROR_FILE_NOT_FOUND {
+                if e.code() == WIN32_ERROR_E_FILENOTFOUND {
                     // do nothing
                 } else {
                     if root.as_raw() == windows_registry::LOCAL_MACHINE.as_raw() {
@@ -293,5 +333,3 @@ pub fn check_deleted(root: &windows_registry::Key, path: &str, keys: &[&str]) ->
     }
     anyhow::Ok(())
 }
-
-
