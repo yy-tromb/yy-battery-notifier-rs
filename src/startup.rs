@@ -1,7 +1,5 @@
-use std::{collections::btree_map::Keys, thread::current};
-
 use colored::Colorize;
-use windows::{Win32::UI::WindowsAndMessaging::KBDLLHOOKSTRUCT, core::HRESULT};
+use windows::core::HRESULT;
 
 use crate::registry::{
     CURRENT_USER, LOCAL_MACHINE, RegistryValue, check_deleted, check_registered, delete_values,
@@ -10,8 +8,6 @@ use crate::registry::{
 
 const REG_STARTUP_KEY: &str = r"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
 const REG_STARTUP_NAME: &str = "yy-tromb.yy-battery-notifier-rs";
-const REG_STARTUP_NAME_PCWSTR: windows::core::PCWSTR =
-    windows::core::w!("yy-tromb.yy-battery-notifier-rs");
 const REG_STARTUP_APPROVED_KEY: &str =
     r"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run";
 const REG_STARTUP_APPROVED_VALUE: [u8; 12] = [
