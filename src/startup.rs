@@ -94,7 +94,7 @@ pub fn register_cli(
         "Now start register. settings.toml file: '{}'",
         toml_settings_path_absolute //for remove "\\?\" prefix: &toml_settings_path_absolute[4..]
     );
-    let register_result = register_and_check_startup(toml_settings_path_absolute.to_string());
+    register_and_check_startup(toml_settings_path_absolute.to_string())?;
     #[cfg(feature = "gui")]
     {
         use windows::Win32::UI::WindowsAndMessaging::{MB_OK, MessageBoxW};
@@ -108,7 +108,7 @@ pub fn register_cli(
             );
         }
     }
-    register_result
+    anyhow::Ok(())
 }
 
 #[inline]
