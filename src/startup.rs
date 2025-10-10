@@ -111,7 +111,6 @@ pub fn register_cli(
     anyhow::Ok(())
 }
 
-#[inline]
 fn register_and_check_startup(toml_settings_path: String) -> anyhow::Result<()> {
     //use windows::ApplicationModel::{StartupTask, StartupTaskState};
     dbg!(&toml_settings_path);
