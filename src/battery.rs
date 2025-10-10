@@ -32,7 +32,7 @@ pub fn battery_check() -> anyhow::Result<BatteryReport> {
 fn battery_check_winrt() -> anyhow::Result<BatteryReport> {
     use windows::System::Power::PowerManager;
     let percentage = PowerManager::RemainingChargePercent()? as u32;
-    let remaining_seconds = PowerManager::RemainingDischargeTime()?.Duration as u64;
+    let remaining_seconds = PowerManager::RemainingDischargeTime()?.Duration as u64 / 1000_1000_1000_1000;
     let power_supply: PowerSupply = PowerManager::PowerSupplyStatus()?.into();
     // do something
     Ok(BatteryReport {
