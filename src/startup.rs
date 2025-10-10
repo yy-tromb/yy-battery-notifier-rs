@@ -13,8 +13,6 @@ const REG_STARTUP_APPROVED_KEY: &str =
 const REG_STARTUP_APPROVED_VALUE: [u8; 12] = [
     0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 ];
-const E_ACCESSDENIED: HRESULT = HRESULT::from_win32(0x80070005_u32);
-const E_FILENOTFOUND: HRESULT = HRESULT::from_win32(0x80070002_u32);
 
 pub fn register_cli(
     toml_settings_path: Option<String>,

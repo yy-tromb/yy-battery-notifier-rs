@@ -8,6 +8,8 @@ pub enum RegistryValue<'a> {
 
 const WIN32_ERROR_E_FILENOTFOUND: windows::core::HRESULT =
     windows::core::HRESULT::from_win32(0x80070002);
+const WIN32_ERROR_E_ACCESSDENIED: windows::core::HRESULT =
+    windows::core::HRESULT::from_win32(0x80070005);
 
 #[inline]
 fn str_to_wide(s: &str) -> windows::core::PCWSTR {
