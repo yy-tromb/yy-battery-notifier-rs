@@ -3,14 +3,14 @@
 use clap::Parser;
 use colored::Colorize;
 
+mod aumid;
 mod battery;
 mod cli;
 mod common;
 mod notify;
 mod registry;
-mod aumid;
-mod startup;
 mod settings;
+mod startup;
 
 use registry::{CURRENT_USER, LOCAL_MACHINE};
 
@@ -137,7 +137,9 @@ fn main() -> anyhow::Result<()> {
     if app_args.subcommands.is_some() {
         let subcommand = match app_args.subcommands.unwrap() {
             SubCommand::Registry { subcommands } => match subcommands {
-                RegistrySubCommand::Register => crate::aumid::register_and_check_aumid(&CURRENT_USER),
+                RegistrySubCommand::Register => {
+                    crate::aumid::register_and_check_aumid(&CURRENT_USER)
+                }
                 RegistrySubCommand::Delete => crate::aumid::delete_and_check_aumid(&CURRENT_USER),
             },
             SubCommand::Startup { subcommands } => match subcommands {
