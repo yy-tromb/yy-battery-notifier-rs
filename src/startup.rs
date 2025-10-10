@@ -129,7 +129,7 @@ fn register_and_check_startup(toml_settings_path: String) -> anyhow::Result<()> 
     register(CURRENT_USER, REG_STARTUP_KEY, &keys_and_values)?;
 
     //check startup
-    check_registered(CURRENT_USER, REG_STARTUP_NAME, &keys_and_values)?;
+    check_registered(CURRENT_USER, REG_STARTUP_KEY, &keys_and_values)?;
 
     //register approved
     let keys_and_values = vec![(
