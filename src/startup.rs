@@ -1,5 +1,4 @@
 use colored::Colorize;
-use windows::core::HRESULT;
 
 use crate::registry::{
     CURRENT_USER, LOCAL_MACHINE, RegistryValue, check_deleted, check_registered, delete_values,
