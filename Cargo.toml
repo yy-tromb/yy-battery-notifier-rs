@@ -20,7 +20,7 @@ version = "0.62.2"
 features = [
     "System_Power",
     # "Devices_Power",
-    # "Win32_System_Power",
+    "Win32_System_Power",
     "Win32_System_Registry",
     # "ApplicationModel",
     "Win32_UI_WindowsAndMessaging",
