@@ -27,7 +27,7 @@ impl From<windows::System::Power::PowerSupplyStatus> for PowerSupply {
 pub fn battery_check() -> anyhow::Result<BatteryReport> {
     let mut battery_report = battery_check_winrt()?;
     dbg!(&battery_report);
-    // tmporary
+    // temporary
     if battery_report.remaining_seconds.is_none() {
         let batttery_report_win32 = battery_check_win32()?;
         dbg!(&batttery_report_win32);
