@@ -33,6 +33,12 @@ fn notify_winrt_toast(
         .title(title)
         .text1(message)
         .progress(&progress)
+        .add_button("temporary1", "temporary action 1")
+        .add_button("temporary2", "temporary action 2")
+        .on_activated(|action| {
+            println!("Toast activated: {}", action.unwrap_or("no action".to_string()));
+            tauri_winrt_notification::Result::Ok(())
+        })
         .duration(Duration::Short)
         .show()
         .map_err(|error| match error {
