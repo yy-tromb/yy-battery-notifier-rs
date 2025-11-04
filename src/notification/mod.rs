@@ -1,7 +1,7 @@
 mod tauri_winrt;
 mod winrt_toast_reborn;
 
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, Mutex, RwLock};
 
 use crate::notification;
 
@@ -16,6 +16,7 @@ pub enum NotificationMethod {
 pub enum NotificationAction {
     Silent5Mins,
     Silent10Mins,
+    SilentSpecifiedMins(u64),
 }
 
 #[inline]
@@ -24,7 +25,7 @@ pub fn notify(
     title: &str,
     message: &str,
     method: &NotificationMethod,
-    notification_action: Arc<RwLock<Option<NotificationAction>>>,
+    notification_action: Arc<Mutex<Option<NotificationAction>>>,
 ) -> anyhow::Result<()> {
     match method {
         NotificationMethod::TauriWinrtToast => {

@@ -1,4 +1,4 @@
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, RwLock,Mutex};
 
 use colored::Colorize;
 
@@ -18,28 +18,40 @@ impl Cli {
             Some(method) => method,
             None => &NotificationMethod::TauriWinrtToast,
         };
-        let notification_action: Arc<RwLock<Option<NotificationAction>>> =
-            Arc::new(RwLock::new(None));
+        let notification_action: Arc<Mutex<Option<NotificationAction>>> =
+            Arc::new(Mutex::new(None));
         loop {
-            match notification_action.read() {
-                Ok(action_guard) => {
-                    if let Some(action) = &*action_guard {
-                        match action {
-                            NotificationAction::Silent5Mins => {
-                                println!("{}", "Silent for 5 minutes action triggered.".yellow());
-                                std::thread::sleep(std::time::Duration::from_secs(300-self.settings.check_interval));
-                            }
-                            NotificationAction::Silent10Mins => {
-                                println!("{}", "Silent for 10 minutes action triggered.".yellow());
-                                std::thread::sleep(std::time::Duration::from_secs(600-self.settings.check_interval));
-                            }
-                        }
+            let action_guard = match notification_action.lock() {
+                Ok(action_guard) => action_guard,
+                Err(e) => {
+                    eprintln!("{}", "Failed to read notification action.".red());
+                    eprintln!("{:?}", e.get_ref());
+                    e.into_inner()
+                }
+            };
+            if let Some(action) = &*action_guard {
+                match action {
+                    NotificationAction::Silent5Mins => {
+                        println!("{}", "Silent for 5 minutes action triggered.".yellow());
+                        std::thread::sleep(std::time::Duration::from_secs(
+                            300 - self.settings.check_interval,
+                        ));
+                    }
+                    NotificationAction::Silent10Mins => {
+                        println!("{}", "Silent for 10 minutes action triggered.".yellow());
+                        std::thread::sleep(std::time::Duration::from_secs(
+                            600 - self.settings.check_interval,
+                        ));
+                    }
+                    NotificationAction::SilentSpecifiedMins(specified_mins)=> {
+                        println!("{}", format!("Silent for {} minutes action triggered.", specified_mins).yellow());
+                        std::thread::sleep(std::time::Duration::from_secs(
+                            specified_mins.checked_mul(60).unwrap_or(600) - self.settings.check_interval,
+                        ));
                     }
                 }
-                Err(_e) => {
-                    eprintln!("{}", "Failed to read notification action.".red());
-                }
             }
+            drop(action_guard); // Release the lock before checking battery
             let battery_report = crate::battery::battery_check().inspect_err(|_e| {
                 eprintln!("{}", "Failed to check battery information.".red());
             })?;

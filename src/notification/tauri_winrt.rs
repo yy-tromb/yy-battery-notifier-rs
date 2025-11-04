@@ -1,11 +1,11 @@
 use super::NotificationAction;
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, Mutex, RwLock};
 
 pub(super) fn notify_tauri_winrt_toast(
     battery_report: &crate::battery::BatteryReport,
     title: &str,
     message: &str,
-    notification_action: Arc<RwLock<Option<NotificationAction>>>,
+    notification_action: Arc<Mutex<Option<NotificationAction>>>,
 ) -> anyhow::Result<()> {
     use tauri_winrt_notification::{Duration, Progress, Toast};
     let progress = match battery_report.remaining_seconds {
@@ -39,13 +39,13 @@ pub(super) fn notify_tauri_winrt_toast(
             match action.as_deref() {
                 Some("silent 5 mins") => {
                     println!("Toast activated with action: silent 5 mins");
-                    if let Ok(mut action_guard) = notification_action.write() {
+                    if let Ok(mut action_guard) = notification_action.lock() {
                         *action_guard = Some(NotificationAction::Silent5Mins);
                     }
                 }
                 Some("silent 10 mins") => {
                     println!("Toast activated with action: silent 10 mins");
-                    if let Ok(mut action_guard) = notification_action.write() {
+                    if let Ok(mut action_guard) = notification_action.lock() {
                         *action_guard = Some(NotificationAction::Silent10Mins);
                     }
                 }
