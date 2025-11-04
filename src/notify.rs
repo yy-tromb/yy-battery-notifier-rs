@@ -49,41 +49,36 @@ fn notify_tauri_winrt_toast(
             value_string: format!("{}%", battery_report.percentage),
         },
     };
+    let mut notification_action: Option<NotificationAction> = None;
     Toast::new("yy-tromb.yy-battery-notifier-rs")
         .title(title)
         .text1(message)
         .progress(&progress)
         //.add_button("temporary1", "temporary action 1")
         //.add_button("temporary2", "temporary action 2")
-        //.on_activated(&notify_tauri_winrt_toast_on_activated)
+        /*.on_activated(|action| {
+            match action.as_deref() {
+                Some("temporary action 1") => {
+                    println!("Temporary action 1 executed.");
+                    notification_action = Some(NotificationAction::Temporary1);
+                }
+                Some("temporary action 2") => {
+                    println!("Temporary action 2 executed.");
+                }
+                Some(action) => {
+                    println!("Unknown action: {}", action);
+                }
+                None => {
+                    println!("Toast activated without action.");
+                }
+            }
+            Ok(())
+        })*/
         .duration(Duration::Short)
         .show()
         .map_err(|error| match error {
             tauri_winrt_notification::Error::Os(e) => anyhow::Error::from(e),
             tauri_winrt_notification::Error::Io(e) => anyhow::Error::from(e),
         })?;
-    Ok(None)
-}
-
-#[clippy::ignore = "temporary"]
-fn notify_tauri_winrt_toast_on_activated(
-    action: Option<String>,
-) -> tauri_winrt_notification::Result<()> {
-    match action.as_deref() {
-        Some("temporary action 1") => {
-            println!("Temporary action 1 executed.");
-            std::thread::sleep(std::time::Duration::from_secs(5));
-            println!("Temporary action 1 finished.");
-        }
-        Some("temporary action 2") => {
-            println!("Temporary action 2 executed.");
-        }
-        Some(action) => {
-            println!("Unknown action: {}", action);
-        }
-        None => {
-            println!("Toast activated without action.");
-        }
-    }
-    Ok(())
+    Ok(notification_action)
 }
