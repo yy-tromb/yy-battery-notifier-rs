@@ -32,3 +32,4 @@ expand.rs
 expand_s.rs
 
 test.toml
+test_tauri.toml
