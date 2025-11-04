@@ -16,6 +16,7 @@ pub enum NotificationMethod {
 pub enum NotificationAction {
     Temporary1,
     Temporary2,
+    Silent10Mins,
 }
 
 #[inline]

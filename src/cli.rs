@@ -21,19 +21,19 @@ impl Cli {
         let notification_action: Arc<RwLock<Option<NotificationAction>>> =
             Arc::new(RwLock::new(None));
         loop {
-            let battery_report = crate::battery::battery_check().inspect_err(|_e| {
-                eprintln!("{}", "Failed to check battery information.".red());
-            })?;
-            dbg!(&battery_report);
             match notification_action.read() {
                 Ok(action_guard) => {
                     if let Some(action) = &*action_guard {
                         match action {
                             NotificationAction::Temporary1 => {
-                                println!("{}","Temporary Action 1 triggered.".yellow());
+                                println!("{}", "Temporary Action 1 triggered.".yellow());
                             }
                             NotificationAction::Temporary2 => {
-                                println!("{}","Temporary Action 2 triggered.".yellow());
+                                println!("{}", "Temporary Action 2 triggered.".yellow());
+                            }
+                            NotificationAction::Silent10Mins => {
+                                println!("{}", "Silent for 10 minutes action triggered.".yellow());
+                                std::thread::sleep(std::time::Duration::from_secs(600));
                             }
                         }
                     }
@@ -42,6 +42,10 @@ impl Cli {
                     eprintln!("{}", "Failed to read notification action.".red());
                 }
             }
+            let battery_report = crate::battery::battery_check().inspect_err(|_e| {
+                eprintln!("{}", "Failed to check battery information.".red());
+            })?;
+            dbg!(&battery_report);
             for notification_setting in &self.settings.notifications {
                 match notification_setting.percentage_symbol {
                     crate::settings::PercentageSymbol::Excess => {

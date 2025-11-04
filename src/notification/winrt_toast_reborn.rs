@@ -39,7 +39,8 @@ pub(super) fn notify_winrt_toast_reborn(
     toast
         .duration(ToastDuration::Short)
         .action(Action::new("temporary1", "temporary action 1", ""))
-        .action(Action::new("temporary2", "temporary action 2", ""));
+        .action(Action::new("temporary2", "temporary action 2", ""))
+        .action(Action::new("silent for 10 mins", "silent 10 mins", ""));
 
     let action_take = Arc::new(AtomicBool::new(false));
     let action_clone = Arc::clone(&action_take);
@@ -58,6 +59,11 @@ pub(super) fn notify_winrt_toast_reborn(
                     "temporary action 2" => {
                         if let Ok(mut guard) = notification_action.write() {
                             *guard = Some(NotificationAction::Temporary2);
+                        }
+                    }
+                    "silent 10 mins" => {
+                        if let Ok(mut guard) = notification_action.write() {
+                            *guard = Some(NotificationAction::Silent10Mins);
                         }
                     }
                     _ => {println!("Unknown action.");}
