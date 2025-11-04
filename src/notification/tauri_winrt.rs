@@ -33,26 +33,31 @@ pub(super) fn notify_tauri_winrt_toast(
         .title(title)
         .text1(message)
         .progress(&progress)
-        //.add_button("temporary1", "temporary action 1")
-        //.add_button("temporary2", "temporary action 2")
-        /*.on_activated(|action| {
+        .add_button("silent for 5 mins", "silent 5 mins")
+        .add_button("silent for 10 mins", "silent 10 mins")
+        .on_activated(move |action| {
             match action.as_deref() {
-                Some("temporary action 1") => {
-                    println!("Temporary action 1 executed.");
-                    notification_action = Some(NotificationAction::Temporary1);
+                Some("silent 5 mins") => {
+                    println!("Toast activated with action: silent 5 mins");
+                    if let Ok(mut action_guard) = notification_action.write() {
+                        *action_guard = Some(NotificationAction::Silent5Mins);
+                    }
                 }
-                Some("temporary action 2") => {
-                    println!("Temporary action 2 executed.");
+                Some("silent 10 mins") => {
+                    println!("Toast activated with action: silent 10 mins");
+                    if let Ok(mut action_guard) = notification_action.write() {
+                        *action_guard = Some(NotificationAction::Silent10Mins);
+                    }
                 }
-                Some(action) => {
-                    println!("Unknown action: {}", action);
+                Some(unknown_action) => {
+                    println!("Toast activated with unknown action: {}", unknown_action);
                 }
                 None => {
                     println!("Toast activated without action.");
                 }
             }
             Ok(())
-        })*/
+        })
         .duration(Duration::Short)
         .show()
         .map_err(|error| match error {
