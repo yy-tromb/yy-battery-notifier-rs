@@ -1,3 +1,8 @@
+pub enum NotificationMethod {
+    TauriWinrtToast,
+    // Future methods can be added here
+}
+
 pub enum NotificationAction {
     Temporary1,
     Temporary2,
@@ -8,8 +13,13 @@ pub fn notify(
     battery_report: &crate::battery::BatteryReport,
     title: &str,
     message: &str,
+    method: NotificationMethod,
 ) -> anyhow::Result<Option<NotificationAction>> {
-    notify_tauri_winrt_toast(battery_report, title, message)
+    match method {
+        NotificationMethod::TauriWinrtToast => {
+            notify_tauri_winrt_toast(battery_report, title, message)
+        }
+    }
 }
 
 fn notify_tauri_winrt_toast(
@@ -56,7 +66,9 @@ fn notify_tauri_winrt_toast(
 }
 
 #[clippy::ignore = "temporary"]
-fn notify_tauri_winrt_toast_on_activated(action: Option<String>) -> tauri_winrt_notification::Result<()> {
+fn notify_tauri_winrt_toast_on_activated(
+    action: Option<String>,
+) -> tauri_winrt_notification::Result<()> {
     match action.as_deref() {
         Some("temporary action 1") => {
             println!("Temporary action 1 executed.");
