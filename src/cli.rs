@@ -10,7 +10,7 @@ impl Cli {
     }
 
     pub fn run(&self) -> anyhow::Result<()> {
-        use crate::notify::NotificationMethod;
+        use crate::notification::{NotificationAction, NotificationMethod, notify};
         let duration = std::time::Duration::from_secs(self.settings.check_interval);
         loop {
             let battery_report = crate::battery::battery_check().inspect_err(|_e| {
@@ -23,25 +23,25 @@ impl Cli {
                         if (battery_report.percentage > notification_setting.percentage_int)
                             && (battery_report.power_supply == notification_setting.power_supply)
                         {
-                            crate::notify::notify(
+                            notify(
                                 &battery_report,
                                 &notification_setting.title,
                                 &notification_setting.message,
-                                NotificationMethod::TauriWinrtToast
+                                NotificationMethod::TauriWinrtToast,
                             )?
                         } else {
                             None
                         }
-                    },
+                    }
                     crate::settings::PercentageSymbol::Under => {
                         if (battery_report.percentage < notification_setting.percentage_int)
                             && (battery_report.power_supply == notification_setting.power_supply)
                         {
-                            crate::notify::notify(
+                            notify(
                                 &battery_report,
                                 &notification_setting.title,
                                 &notification_setting.message,
-                                NotificationMethod::TauriWinrtToast
+                                NotificationMethod::TauriWinrtToast,
                             )?
                         } else {
                             None
@@ -50,10 +50,10 @@ impl Cli {
                 };
                 if let Some(action) = notification_action {
                     match action {
-                        crate::notify::NotificationAction::Temporary1 => {
+                        NotificationAction::Temporary1 => {
                             println!("Temporary action 1 executed from CLI.");
                         }
-                        crate::notify::NotificationAction::Temporary2 => {
+                        NotificationAction::Temporary2 => {
                             println!("Temporary action 2 executed from CLI.");
                         }
                     }

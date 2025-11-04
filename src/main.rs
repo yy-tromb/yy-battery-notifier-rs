@@ -7,10 +7,10 @@ mod aumid;
 mod battery;
 mod cli;
 mod common;
-mod notify;
 mod registry;
 mod settings;
 mod startup;
+mod notification;
 
 use registry::{CURRENT_USER, LOCAL_MACHINE};
 
