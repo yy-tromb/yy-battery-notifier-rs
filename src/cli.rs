@@ -18,7 +18,7 @@ impl Cli {
             dbg!(&battery_report);
             for notification_setting in &self.settings.notifications {
                 let notification_action = match notification_setting.percentage_symbol {
-                    crate::common::PercentageSymbol::Excess => {
+                    crate::settings::PercentageSymbol::Excess => {
                         if (battery_report.percentage > notification_setting.percentage_int)
                             && (battery_report.power_supply == notification_setting.power_supply)
                         {
@@ -31,7 +31,7 @@ impl Cli {
                             None
                         }
                     },
-                    crate::common::PercentageSymbol::Under => {
+                    crate::settings::PercentageSymbol::Under => {
                         if (battery_report.percentage < notification_setting.percentage_int)
                             && (battery_report.power_supply == notification_setting.power_supply)
                         {

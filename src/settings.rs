@@ -26,8 +26,8 @@ impl TryFrom<TOMLSettings> for Settings {
                 ));
             };
             let percentage_symbol = match percentage_symbol {
-                '+' => crate::common::PercentageSymbol::Excess,
-                '-' => crate::common::PercentageSymbol::Under,
+                '+' => PercentageSymbol::Excess,
+                '-' => PercentageSymbol::Under,
                 _ => {
                     eprintln!(
                         "{}",
@@ -75,16 +75,13 @@ impl TryFrom<TOMLSettings> for Settings {
                     ));
                 }
             };
-            settings
-                .notifications
-                .push(NotificationSetting {
-                    percentage,
-                    percentage_int,
-                    percentage_symbol,
-                    power_supply,
-                    title: notification_toml_setting.title,
-                    message: notification_toml_setting.message,
-                });
+            settings.notifications.push(NotificationSetting {
+                percentage_int,
+                percentage_symbol,
+                power_supply,
+                title: notification_toml_setting.title,
+                message: notification_toml_setting.message,
+            });
         }
         dbg!(&settings);
         Ok(settings)
@@ -105,11 +102,16 @@ pub struct NotificationTOMLSetting {
     pub message: String,
 }
 
+#[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
+pub enum PercentageSymbol {
+    Excess,
+    Under,
+}
+
 #[derive(Debug, Clone)]
 pub struct NotificationSetting {
-    pub percentage: String,
     pub percentage_int: u32,
-    pub percentage_symbol: crate::common::PercentageSymbol,
+    pub percentage_symbol: PercentageSymbol,
     pub power_supply: crate::battery::PowerSupply,
     pub title: String,
     pub message: String,

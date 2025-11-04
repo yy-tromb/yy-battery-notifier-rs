@@ -131,7 +131,7 @@ fn main() -> anyhow::Result<()> {
         {
             let error = anyhow::Error::from(windows::core::Error::from_thread());
             eprintln!("{}", error.to_string().red());
-            crate::common::msgbox(&error).inspect_err(|e| eprintln!("{}", e.to_string().red()))?;
+            crate::common::error_msgbox(&error).inspect_err(|e| eprintln!("{}", e.to_string().red()))?;
         }
     }
     if app_args.subcommands.is_some() {
@@ -152,7 +152,7 @@ fn main() -> anyhow::Result<()> {
             },
         };
         if app_args.msgbox {
-            return subcommand.or_else(|e| crate::common::msgbox(&e));
+            return subcommand.or_else(|e| crate::common::error_msgbox(&e));
         } else {
             return subcommand;
         }
@@ -185,7 +185,7 @@ fn main() -> anyhow::Result<()> {
     if app_args.msgbox {
         crate::cli::Cli::new(crate::settings::Settings::try_from(toml_settings)?)?
             .run()
-            .or_else(|e| crate::common::msgbox(&e))
+            .or_else(|e| crate::common::error_msgbox(&e))
     } else {
         crate::cli::Cli::new(crate::settings::Settings::try_from(toml_settings)?)?.run()
     }
