@@ -1,4 +1,7 @@
+use crate::notification;
+
 use super::NotificationAction;
+use std::sync::{Arc, RwLock};
 
 const AUMID: &str = "yy-tromb.yy-battery-notifier-rs";
 
@@ -6,8 +9,8 @@ pub(super) fn notify_winrt_toast_reborn(
     battery_report: &crate::battery::BatteryReport,
     title: &str,
     message: &str,
-) -> anyhow::Result<Option<NotificationAction>> {
-    use std::sync::Arc;
+    notification_action: Arc<RwLock<Option<NotificationAction>>>,
+) -> anyhow::Result<()> {
     use std::sync::atomic::{AtomicBool, Ordering};
     use winrt_toast_reborn::{Action, Toast, ToastDuration, ToastManager};
 
@@ -40,16 +43,25 @@ pub(super) fn notify_winrt_toast_reborn(
 
     let action_take = Arc::new(AtomicBool::new(false));
     let action_clone = Arc::clone(&action_take);
-    let dismiss_clone = Arc::clone(&action_take);
 
-    fn handle_activated_action(action: Option<winrt_toast_reborn::ActivatedAction>) {
+    fn handle_activated_action(action: Option<winrt_toast_reborn::ActivatedAction>,notification_action: &Arc<RwLock<Option<NotificationAction>>>) {
         match action {
             Some(action) => {
-                let message = format!(
-                    "Toast activated with action: {}",
-                    action.arg
-                );
+                let message = format!("Toast activated with action: {}", action.arg);
                 println!("{}", message);
+                match action.arg.as_str() {
+                    "temporary action 1" => {
+                        if let Ok(mut guard) = notification_action.write() {
+                            *guard = Some(NotificationAction::Temporary1);
+                        }
+                    }
+                    "temporary action 2" => {
+                        if let Ok(mut guard) = notification_action.write() {
+                            *guard = Some(NotificationAction::Temporary2);
+                        }
+                    }
+                    _ => {println!("Unknown action.");}
+                }
             }
             None => {
                 println!("Toast activated without action.");
@@ -57,10 +69,11 @@ pub(super) fn notify_winrt_toast_reborn(
         }
     }
 
-    toast_manager.on_activated(None, move |action| {
-            handle_activated_action(action);
+    toast_manager
+        .on_activated(None, move |action| {
+            handle_activated_action(action,&notification_action);
             action_clone.store(true, Ordering::SeqCst);
         })
-    .show(&toast)?;
-    Ok(None)
+        .show(&toast)?;
+    Ok(())
 }

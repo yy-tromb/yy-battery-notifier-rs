@@ -1,3 +1,5 @@
+use std::sync::{Arc, RwLock};
+
 use colored::Colorize;
 
 pub struct Cli {
@@ -14,16 +16,34 @@ impl Cli {
         let duration = std::time::Duration::from_secs(self.settings.check_interval);
         let notification_method = match &self.settings.notification_method {
             Some(method) => method,
-            None => &NotificationMethod::WinrtToastReborn
-            
+            None => &NotificationMethod::WinrtToastReborn,
         };
+        let notification_action: Arc<RwLock<Option<NotificationAction>>> =
+            Arc::new(RwLock::new(None));
         loop {
             let battery_report = crate::battery::battery_check().inspect_err(|_e| {
                 eprintln!("{}", "Failed to check battery information.".red());
             })?;
             dbg!(&battery_report);
+            match notification_action.read() {
+                Ok(action_guard) => {
+                    if let Some(action) = &*action_guard {
+                        match action {
+                            NotificationAction::Temporary1 => {
+                                println!("{}","Temporary Action 1 triggered.".yellow());
+                            }
+                            NotificationAction::Temporary2 => {
+                                println!("{}","Temporary Action 2 triggered.".yellow());
+                            }
+                        }
+                    }
+                }
+                Err(_e) => {
+                    eprintln!("{}", "Failed to read notification action.".red());
+                }
+            }
             for notification_setting in &self.settings.notifications {
-                let notification_action = match notification_setting.percentage_symbol {
+                match notification_setting.percentage_symbol {
                     crate::settings::PercentageSymbol::Excess => {
                         if (battery_report.percentage > notification_setting.percentage_int)
                             && (battery_report.power_supply == notification_setting.power_supply)
@@ -33,9 +53,8 @@ impl Cli {
                                 &notification_setting.title,
                                 &notification_setting.message,
                                 notification_method,
+                                notification_action.clone(),
                             )?
-                        } else {
-                            None
                         }
                     }
                     crate::settings::PercentageSymbol::Under => {
@@ -47,22 +66,11 @@ impl Cli {
                                 &notification_setting.title,
                                 &notification_setting.message,
                                 notification_method,
+                                notification_action.clone(),
                             )?
-                        } else {
-                            None
                         }
                     }
                 };
-                if let Some(action) = notification_action {
-                    match action {
-                        NotificationAction::Temporary1 => {
-                            println!("Temporary action 1 executed from CLI.");
-                        }
-                        NotificationAction::Temporary2 => {
-                            println!("Temporary action 2 executed from CLI.");
-                        }
-                    }
-                }
             }
             println!("check battery and notifying");
             std::thread::sleep(duration);

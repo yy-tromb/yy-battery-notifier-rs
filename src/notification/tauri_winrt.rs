@@ -1,10 +1,12 @@
 use super::NotificationAction;
+use std::sync::{Arc, RwLock};
 
 pub(super) fn notify_tauri_winrt_toast(
     battery_report: &crate::battery::BatteryReport,
     title: &str,
     message: &str,
-) -> anyhow::Result<Option<NotificationAction>> {
+    notification_action: Arc<RwLock<Option<NotificationAction>>>,
+) -> anyhow::Result<()> {
     use tauri_winrt_notification::{Duration, Progress, Toast};
     let progress = match battery_report.remaining_seconds {
         Some(remaining_seconds) => Progress {
@@ -27,7 +29,6 @@ pub(super) fn notify_tauri_winrt_toast(
             value_string: format!("{}%", battery_report.percentage),
         },
     };
-    let mut notification_action: Option<NotificationAction> = None;
     Toast::new("yy-tromb.yy-battery-notifier-rs")
         .title(title)
         .text1(message)
@@ -58,5 +59,5 @@ pub(super) fn notify_tauri_winrt_toast(
             tauri_winrt_notification::Error::Os(e) => anyhow::Error::from(e),
             tauri_winrt_notification::Error::Io(e) => anyhow::Error::from(e),
         })?;
-    Ok(notification_action)
+    Ok(())
 }
