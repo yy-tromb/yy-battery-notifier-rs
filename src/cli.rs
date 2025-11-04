@@ -27,11 +27,11 @@ impl Cli {
                         match action {
                             NotificationAction::Silent5Mins => {
                                 println!("{}", "Silent for 5 minutes action triggered.".yellow());
-                                std::thread::sleep(std::time::Duration::from_secs(300));
+                                std::thread::sleep(std::time::Duration::from_secs(300-self.settings.check_interval));
                             }
                             NotificationAction::Silent10Mins => {
                                 println!("{}", "Silent for 10 minutes action triggered.".yellow());
-                                std::thread::sleep(std::time::Duration::from_secs(600));
+                                std::thread::sleep(std::time::Duration::from_secs(600-self.settings.check_interval));
                             }
                         }
                     }
