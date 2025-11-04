@@ -1,7 +1,10 @@
+use crate::notification::NotificationMethod;
+
 #[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
 pub struct TOMLSettings {
     pub check_interval: u64,
     pub notifications: Vec<NotificationTOMLSetting>,
+    pub notification_method: Option<NotificationMethod>,
 }
 
 impl TryFrom<TOMLSettings> for Settings {
@@ -12,6 +15,7 @@ impl TryFrom<TOMLSettings> for Settings {
             check_interval: toml_settings.check_interval,
             temporary_check_interval: None,
             notifications: Vec::with_capacity(toml_settings.notifications.len()),
+            notification_method: toml_settings.notification_method,
         };
         for notification_toml_setting in toml_settings.notifications {
             let percentage = notification_toml_setting.percentage;
@@ -93,6 +97,7 @@ pub struct Settings {
     pub check_interval: u64,
     pub temporary_check_interval: Option<u64>,
     pub notifications: Vec<NotificationSetting>,
+    pub notification_method: Option<NotificationMethod>,
 }
 #[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
 pub struct NotificationTOMLSetting {

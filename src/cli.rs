@@ -12,6 +12,11 @@ impl Cli {
     pub fn run(&self) -> anyhow::Result<()> {
         use crate::notification::{NotificationAction, NotificationMethod, notify};
         let duration = std::time::Duration::from_secs(self.settings.check_interval);
+        let notification_method = match &self.settings.notification_method {
+            Some(method) => method,
+            None => &NotificationMethod::WinrtToastReborn
+            
+        };
         loop {
             let battery_report = crate::battery::battery_check().inspect_err(|_e| {
                 eprintln!("{}", "Failed to check battery information.".red());
@@ -27,7 +32,7 @@ impl Cli {
                                 &battery_report,
                                 &notification_setting.title,
                                 &notification_setting.message,
-                                NotificationMethod::TauriWinrtToast,
+                                notification_method,
                             )?
                         } else {
                             None
@@ -41,7 +46,7 @@ impl Cli {
                                 &battery_report,
                                 &notification_setting.title,
                                 &notification_setting.message,
-                                NotificationMethod::TauriWinrtToast,
+                                notification_method,
                             )?
                         } else {
                             None
