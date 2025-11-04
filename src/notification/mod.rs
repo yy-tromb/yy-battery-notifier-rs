@@ -14,8 +14,7 @@ pub enum NotificationMethod {
 
 #[derive(Debug, Clone)]
 pub enum NotificationAction {
-    Temporary1,
-    Temporary2,
+    Silent5Mins,
     Silent10Mins,
 }
 

@@ -38,48 +38,44 @@ pub(super) fn notify_winrt_toast_reborn(
     );*/
     toast
         .duration(ToastDuration::Short)
-        .action(Action::new("temporary1", "temporary action 1", ""))
-        .action(Action::new("temporary2", "temporary action 2", ""))
+        .action(Action::new("silent for 5 mins", "silent 5 mins", ""))
         .action(Action::new("silent for 10 mins", "silent 10 mins", ""));
-
-    let action_take = Arc::new(AtomicBool::new(false));
-    let action_clone = Arc::clone(&action_take);
-
-    fn handle_activated_action(action: Option<winrt_toast_reborn::ActivatedAction>,notification_action: &Arc<RwLock<Option<NotificationAction>>>) {
-        match action {
-            Some(action) => {
-                let message = format!("Toast activated with action: {}", action.arg);
-                println!("{}", message);
-                match action.arg.as_str() {
-                    "temporary action 1" => {
-                        if let Ok(mut guard) = notification_action.write() {
-                            *guard = Some(NotificationAction::Temporary1);
-                        }
-                    }
-                    "temporary action 2" => {
-                        if let Ok(mut guard) = notification_action.write() {
-                            *guard = Some(NotificationAction::Temporary2);
-                        }
-                    }
-                    "silent 10 mins" => {
-                        if let Ok(mut guard) = notification_action.write() {
-                            *guard = Some(NotificationAction::Silent10Mins);
-                        }
-                    }
-                    _ => {println!("Unknown action.");}
-                }
-            }
-            None => {
-                println!("Toast activated without action.");
-            }
-        }
-    }
+    //toast.action(Action::new("change mode", "change mode", ""));
 
     toast_manager
         .on_activated(None, move |action| {
-            handle_activated_action(action,&notification_action);
-            action_clone.store(true, Ordering::SeqCst);
+            handle_activated_action(action, &notification_action);
         })
         .show(&toast)?;
     Ok(())
+}
+
+fn handle_activated_action(
+    action: Option<winrt_toast_reborn::ActivatedAction>,
+    notification_action: &Arc<RwLock<Option<NotificationAction>>>,
+) {
+    match action {
+        Some(action) => {
+            let message = format!("Toast activated with action: {}", action.arg);
+            println!("{}", message);
+            match action.arg.as_str() {
+                "silent 5 mins" => {
+                    if let Ok(mut guard) = notification_action.write() {
+                        *guard = Some(NotificationAction::Silent5Mins);
+                    }
+                }
+                "silent 10 mins" => {
+                    if let Ok(mut guard) = notification_action.write() {
+                        *guard = Some(NotificationAction::Silent10Mins);
+                    }
+                }
+                _ => {
+                    println!("Unknown action.");
+                }
+            }
+        }
+        None => {
+            println!("Toast activated without action.");
+        }
+    }
 }

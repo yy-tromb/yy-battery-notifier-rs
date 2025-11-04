@@ -25,11 +25,9 @@ impl Cli {
                 Ok(action_guard) => {
                     if let Some(action) = &*action_guard {
                         match action {
-                            NotificationAction::Temporary1 => {
-                                println!("{}", "Temporary Action 1 triggered.".yellow());
-                            }
-                            NotificationAction::Temporary2 => {
-                                println!("{}", "Temporary Action 2 triggered.".yellow());
+                            NotificationAction::Silent5Mins => {
+                                println!("{}", "Silent for 5 minutes action triggered.".yellow());
+                                std::thread::sleep(std::time::Duration::from_secs(300));
                             }
                             NotificationAction::Silent10Mins => {
                                 println!("{}", "Silent for 10 minutes action triggered.".yellow());
