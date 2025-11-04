@@ -17,7 +17,7 @@ impl Cli {
             })?;
             dbg!(&battery_report);
             for notification_setting in &self.settings.notifications {
-                match notification_setting.percentage_symbol {
+                let notification_action = match notification_setting.percentage_symbol {
                     crate::common::PercentageSymbol::Excess => {
                         if (battery_report.percentage > notification_setting.percentage_int)
                             && (battery_report.power_supply == notification_setting.power_supply)
@@ -27,8 +27,10 @@ impl Cli {
                                 &notification_setting.title,
                                 &notification_setting.message,
                             )?
+                        } else {
+                            None
                         }
-                    }
+                    },
                     crate::common::PercentageSymbol::Under => {
                         if (battery_report.percentage < notification_setting.percentage_int)
                             && (battery_report.power_supply == notification_setting.power_supply)
@@ -38,6 +40,18 @@ impl Cli {
                                 &notification_setting.title,
                                 &notification_setting.message,
                             )?
+                        } else {
+                            None
+                        }
+                    }
+                };
+                if let Some(action) = notification_action {
+                    match action {
+                        crate::notify::NotificationAction::Temporary1 => {
+                            println!("Temporary action 1 executed from CLI.");
+                        }
+                        crate::notify::NotificationAction::Temporary2 => {
+                            println!("Temporary action 2 executed from CLI.");
                         }
                     }
                 }

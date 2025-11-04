@@ -10,6 +10,7 @@ impl TryFrom<TOMLSettings> for Settings {
         use colored::Colorize;
         let mut settings = Settings {
             check_interval: toml_settings.check_interval,
+            temporary_check_interval: None,
             notifications: Vec::with_capacity(toml_settings.notifications.len()),
         };
         for notification_toml_setting in toml_settings.notifications {
@@ -93,6 +94,7 @@ impl TryFrom<TOMLSettings> for Settings {
 #[derive(Debug, Clone)]
 pub struct Settings {
     pub check_interval: u64,
+    pub temporary_check_interval: Option<u64>,
     pub notifications: Vec<NotificationSetting>,
 }
 #[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
