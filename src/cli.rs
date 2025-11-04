@@ -16,7 +16,7 @@ impl Cli {
         let duration = std::time::Duration::from_secs(self.settings.check_interval);
         let notification_method = match &self.settings.notification_method {
             Some(method) => method,
-            None => &NotificationMethod::WinrtToastReborn,
+            None => &NotificationMethod::TauriWinrtToast,
         };
         let notification_action: Arc<RwLock<Option<NotificationAction>>> =
             Arc::new(RwLock::new(None));
