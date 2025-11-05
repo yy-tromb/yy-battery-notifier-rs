@@ -13,7 +13,6 @@ impl TryFrom<TOMLSettings> for Settings {
         use colored::Colorize;
         let mut settings = Settings {
             check_interval: toml_settings.check_interval,
-            temporary_check_interval: None,
             notifications: Vec::with_capacity(toml_settings.notifications.len()),
             notification_method: toml_settings.notification_method,
         };
@@ -95,7 +94,6 @@ impl TryFrom<TOMLSettings> for Settings {
 #[derive(Debug, Clone)]
 pub struct Settings {
     pub check_interval: u64,
-    pub temporary_check_interval: Option<u64>,
     pub notifications: Vec<NotificationSetting>,
     pub notification_method: Option<NotificationMethod>,
 }
