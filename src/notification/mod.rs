@@ -1,4 +1,4 @@
-mod tauri_winrt;
+mod tauri_winrt_toast;
 mod winrt_toast_reborn;
 
 use std::sync::{Arc, Mutex};
@@ -27,7 +27,7 @@ pub fn battery_notify(
 ) -> anyhow::Result<()> {
     match method {
         NotificationMethod::TauriWinrtToast => {
-            tauri_winrt::battery_notify_tauri_winrt_toast(battery_report, title, message,notification_action)
+            tauri_winrt_toast::battery_notify_tauri_winrt_toast(battery_report, title, message,notification_action)
         },
         NotificationMethod::WinrtToastReborn => {
             winrt_toast_reborn::battery_notify_winrt_toast_reborn(battery_report, title, message,notification_action)
