@@ -1,8 +1,5 @@
 use super::NotificationAction;
-use std::{
-    f32::consts::E,
-    sync::{Arc, Mutex, RwLock},
-};
+use std::sync::{Arc, Mutex};
 
 const AUMID: &str = "yy-tromb.yy-battery-notifier-rs";
 
@@ -12,25 +9,28 @@ pub(super) fn battery_notify_winrt_toast_reborn(
     message: &str,
     notification_action: Arc<Mutex<Option<NotificationAction>>>,
 ) -> anyhow::Result<()> {
-    use std::sync::atomic::{AtomicBool, Ordering};
     use winrt_toast_reborn::content::input::InputType;
     use winrt_toast_reborn::{Action, Input, Selection, Toast, ToastDuration, ToastManager};
 
     let toast_manager = ToastManager::new(AUMID);
 
-    /*let progress_value = battery_report.percentage as f32 / 100.0;
-    let progress_status = match battery_report.remaining_seconds {
+    //let progress_value = battery_report.percentage as f32 / 100.0;
+    let battery_status = match battery_report.remaining_seconds {
         Some(remaining_seconds) => format!(
             "{}:{}:{} remaining",
             remaining_seconds / 3600,
             (remaining_seconds % 3600) / 60,
             remaining_seconds % 60
         ),
-        None => "N/A".to_string(),
-    };*/
+        None => "Unknown time remaining.".to_string(),
+    };
+    //let progress_status = battery_status;
 
     let mut toast = Toast::new();
-    toast.text1(title).text2(message);
+    toast.text1(title).text2(message).text3(format!(
+        "Battery level: {}%, {battery_status}",
+        battery_report.percentage
+    ));
     /*toast.progress(
         "tag",
         "Now Battery Level:",
@@ -48,12 +48,8 @@ pub(super) fn battery_notify_winrt_toast_reborn(
         .action(Action::new("silent for 5 mins", "silent 5 mins", ""))
         .action(Action::new("silent for 10 mins", "silent 10 mins", ""))
         .action(
-            Action::new(
-                "mins: Keep silent",
-                "silent specified mins",
-                "",
-            )
-            .with_input_id("silent_time"),
+            Action::new("mins: Keep silent", "silent specified mins", "")
+                .with_input_id("silent_time"),
         );
     //toast.action(Action::new("change mode", "change mode", ""));
 
