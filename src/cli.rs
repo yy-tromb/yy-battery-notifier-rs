@@ -1,4 +1,4 @@
-use std::sync::{Arc, RwLock,Mutex};
+use std::sync::{Arc, Mutex};
 
 use colored::Colorize;
 
@@ -12,7 +12,7 @@ impl Cli {
     }
 
     pub fn run(&self) -> anyhow::Result<()> {
-        use crate::notification::{NotificationAction, NotificationMethod, notify};
+        use crate::notification::{NotificationAction, NotificationMethod, battery_notify};
         let duration = std::time::Duration::from_secs(self.settings.check_interval);
         let notification_method = match &self.settings.notification_method {
             Some(method) => method,
@@ -34,19 +34,31 @@ impl Cli {
                     NotificationAction::Silent5Mins => {
                         println!("{}", "Silent for 5 minutes action triggered.".yellow());
                         std::thread::sleep(std::time::Duration::from_secs(
-                            300 - self.settings.check_interval,
+                            300u64
+                                .checked_sub(self.settings.check_interval)
+                                .unwrap_or(0),
                         ));
                     }
                     NotificationAction::Silent10Mins => {
                         println!("{}", "Silent for 10 minutes action triggered.".yellow());
                         std::thread::sleep(std::time::Duration::from_secs(
-                            600 - self.settings.check_interval,
+                            600u64
+                                .checked_sub(self.settings.check_interval)
+                                .unwrap_or(0),
                         ));
                     }
-                    NotificationAction::SilentSpecifiedMins(specified_mins)=> {
-                        println!("{}", format!("Silent for {} minutes action triggered.", specified_mins).yellow());
+                    NotificationAction::SilentSpecifiedMins(specified_mins) => {
+                        println!(
+                            "{}",
+                            format!("Silent for {} minutes action triggered.", specified_mins)
+                                .yellow()
+                        );
                         std::thread::sleep(std::time::Duration::from_secs(
-                            specified_mins.checked_mul(60).unwrap_or(600) - self.settings.check_interval,
+                            specified_mins
+                                .checked_mul(60)
+                                .unwrap_or(u64::MAX)
+                                .checked_sub(self.settings.check_interval)
+                                .unwrap_or(0),
                         ));
                     }
                 }
@@ -62,7 +74,7 @@ impl Cli {
                         if (battery_report.percentage > notification_setting.percentage_int)
                             && (battery_report.power_supply == notification_setting.power_supply)
                         {
-                            notify(
+                            battery_notify(
                                 &battery_report,
                                 &notification_setting.title,
                                 &notification_setting.message,
@@ -75,7 +87,7 @@ impl Cli {
                         if (battery_report.percentage < notification_setting.percentage_int)
                             && (battery_report.power_supply == notification_setting.power_supply)
                         {
-                            notify(
+                            battery_notify(
                                 &battery_report,
                                 &notification_setting.title,
                                 &notification_setting.message,
