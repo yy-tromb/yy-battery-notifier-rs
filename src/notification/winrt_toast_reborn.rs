@@ -1,8 +1,6 @@
 use super::NotificationAction;
 use std::sync::{Arc, Mutex};
 
-const AUMID: &str = "yy-tromb.yy-battery-notifier-rs";
-
 pub(super) fn battery_notify_winrt_toast_reborn(
     battery_report: &crate::battery::BatteryReport,
     title: &str,
@@ -12,7 +10,7 @@ pub(super) fn battery_notify_winrt_toast_reborn(
     use winrt_toast_reborn::content::input::InputType;
     use winrt_toast_reborn::{Action, Input, Selection, Toast, ToastDuration, ToastManager};
 
-    let toast_manager = ToastManager::new(AUMID);
+    let toast_manager = ToastManager::new(crate::aumid::AUMID);
 
     //let progress_value = battery_report.percentage as f32 / 100.0;
     let battery_remaining_status = match battery_report.remaining_seconds {

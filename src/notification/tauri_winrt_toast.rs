@@ -29,7 +29,7 @@ pub(super) fn battery_notify_tauri_winrt_toast(
             value_string: format!("{}%", battery_report.percentage),
         },
     };
-    let toast = Toast::new("yy-tromb.yy-battery-notifier-rs")
+    let toast = Toast::new(crate::aumid::AUMID)
         .title(title)
         .text1(message)
         .progress(&progress)
