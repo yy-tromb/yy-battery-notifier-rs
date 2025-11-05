@@ -1,9 +1,7 @@
 mod tauri_winrt;
 mod winrt_toast_reborn;
 
-use std::sync::{Arc, Mutex, RwLock};
-
-use crate::notification;
+use std::sync::{Arc, Mutex};
 
 #[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
 pub enum NotificationMethod {
