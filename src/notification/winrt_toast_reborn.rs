@@ -15,7 +15,7 @@ pub(super) fn battery_notify_winrt_toast_reborn(
     let toast_manager = ToastManager::new(AUMID);
 
     //let progress_value = battery_report.percentage as f32 / 100.0;
-    let battery_status = match battery_report.remaining_seconds {
+    let battery_remaining_status = match battery_report.remaining_seconds {
         Some(remaining_seconds) => format!(
             "{}:{}:{} remaining",
             remaining_seconds / 3600,
@@ -24,11 +24,11 @@ pub(super) fn battery_notify_winrt_toast_reborn(
         ),
         None => "Unknown time remaining.".to_string(),
     };
-    //let progress_status = battery_status;
+    //let progress_status = battery_remaining_status;
 
     let mut toast = Toast::new();
     toast.text1(title).text2(message).text3(format!(
-        "Battery level: {}%, {battery_status}",
+        "Battery level: {}%, {battery_remaining_status}",
         battery_report.percentage
     ));
     /*toast.progress(
