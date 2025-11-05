@@ -42,14 +42,14 @@ pub(super) fn battery_notify_winrt_toast_reborn(
         .duration(ToastDuration::Short)
         .input(
             Input::new("silent_time", InputType::Text)
-                .with_title("Select silent minites")
+                .with_title("Input silent minites:")
                 .with_default_input("5"),
         )
         .action(Action::new("silent for 5 mins", "silent 5 mins", ""))
         .action(Action::new("silent for 10 mins", "silent 10 mins", ""))
         .action(
             Action::new(
-                "silent for your specified mins",
+                "mins: Keep silent",
                 "silent specified mins",
                 "",
             )
