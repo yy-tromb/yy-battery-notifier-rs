@@ -24,7 +24,7 @@ pub(super) fn battery_notify_tauri_winrt_toast(
         None => Progress {
             tag: "tag".to_string(),
             title: "Now Battery Level:".to_string(),
-            status: "N/A".to_string(),
+            status: "Unknown time remaining".to_string(),
             value: battery_report.percentage as f32 / 100.0,
             value_string: format!("{}%", battery_report.percentage),
         },
