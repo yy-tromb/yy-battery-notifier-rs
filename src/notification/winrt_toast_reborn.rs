@@ -6,7 +6,7 @@ use std::{
 
 const AUMID: &str = "yy-tromb.yy-battery-notifier-rs";
 
-pub(super) fn notify_winrt_toast_reborn(
+pub(super) fn battery_notify_winrt_toast_reborn(
     battery_report: &crate::battery::BatteryReport,
     title: &str,
     message: &str,
@@ -59,13 +59,13 @@ pub(super) fn notify_winrt_toast_reborn(
 
     toast_manager
         .on_activated(None, move |action| {
-            handle_activated_action(action, &notification_action);
+            handle_battery_notify_activated_action(action, &notification_action);
         })
         .show(&toast)?;
     Ok(())
 }
 
-fn handle_activated_action(
+fn handle_battery_notify_activated_action(
     action: Option<winrt_toast_reborn::ActivatedAction>,
     notification_action: &Arc<Mutex<Option<NotificationAction>>>,
 ) {

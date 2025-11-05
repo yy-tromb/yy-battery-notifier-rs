@@ -20,7 +20,7 @@ pub enum NotificationAction {
 }
 
 #[inline]
-pub fn notify(
+pub fn battery_notify(
     battery_report: &crate::battery::BatteryReport,
     title: &str,
     message: &str,
@@ -29,10 +29,10 @@ pub fn notify(
 ) -> anyhow::Result<()> {
     match method {
         NotificationMethod::TauriWinrtToast => {
-            tauri_winrt::notify_tauri_winrt_toast(battery_report, title, message,notification_action)
+            tauri_winrt::battery_notify_tauri_winrt_toast(battery_report, title, message,notification_action)
         },
         NotificationMethod::WinrtToastReborn => {
-            winrt_toast_reborn::notify_winrt_toast_reborn(battery_report, title, message,notification_action)
+            winrt_toast_reborn::battery_notify_winrt_toast_reborn(battery_report, title, message,notification_action)
         },
     }
 }
