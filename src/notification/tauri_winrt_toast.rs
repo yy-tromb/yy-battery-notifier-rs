@@ -10,7 +10,7 @@ pub(super) fn battery_notify_tauri_winrt_toast(
     use tauri_winrt_notification::{Duration, Progress, Toast};
     let progress = match battery_report.remaining_seconds {
         Some(remaining_seconds) => Progress {
-            tag: "tag".to_string(),
+            tag: "battery_progress".to_string(),
             title: "Now Battery Level:".to_string(),
             status: format!(
                 "{}:{}:{} remaining",
@@ -22,7 +22,7 @@ pub(super) fn battery_notify_tauri_winrt_toast(
             value_string: format!("{}%", battery_report.percentage),
         },
         None => Progress {
-            tag: "tag".to_string(),
+            tag: "battery_progress".to_string(),
             title: "Now Battery Level:".to_string(),
             status: "Unknown time remaining".to_string(),
             value: battery_report.percentage as f32 / 100.0,
