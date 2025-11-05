@@ -1,6 +1,8 @@
 use crate::registry::{check_deleted, check_registered, delete_tree, register, RegistryValue};
 use colored::Colorize;
 
+pub const AUMID: &str = "yy-tromb.yy-battery-notifier-rs";
+
 #[inline]
 pub fn register_and_check_aumid(root: &windows_registry::Key) -> anyhow::Result<()> {
     let keys_and_values = vec![
@@ -9,21 +11,21 @@ pub fn register_and_check_aumid(root: &windows_registry::Key) -> anyhow::Result<
             std::env::current_exe()
                 .inspect_err(|_e| eprintln!("{}", "Failed to get current exe".red()))?
                 .to_str()
-                .unwrap_or(r"C:\Program Files\yy-tromb\yy-battery-notifier-rs\\yy-battery-notifier-rs.exe")
+                .unwrap_or(r"C:\Program Files\yy-tromb\yy-battery-notifier-rs\yy-battery-notifier-rs.exe")
                 .to_string()
         )),
     ];
     //register
     register(
         root,
-        r"SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs",
+        format!(r"SOFTWARE\Classes\AppUserModelId\{}", AUMID).as_str(),
         &keys_and_values,
     )?;
 
     //check
     check_registered(
         root,
-        r"SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs",
+        format!(r"SOFTWARE\Classes\AppUserModelId\{}", AUMID).as_str(),
         &keys_and_values,
     )?;
     println!("{}", "register sucuessed!".green().on_black());
@@ -37,11 +39,11 @@ pub fn delete_and_check_aumid(root: &windows_registry::Key) -> anyhow::Result<()
     delete_tree(
         root,
         r"SOFTWARE\Classes\AppUserModelId",
-        "yy-tromb.yy-battery-notifier-rs",
+        &AUMID,
     )?;
     check_deleted(
         root,
-        r"SOFTWARE\Classes\AppUserModelId\yy-tromb.yy-battery-notifier-rs",
+        format!(r"SOFTWARE\Classes\AppUserModelId\{}", AUMID).as_str(),
         &keys,
     )?;
     println!("{}", "delete sucuessed!".green().on_black());
