@@ -1,3 +1,5 @@
+use colored::Colorize;
+
 #[derive(Debug, Clone)]
 pub struct BatteryReport {
     pub percentage: u32,
@@ -66,7 +68,16 @@ fn battery_check_win32() -> anyhow::Result<BatteryReport> {
     unsafe {
         GetSystemPowerStatus(&mut system_power_status)?;
     }
-    let percentage = system_power_status.BatteryLifePercent as u32;
+    let percentage = match system_power_status.BatteryLifePercent {
+        0..=100 => system_power_status.BatteryLifePercent as u32,
+        255 => {
+            return Err(anyhow::anyhow!(format!(
+                "{}",
+                "Battery life percentage is unknown.".red()
+            )));
+        }
+        _ => unreachable!(),
+    };
     let remaining_seconds = if system_power_status.BatteryLifeTime == u32::MAX {
         None
     } else {
