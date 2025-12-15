@@ -1,7 +1,7 @@
+use colored::Colorize;
 use std::collections::HashMap;
 
 use crate::notification::NotificationMethod;
-use colored::Colorize;
 
 #[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
 pub struct TOMLSettings {
