@@ -1,6 +1,5 @@
 use colored::Colorize;
 use rustc_hash::FxHashMap;
-use std::collections::HashMap;
 
 use crate::notification::NotificationMethod;
 
@@ -10,7 +9,7 @@ pub struct TOMLSettings {
     pub notification_method: Option<NotificationMethod>,
     pub default_mode: Option<String>,
     pub notifications: Vec<NotificationTOMLSetting>,
-    pub modes: Option<HashMap<String, NotificationTOMLSetting>>,
+    pub modes: Option<FxHashMap<String, NotificationTOMLSetting>>,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
@@ -27,7 +26,7 @@ pub struct Settings {
     pub notification_method: NotificationMethod,
     pub default_mode: String,
     pub notifications: Vec<NotificationSetting>,
-    pub modes: std::collections::HashMap<String, NotificationSetting>,
+    pub modes: FxHashMap<String, NotificationSetting>,
 }
 
 #[derive(Debug, Clone)]
@@ -53,8 +52,12 @@ impl TryFrom<TOMLSettings> for Settings {
             notification_method: toml_settings.notification_method.unwrap_or_default(),
             default_mode: toml_settings.default_mode.unwrap_or_default(),
             notifications: Vec::with_capacity(toml_settings.notifications.len()),
-            modes: HashMap::with_capacity(
-                toml_settings.modes.as_ref().map_or(0, |modes| modes.len()),
+            modes: FxHashMap::with_capacity_and_hasher(
+                toml_settings
+                    .modes
+                    .as_ref()
+                    .map_or(0usize, |modes| modes.len()),
+                Default::default(),
             ),
         };
         for notification_toml_setting in toml_settings.notifications {
