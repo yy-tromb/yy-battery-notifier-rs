@@ -12,7 +12,7 @@ impl Cli {
     }
 
     pub fn run(&self) -> anyhow::Result<()> {
-        use crate::notification::{NotificationAction, NotificationMethod, battery_notify};
+        use crate::notification::{NotificationAction, battery_notify};
         let duration = std::time::Duration::from_secs(self.settings.check_interval);
         let mode = &self.settings.default_mode;
         let notification_method = &self.settings.notification_method;
