@@ -14,10 +14,8 @@ impl Cli {
     pub fn run(&self) -> anyhow::Result<()> {
         use crate::notification::{NotificationAction, NotificationMethod, battery_notify};
         let duration = std::time::Duration::from_secs(self.settings.check_interval);
-        let notification_method = match &self.settings.notification_method {
-            Some(method) => method,
-            None => &NotificationMethod::TauriWinrtToast,
-        };
+        let mode = &self.settings.default_mode;
+        let notification_method = &self.settings.notification_method;
         let notification_action: Arc<Mutex<Option<NotificationAction>>> =
             Arc::new(Mutex::new(None));
         loop {
@@ -68,36 +66,35 @@ impl Cli {
                 eprintln!("{}", "Failed to check battery information.".red());
             })?;
             dbg!(&battery_report);
-            for notification_setting in &self.settings.notifications {
-                match notification_setting.percentage_symbol {
-                    crate::settings::PercentageSymbol::Excess => {
-                        if (battery_report.percentage > notification_setting.percentage_int)
-                            && (battery_report.power_supply == notification_setting.power_supply)
-                        {
-                            battery_notify(
-                                &battery_report,
-                                &notification_setting.title,
-                                &notification_setting.message,
-                                notification_method,
-                                notification_action.clone(),
-                            )?
-                        }
-                    }
-                    crate::settings::PercentageSymbol::Under => {
-                        if (battery_report.percentage < notification_setting.percentage_int)
-                            && (battery_report.power_supply == notification_setting.power_supply)
-                        {
-                            battery_notify(
-                                &battery_report,
-                                &notification_setting.title,
-                                &notification_setting.message,
-                                notification_method,
-                                notification_action.clone(),
-                            )?
-                        }
-                    }
-                };
-            }
+            self.settings
+                .notifications
+                .iter()
+                .filter(|notification_setting| {
+                    crate::notification::judge_notification(notification_setting, &battery_report)
+                })
+                .try_for_each(|notification_setting| {
+                    battery_notify(
+                        &battery_report,
+                        &notification_setting.title,
+                        &notification_setting.message,
+                        notification_method,
+                        notification_action.clone(),
+                    )
+                })?;
+            if let Some(mode_notification_setting) = self.settings.modes.get(mode) {
+                if crate::notification::judge_notification(
+                    mode_notification_setting,
+                    &battery_report,
+                ) {
+                    battery_notify(
+                        &battery_report,
+                        &mode_notification_setting.title,
+                        &mode_notification_setting.message,
+                        notification_method,
+                        notification_action.clone(),
+                    )?
+                }
+            };
             println!("check battery and notifying");
             std::thread::sleep(duration);
         }
