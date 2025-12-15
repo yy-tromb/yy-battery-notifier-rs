@@ -1,4 +1,5 @@
 use colored::Colorize;
+use rustc_hash::FxHashMap;
 use std::collections::HashMap;
 
 use crate::notification::NotificationMethod;
@@ -6,10 +7,10 @@ use crate::notification::NotificationMethod;
 #[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
 pub struct TOMLSettings {
     pub check_interval: u64,
-    pub notifications: Vec<NotificationTOMLSetting>,
     pub notification_method: Option<NotificationMethod>,
-    pub modes: Option<HashMap<String, NotificationTOMLSetting>>,
     pub default_mode: Option<String>,
+    pub notifications: Vec<NotificationTOMLSetting>,
+    pub modes: Option<HashMap<String, NotificationTOMLSetting>>,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
@@ -23,10 +24,10 @@ pub struct NotificationTOMLSetting {
 #[derive(Debug, Clone)]
 pub struct Settings {
     pub check_interval: u64,
-    pub notifications: Vec<NotificationSetting>,
     pub notification_method: NotificationMethod,
-    pub modes: std::collections::HashMap<String, NotificationSetting>,
     pub default_mode: String,
+    pub notifications: Vec<NotificationSetting>,
+    pub modes: std::collections::HashMap<String, NotificationSetting>,
 }
 
 #[derive(Debug, Clone)]
@@ -49,23 +50,26 @@ impl TryFrom<TOMLSettings> for Settings {
     fn try_from(toml_settings: TOMLSettings) -> anyhow::Result<Self> {
         let mut settings = Settings {
             check_interval: toml_settings.check_interval,
-            notifications: Vec::with_capacity(toml_settings.notifications.len()),
             notification_method: toml_settings.notification_method.unwrap_or_default(),
-            modes: HashMap::new(),
             default_mode: toml_settings.default_mode.unwrap_or_default(),
+            notifications: Vec::with_capacity(toml_settings.notifications.len()),
+            modes: HashMap::with_capacity(
+                toml_settings.modes.as_ref().map_or(0, |modes| modes.len()),
+            ),
         };
         for notification_toml_setting in toml_settings.notifications {
             settings
                 .notifications
                 .push(notification_toml_setting.try_into()?);
         }
-        for (mode, notification_toml_setting) in
-            toml_settings.modes.unwrap_or_else(|| HashMap::new())
-        {
-            settings
-                .modes
-                .insert(mode, notification_toml_setting.try_into()?);
+        if let Some(modes) = toml_settings.modes {
+            for (mode, notification_toml_setting) in modes {
+                settings
+                    .modes
+                    .insert(mode, notification_toml_setting.try_into()?);
+            }
         }
+
         dbg!(&settings);
         Ok(settings)
     }
