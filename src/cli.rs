@@ -91,7 +91,7 @@ impl Cli {
                         &mode_notification_setting.title,
                         &mode_notification_setting.message,
                         notification_method,
-                        notification_action.clone(),
+                        Arc::clone(&notification_action),
                     )?
                 }
             };
