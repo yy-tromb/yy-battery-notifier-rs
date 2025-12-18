@@ -74,7 +74,7 @@ impl Cli {
                         }
                     }
                 }
-                *action_guard = None; // set action to None
+                *action_guard = None; // clear action for next check
             }
             drop(action_guard); // Release the lock before checking battery
             if !mode.is_empty() {
