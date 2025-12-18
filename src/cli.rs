@@ -78,7 +78,7 @@ impl Cli {
                         &notification_setting.title,
                         &notification_setting.message,
                         notification_method,
-                        notification_action.clone(),
+                        Arc::clone(&notification_action),
                     )
                 })?;
             if let Some(mode_notification_setting) = self.settings.modes.get(mode) {
