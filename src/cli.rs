@@ -20,7 +20,7 @@ impl Cli {
         let notification_action: Arc<Mutex<Option<NotificationAction>>> =
             Arc::new(Mutex::new(None));
         loop {
-            let action_guard = match notification_action.lock() {
+            let mut action_guard = match notification_action.lock() {
                 Ok(action_guard) => action_guard,
                 Err(e) => {
                     eprintln!("{}", "Failed to read notification action.".red());
@@ -66,11 +66,15 @@ impl Cli {
                     NotificationAction::ChangeMode(mode_to_change) => {
                         println!(
                             "{}",
-                            format!("change mode to {} action triggered.", mode_to_change).yellow()
+                            format!(r#"change mode to "{}" action triggered."#, mode_to_change)
+                                .yellow()
                         );
-                        mode = mode_to_change.clone();
+                        if mode_names.contains(&&mode) {
+                            mode = mode_to_change.clone();
+                        }
                     }
                 }
+                *action_guard = None; // set action to None
             }
             drop(action_guard); // Release the lock before checking battery
             if !mode.is_empty() {
