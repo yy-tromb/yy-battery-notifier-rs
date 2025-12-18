@@ -6,6 +6,8 @@ pub(super) fn battery_notify_winrt_toast_reborn(
     title: &str,
     message: &str,
     notification_action: Arc<Mutex<Option<NotificationAction>>>,
+    mode_names: &[&String],
+    mode: &str,
 ) -> anyhow::Result<()> {
     use winrt_toast_reborn::content::input::InputType;
     use winrt_toast_reborn::{Action, Input, Selection, Toast, ToastDuration, ToastManager};
@@ -44,12 +46,31 @@ pub(super) fn battery_notify_winrt_toast_reborn(
                 .with_default_input("5"),
         )
         .action(Action::new("silent for 5 mins", "silent 5 mins", ""))
-        .action(Action::new("silent for 10 mins", "silent 10 mins", ""))
         .action(
             Action::new("mins: Keep silent", "silent specified mins", "")
                 .with_input_id("silent_time"),
         );
     //toast.action(Action::new("change mode", "change mode", ""));
+
+    if mode_names.len() > 0 {
+        toast.input(
+            Input::new("mode_selection", InputType::Selection)
+                .with_title("select mode")
+                .with_default_input(if mode.is_empty() {
+                    "mode_no_mode".into()
+                } else {
+                    format!("mode:{}", mode)
+                }),
+        );
+        toast.selection(Selection::new("mode_no_mode", "<no mode>"));
+    }
+    mode_names
+        .iter()
+        .map(|mode_name| Selection::new(format!("mode:{}", mode_name), *mode_name))
+        .for_each(|selection| {
+            toast.selection(selection);
+        });
+    toast.action(Action::new("change mode", "change mode", ""));
 
     toast_manager
         .on_activated(None, move |action| {
@@ -93,6 +114,23 @@ fn handle_battery_notify_activated_action(
                         }
                     } else {
                         println!("No input value found for silent time.");
+                    }
+                }
+                "change mode" => {
+                    if let Some(mode_to_change) = action.values.get("mode_selection") {
+                        let mut guard = match notification_action.lock() {
+                            Ok(guard) => guard,
+                            Err(e) => e.into_inner(),
+                        };
+                        if mode_to_change == "mode_no_mode" {
+                            println!("change to no mode");
+                            *guard = Some(NotificationAction::ChangeMode(String::default()));
+                        } else {
+                            println!(r#"change mode to: "{}""#, mode_to_change);
+                            *guard = Some(NotificationAction::ChangeMode(mode_to_change.clone()));
+                        }
+                    } else {
+                        println!("No input value found for change mode.");
                     }
                 }
                 _ => {

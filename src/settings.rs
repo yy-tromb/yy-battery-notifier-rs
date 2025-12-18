@@ -8,8 +8,8 @@ pub struct TOMLSettings {
     pub check_interval: u64,
     pub notification_method: Option<NotificationMethod>,
     pub default_mode: Option<String>,
-    pub notifications: Vec<NotificationTOMLSetting>,
-    pub modes: Option<FxHashMap<String, NotificationTOMLSetting>>,
+    pub notifications: Option<Vec<NotificationTOMLSetting>>,
+    pub modes: Option<FxHashMap<String, ModeTOMLSetting>>,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
@@ -20,13 +20,18 @@ pub struct NotificationTOMLSetting {
     pub message: String,
 }
 
+#[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
+pub struct ModeTOMLSetting {
+    pub notifications: Vec<NotificationTOMLSetting>,
+}
+
 #[derive(Debug, Clone)]
 pub struct Settings {
     pub check_interval: u64,
     pub notification_method: NotificationMethod,
     pub default_mode: String,
     pub notifications: Vec<NotificationSetting>,
-    pub modes: FxHashMap<String, NotificationSetting>,
+    pub modes: FxHashMap<String, ModeSetting>,
 }
 
 #[derive(Debug, Clone)]
@@ -44,6 +49,11 @@ pub enum PercentageSymbol {
     Under,
 }
 
+#[derive(Debug, Clone)]
+pub struct ModeSetting {
+    pub notifications: Vec<NotificationSetting>,
+}
+
 impl TryFrom<TOMLSettings> for Settings {
     type Error = anyhow::Error;
     fn try_from(toml_settings: TOMLSettings) -> anyhow::Result<Self> {
@@ -51,7 +61,12 @@ impl TryFrom<TOMLSettings> for Settings {
             check_interval: toml_settings.check_interval,
             notification_method: toml_settings.notification_method.unwrap_or_default(),
             default_mode: toml_settings.default_mode.unwrap_or_default(),
-            notifications: Vec::with_capacity(toml_settings.notifications.len()),
+            notifications: Vec::with_capacity(
+                toml_settings
+                    .notifications
+                    .as_ref()
+                    .map_or(0usize, |notifications| notifications.len()),
+            ),
             modes: FxHashMap::with_capacity_and_hasher(
                 toml_settings
                     .modes
@@ -60,21 +75,34 @@ impl TryFrom<TOMLSettings> for Settings {
                 Default::default(),
             ),
         };
-        for notification_toml_setting in toml_settings.notifications {
+        for notification_toml_setting in toml_settings.notifications.unwrap_or_default() {
             settings
                 .notifications
                 .push(notification_toml_setting.try_into()?);
         }
         if let Some(modes) = toml_settings.modes {
-            for (mode, notification_toml_setting) in modes {
-                settings
-                    .modes
-                    .insert(mode, notification_toml_setting.try_into()?);
+            for (mode, mode_toml_setting) in modes {
+                settings.modes.insert(mode, mode_toml_setting.try_into()?);
             }
         }
 
         dbg!(&settings);
         Ok(settings)
+    }
+}
+
+impl TryFrom<ModeTOMLSetting> for ModeSetting {
+    type Error = anyhow::Error;
+    fn try_from(mode_toml_setting: ModeTOMLSetting) -> anyhow::Result<Self> {
+        let mut mode_settings = Self {
+            notifications: Vec::with_capacity(mode_toml_setting.notifications.len()),
+        };
+        for notification_setting in mode_toml_setting.notifications {
+            mode_settings
+                .notifications
+                .push(notification_setting.try_into()?);
+        }
+        Ok(mode_settings)
     }
 }
 

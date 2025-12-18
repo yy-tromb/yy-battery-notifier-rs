@@ -16,6 +16,8 @@ pub enum NotificationAction {
     Silent5Mins,
     Silent10Mins,
     SilentSpecifiedMins(u64),
+    RequireChangeMode,
+    ChangeMode(String),
 }
 
 #[inline]
@@ -25,6 +27,8 @@ pub fn battery_notify(
     message: &str,
     method: &NotificationMethod,
     notification_action: Arc<Mutex<Option<NotificationAction>>>,
+    mode_names: &[&String],
+    mode: &str,
 ) -> anyhow::Result<()> {
     match method {
         NotificationMethod::TauriWinrtToast => tauri_winrt_toast::battery_notify_tauri_winrt_toast(
@@ -39,6 +43,8 @@ pub fn battery_notify(
                 title,
                 message,
                 notification_action,
+                mode_names,
+                mode,
             )
         }
     }
