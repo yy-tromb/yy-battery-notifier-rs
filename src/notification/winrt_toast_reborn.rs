@@ -126,8 +126,10 @@ fn handle_battery_notify_activated_action(
                             println!("change to no mode");
                             *guard = Some(NotificationAction::ChangeMode(String::default()));
                         } else {
-                            println!(r#"change mode to: "{}""#, mode_to_change);
-                            *guard = Some(NotificationAction::ChangeMode(mode_to_change.clone()));
+                            println!(r#"change mode to id="{}""#, mode_to_change);
+                            *guard = Some(NotificationAction::ChangeMode(
+                                mode_to_change.get(5..).unwrap_or_default().to_string(),
+                            ));
                         }
                     } else {
                         println!("No input value found for change mode.");
