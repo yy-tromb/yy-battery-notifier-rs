@@ -50,6 +50,7 @@ pub fn battery_notify(
     }
 }
 
+#[inline]
 pub fn judge_notification(
     notification_setting: &crate::settings::NotificationSetting,
     battery_report: &crate::battery::BatteryReport,
