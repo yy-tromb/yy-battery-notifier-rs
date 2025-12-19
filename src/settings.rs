@@ -7,7 +7,7 @@ use crate::notification::NotificationMethod;
 pub struct TOMLSettings {
     pub check_interval: u64,
     pub notification_method: Option<NotificationMethod>,
-    pub default_mode: Option<String>,
+    pub initial_mode: Option<String>,
     pub notifications: Option<Vec<NotificationTOMLSetting>>,
     pub modes: Option<FxHashMap<String, ModeTOMLSetting>>,
 }
@@ -29,7 +29,7 @@ pub struct ModeTOMLSetting {
 pub struct Settings {
     pub check_interval: u64,
     pub notification_method: NotificationMethod,
-    pub default_mode: String,
+    pub initial_mode: String,
     pub notifications: Vec<NotificationSetting>,
     pub modes: FxHashMap<String, ModeSetting>,
 }
@@ -60,7 +60,19 @@ impl TryFrom<TOMLSettings> for Settings {
         let mut settings = Settings {
             check_interval: toml_settings.check_interval,
             notification_method: toml_settings.notification_method.unwrap_or_default(),
-            default_mode: toml_settings.default_mode.unwrap_or_default(),
+            initial_mode: toml_settings
+                .initial_mode
+                .map_or(String::default(), |initial_mode| {
+                    if let Some(modes) = toml_settings.modes.as_ref() {
+                        if modes.keys().any(|key| key == &initial_mode) {
+                            initial_mode
+                        } else {
+                            String::default()
+                        }
+                    } else {
+                        String::default()
+                    }
+                }),
             notifications: Vec::with_capacity(
                 toml_settings
                     .notifications

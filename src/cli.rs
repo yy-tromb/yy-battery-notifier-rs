@@ -15,7 +15,7 @@ impl Cli {
         use crate::notification::{NotificationAction, battery_notify};
         let duration = std::time::Duration::from_secs(self.settings.check_interval);
         let mode_names: Vec<&String> = self.settings.modes.keys().collect();
-        let mut mode = self.settings.default_mode.clone();
+        let mut mode = self.settings.initial_mode.clone();
         let notification_method = &self.settings.notification_method;
         let notification_action: Arc<Mutex<Option<NotificationAction>>> =
             Arc::new(Mutex::new(None));
