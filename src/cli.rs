@@ -7,15 +7,15 @@ pub struct Cli {
 }
 
 impl Cli {
-    pub fn new(settings: crate::settings::Settings) -> anyhow::Result<Self> {
-        Ok(Self { settings })
+    pub fn new(settings: crate::settings::Settings) -> Self {
+        Self { settings }
     }
 
     pub fn run(&self) -> anyhow::Result<()> {
         use crate::notification::{NotificationAction, battery_notify};
         let duration = std::time::Duration::from_secs(self.settings.check_interval);
-        let mut mode = self.settings.default_mode.clone();
         let mode_names: Vec<&String> = self.settings.modes.keys().collect();
+        let mut mode = self.settings.default_mode.clone();
         let notification_method = &self.settings.notification_method;
         let notification_action: Arc<Mutex<Option<NotificationAction>>> =
             Arc::new(Mutex::new(None));
