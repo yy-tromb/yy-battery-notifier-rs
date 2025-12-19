@@ -14,6 +14,8 @@ rustc-hash = "2.1.1"
 serde = { version = "1.0.219", features = ["derive"] }
 tauri-winrt-notification = "0.7.2"
 toml = "0.9.4"
+tray-icon = "0.21.2"
+win32_notif = "0.10.2"
 windows-registry = "0.6.1"
 winrt-toast-reborn = "0.3.8"
 
