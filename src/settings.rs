@@ -62,7 +62,7 @@ impl TryFrom<TOMLSettings> for Settings {
             notification_method: toml_settings.notification_method.unwrap_or_default(),
             initial_mode: toml_settings
                 .initial_mode
-                .map_or(String::default(), |initial_mode| {
+                .map_or_else(String::default, |initial_mode| {
                     if let Some(modes) = toml_settings.modes.as_ref() {
                         if modes.keys().any(|key| key == &initial_mode) {
                             initial_mode
