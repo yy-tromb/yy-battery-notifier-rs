@@ -68,3 +68,8 @@ message = "The battery level of Your PC is low. Plug in."
       --msgbox : When error occurs, let you know by messagebox
   -h, --help : Print help
   -V, --version : Print version
+
+## ToDos
+- Add mode change button
+- Show mode selector button when this program starts
+- Implement my notification crate ( that can show both progress bar and input )
