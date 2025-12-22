@@ -1,6 +1,7 @@
 use colored::Colorize;
 use rustc_hash::FxHashMap;
 
+use crate::notification::NotificationInputType;
 use crate::notification::NotificationMethod;
 
 #[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
@@ -8,6 +9,7 @@ pub struct TOMLSettings {
     pub check_interval: u64,
     pub notification_method: Option<NotificationMethod>,
     pub initial_mode: Option<String>,
+    pub notify_battery_during_change_mode: Option<bool>,
     pub notifications: Option<Vec<NotificationTOMLSetting>>,
     pub modes: Option<FxHashMap<String, ModeTOMLSetting>>,
 }
@@ -18,6 +20,7 @@ pub struct NotificationTOMLSetting {
     pub power_supply: String,
     pub title: String,
     pub message: String,
+    pub input_type: Option<NotificationInputType>,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
@@ -30,6 +33,7 @@ pub struct Settings {
     pub check_interval: u64,
     pub notification_method: NotificationMethod,
     pub initial_mode: String,
+    pub notify_battery_during_change_mode: bool,
     pub notifications: Vec<NotificationSetting>,
     pub modes: FxHashMap<String, ModeSetting>,
 }
@@ -41,6 +45,7 @@ pub struct NotificationSetting {
     pub power_supply: crate::battery::PowerSupply,
     pub title: String,
     pub message: String,
+    pub input_type: NotificationInputType,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
@@ -73,6 +78,9 @@ impl TryFrom<TOMLSettings> for Settings {
                         String::default()
                     }
                 }),
+            notify_battery_during_change_mode: toml_settings
+                .notify_battery_during_change_mode
+                .unwrap_or(false),
             notifications: Vec::with_capacity(
                 toml_settings
                     .notifications
@@ -187,6 +195,7 @@ impl TryFrom<NotificationTOMLSetting> for NotificationSetting {
             power_supply,
             title: notification_toml_setting.title,
             message: notification_toml_setting.message,
+            input_type: notification_toml_setting.input_type.unwrap_or_default(),
         })
     }
 }

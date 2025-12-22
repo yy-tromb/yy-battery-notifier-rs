@@ -1,17 +1,17 @@
-use super::NotificationAction;
+use super::{NotificationAction, NotificationInputType};
 use std::sync::{Arc, Mutex};
+use winrt_toast_reborn::content::input::InputType;
+use winrt_toast_reborn::{Action, Input, Selection, Toast, ToastDuration, ToastManager};
 
 pub(super) fn battery_notify_winrt_toast_reborn(
     battery_report: &crate::battery::BatteryReport,
     title: &str,
     message: &str,
     notification_action: Arc<Mutex<Option<NotificationAction>>>,
+    input_type: &NotificationInputType,
     mode_names: &[&String],
     mode: &str,
 ) -> anyhow::Result<()> {
-    use winrt_toast_reborn::content::input::InputType;
-    use winrt_toast_reborn::{Action, Input, Selection, Toast, ToastDuration, ToastManager};
-
     let toast_manager = ToastManager::new(crate::aumid::AUMID);
 
     //let progress_value = battery_report.percentage as f32 / 100.0;
@@ -40,37 +40,45 @@ pub(super) fn battery_notify_winrt_toast_reborn(
     );*/
     toast
         .duration(ToastDuration::Short)
-        .input(
-            Input::new("silent_time", InputType::Text)
-                .with_title("Input silent minites:")
-                .with_default_input("5"),
-        )
         .action(Action::new("silent for 5 mins", "silent 5 mins", ""))
-        .action(
-            Action::new("mins: Keep silent", "silent specified mins", "")
-                .with_input_id("silent_time"),
-        );
-    //toast.action(Action::new("change mode", "change mode", ""));
-
-    if mode_names.len() > 0 {
-        toast.input(
-            Input::new("mode_selection", InputType::Selection)
-                .with_title("select mode")
-                .with_default_input(if mode.is_empty() {
-                    "mode_no_mode".into()
-                } else {
-                    format!("mode:{}", mode)
-                }),
-        );
-        toast.selection(Selection::new("mode_no_mode", "<no mode>"));
+        .action(Action::new("silent for 10 mins", "silent 10 mins", ""));
+    match input_type {
+        NotificationInputType::ModeSelector if mode_names.len() > 0 => {
+            toast.input(
+                Input::new("mode_selection", InputType::Selection)
+                    .with_title("select mode")
+                    .with_default_input(if mode.is_empty() {
+                        "mode_no_mode".into()
+                    } else {
+                        format!("mode:{}", mode)
+                    }),
+            );
+            toast.selection(Selection::new("mode_no_mode", "<no mode>"));
+            mode_names
+                .iter()
+                .map(|mode_name| Selection::new(format!("mode:{}", mode_name), *mode_name))
+                .for_each(|selection| {
+                    toast.selection(selection);
+                });
+            toast.action(
+                Action::new("change mode", "change mode", "").with_input_id("mode_selection"),
+            );
+        }
+        NotificationInputType::ModeSelector | NotificationInputType::SilentSpecifiedMinutes => {
+            // if modes is empty, apply SilentSpecifiedMinutes
+            toast
+                .input(
+                    Input::new("silent_time", InputType::Text)
+                        .with_title("Input silent minites:")
+                        .with_default_input("5"),
+                )
+                .action(
+                    Action::new("mins: Keep silent", "silent specified mins", "")
+                        .with_input_id("silent_time"),
+                )
+                .action(Action::new("change mode", "require change mode", ""));
+        }
     }
-    mode_names
-        .iter()
-        .map(|mode_name| Selection::new(format!("mode:{}", mode_name), *mode_name))
-        .for_each(|selection| {
-            toast.selection(selection);
-        });
-    toast.action(Action::new("change mode", "change mode", ""));
 
     toast_manager
         .on_activated(None, move |action| {
@@ -116,6 +124,88 @@ fn handle_battery_notify_activated_action(
                         println!("No input value found for silent time.");
                     }
                 }
+                "require change mode" => {
+                    println!("Required change mode");
+                    let mut guard = match notification_action.lock() {
+                        Ok(guard) => guard,
+                        Err(e) => e.into_inner(),
+                    };
+                    *guard = Some(NotificationAction::RequireChangeMode);
+                }
+                "change mode" => {
+                    if let Some(mode_to_change) = action.values.get("mode_selection") {
+                        let mut guard = match notification_action.lock() {
+                            Ok(guard) => guard,
+                            Err(e) => e.into_inner(),
+                        };
+                        if mode_to_change == "mode_no_mode" {
+                            println!("change to no mode");
+                            *guard = Some(NotificationAction::ChangeMode(String::default()));
+                        } else {
+                            println!(r#"change mode to id="{}""#, mode_to_change);
+                            *guard = Some(NotificationAction::ChangeMode(
+                                mode_to_change.get(5..).unwrap_or_default().to_string(),
+                            ));
+                        }
+                    } else {
+                        println!("No input value found for change mode.");
+                    }
+                }
+                _ => {
+                    println!("Unknown action.");
+                }
+            }
+        }
+        None => {
+            println!("Toast activated without action.");
+        }
+    }
+}
+
+pub(super) fn mode_change_notify_winrt_toast_reborn(
+    notification_action: Arc<Mutex<Option<NotificationAction>>>,
+    mode_names: &[&String],
+    mode: &str,
+) -> anyhow::Result<()> {
+    let toast_manager = ToastManager::new(crate::aumid::AUMID);
+    let mut toast = Toast::new();
+    toast
+        .text1("Notify Mode Change")
+        .duration(ToastDuration::Long)
+        .input(
+            Input::new("mode_selection", InputType::Selection)
+                .with_title("select mode")
+                .with_default_input(if mode.is_empty() {
+                    "mode_no_mode".into()
+                } else {
+                    format!("mode:{}", mode)
+                }),
+        )
+        .selection(Selection::new("mode_no_mode", "<no mode>"));
+    mode_names
+        .iter()
+        .map(|mode_name| Selection::new(format!("mode:{}", mode_name), *mode_name))
+        .for_each(|selection| {
+            toast.selection(selection);
+        });
+    toast.action(Action::new("change mode", "change mode", "").with_input_id("mode_selection"));
+    toast_manager
+        .on_activated(None, move |action| {
+            handle_mode_change_notify_winrt_toast_reborn(action, &notification_action);
+        })
+        .show(&toast)?;
+    Ok(())
+}
+
+fn handle_mode_change_notify_winrt_toast_reborn(
+    action: Option<winrt_toast_reborn::ActivatedAction>,
+    notification_action: &Arc<Mutex<Option<NotificationAction>>>,
+) {
+    match action {
+        Some(action) => {
+            let message = format!("Toast activated with action: {}", action.arg);
+            println!("{}", message);
+            match action.arg.as_str() {
                 "change mode" => {
                     if let Some(mode_to_change) = action.values.get("mode_selection") {
                         let mut guard = match notification_action.lock() {

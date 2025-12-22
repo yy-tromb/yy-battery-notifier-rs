@@ -61,7 +61,18 @@ impl Cli {
                         ));
                     }
                     NotificationAction::RequireChangeMode => {
-                        todo!();
+                        crate::notification::mode_change_notify(
+                            notification_method,
+                            Arc::clone(&notification_action),
+                            &mode_names,
+                            &mode,
+                        )?;
+                        if !self.settings.notify_battery_during_change_mode {
+                            // do not clear action for user to miss dismiss change mode notification
+                            drop(action_guard);
+                            std::thread::sleep(duration);
+                            continue;
+                        }
                     }
                     NotificationAction::ChangeMode(mode_to_change) => {
                         println!(
@@ -94,11 +105,12 @@ impl Cli {
                 })
                 .try_for_each(|notification_setting| {
                     battery_notify(
+                        notification_method,
                         &battery_report,
                         &notification_setting.title,
                         &notification_setting.message,
-                        notification_method,
                         Arc::clone(&notification_action),
+                        &notification_setting.input_type,
                         &mode_names,
                         &mode,
                     )
@@ -115,11 +127,12 @@ impl Cli {
                     })
                     .try_for_each(|notification_setting| {
                         battery_notify(
+                            notification_method,
                             &battery_report,
                             &notification_setting.title,
                             &notification_setting.message,
-                            notification_method,
                             Arc::clone(&notification_action),
+                            &notification_setting.input_type,
                             &mode_names,
                             &mode,
                         )
