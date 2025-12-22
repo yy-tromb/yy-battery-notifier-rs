@@ -1,10 +1,44 @@
 check_interval = 60
+# interval seconds(integer) for check battery level.
+
+# ==================================================
+# Optional fields below:
+
+notification_method = "TauriWinrtToast"
+# Optional field
+# This field defines notification method (notifier crate).
+# Options now: "TauriWinrtToast"(default), "WinrtToastReborn"
+
+notify_battery_during_change_mode = false
+# Optional field
+# This field defines whether to notify battery level during notify change mode.
+# Options: true, false(default)
+
+# Optional fields end
+# ==================================================
 
 [[notifications]]
+# "notifications" is optional, but each field of a notification setting is required.
+# This fields define notifications that always notify.
+
 percentage = "90+"
+# express condition when notifications should be started.
+# This consists of percentage(integer) and suffix "+" or "-".
+# This example express that notifications will start whether battery level excess 90%
+#
 power_supply = "Adequate"
+# express power supply status. This consists of "Adequate", "InAdequate", "None".
+
 title = "Remove the plug!"
+# notification title
+
 message = "Your PC is now fully charged. Remove the plug"
+# notification message
+
+input_type = "SilentSpecifiedMinutes"
+# Optional field
+# This field defines type of input element of notification.
+# Options: "ModeSelector"(default), "SilentSpecifiedMinutes"
 
 [[notifications]]
 percentage = "45-"
