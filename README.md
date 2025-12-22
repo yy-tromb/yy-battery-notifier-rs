@@ -71,9 +71,6 @@ message = "The battery level of Your PC is low. Plug in."
 ```
 
 ### settings with modes
-> [!NOTE]
-> Full feature of modes is available now with "WinrtToastReborn" method only.
-
 > [!IMPORTANT]
 > `modes` features is not available with the binary of GitHub releases.
 
