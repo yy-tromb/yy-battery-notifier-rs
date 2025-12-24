@@ -78,7 +78,7 @@ message = "The battery level of Your PC is low. Plug in."
 
 ### settings with modes
 > [!IMPORTANT]
-> `modes` features is not available with the binary of GitHub releases.
+> `modes` features is not available with the current binary of GitHub releases.
 
 ```settings_mode_partial.toml
 initial_mode = "default"
