@@ -55,9 +55,9 @@ struct AppArgs {
 }
 #[derive(Debug, clap::Subcommand)]
 enum SubCommand {
-    Registry {
+    Aumid {
         #[command(subcommand)]
-        subcommands: RegistrySubCommand,
+        subcommands: AumidSubCommand,
     },
     Startup {
         #[command(subcommand)]
@@ -66,7 +66,7 @@ enum SubCommand {
 }
 
 #[derive(Debug, clap::Subcommand)]
-enum RegistrySubCommand {
+enum AumidSubCommand {
     Register,
     Delete,
 }
@@ -137,11 +137,9 @@ fn main() -> anyhow::Result<()> {
     }
     if app_args.subcommands.is_some() {
         let subcommand = match app_args.subcommands.unwrap() {
-            SubCommand::Registry { subcommands } => match subcommands {
-                RegistrySubCommand::Register => {
-                    crate::aumid::register_and_check_aumid(&CURRENT_USER)
-                }
-                RegistrySubCommand::Delete => crate::aumid::delete_and_check_aumid(&CURRENT_USER),
+            SubCommand::Aumid { subcommands } => match subcommands {
+                AumidSubCommand::Register => crate::aumid::register_and_check_aumid(&CURRENT_USER),
+                AumidSubCommand::Delete => crate::aumid::delete_and_check_aumid(&CURRENT_USER),
             },
             SubCommand::Startup { subcommands } => match subcommands {
                 StartupSubCommand::Register {
