@@ -20,7 +20,7 @@ with gui feature: `cargo build --release --features gui` or `cargo b -r --featur
 
 About TOML format, try google this...
 
-> [NOTE!]
+> [!NOTE]
 > "TauriWinrtToast" method does not implement input element, so "input_type" field of each notification setting is not effective.
 
 ### default_settings.toml
