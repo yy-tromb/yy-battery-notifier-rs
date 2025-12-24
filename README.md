@@ -12,11 +12,16 @@ check battery level and notify you
 
 You can install [from here](https://github.com/yy-tromb/yy-battery-notifier-rs/releases).
 I recommend MSI installer.  
-Or, you can build with [Cargo](https://doc.rust-lang.org/cargo/)  
+Or, you can build with [Cargo](https://doc.rust-lang.org/cargo/) as below...  
+normal release build: `cargo build --release` or `cargo b -r`  
+with gui feature: `cargo build --release --features gui` or `cargo b -r --features gui`
 
 ## About settings.toml
 
 About TOML format, try google this...
+
+> [NOTE!]
+> "TauriWinrtToast" method does not implement input element, so "input_type" field of each notification setting is not effective.
 
 ### default_settings.toml
 
@@ -62,6 +67,7 @@ input_type = "ModeSelector"
 # Optional field
 # This field defines type of input element of notification.
 # Options: "ModeSelector"(default), "SilentSpecifiedMinutes"
+# "TauriWinrtToast" method does not implement input element, so this field is not effective.
 
 [[notifications]]
 percentage = "45-"
@@ -102,6 +108,7 @@ input_type = "ModeSelector"
 # Optional field
 # This field defines type of input element of notification.
 # Options: "ModeSelector"(default), "SilentSpecifiedMinutes"
+# "TauriWinrtToast" method does not implement input element, so this field is not effective.
 ```
 
 <details>
@@ -145,6 +152,7 @@ input_type = "ModeSelector"
 # Optional field
 # This field defines type of input element of notification.
 # Options: "ModeSelector"(default), "SilentSpecifiedMinutes"
+# "TauriWinrtToast" method does not implement input element, so this field is not effective.
 
 [[modes.default.notifications]]
 percentage = "30-"
@@ -196,14 +204,14 @@ ToDo!
 `yy-battery-notifier-rs.exe -d`
 
 ### Sub commands
-  registry - register,delete : register or delete Application User Model Id (used to notify as toast) on Windows Registry  
+  aumid - register,delete : register or delete Application User Model Id (used to notify as toast) on Windows Registry  
   startup - register,delete : register or delete this app as startup app. Even if you register twice or more, settings will be overrided.
 
 ### Options
 
   -s, --settings "path to settings.toml"  \[default: .\settings.toml]  
   -d, --default_settings : Use [default_settings.toml](https://github.com/yy-tromb/yy-battery-notifier-rs/blob/main/default_settings.toml)  
-  --msgbox : When error occurs, let you know by messagebox  
+      --msgbox : When error occurs, let you know by messagebox  
   -h, --help : Print help  
   -V, --version : Print version  
 

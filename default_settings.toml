@@ -39,6 +39,7 @@ input_type = "SilentSpecifiedMinutes"
 # Optional field
 # This field defines type of input element of notification.
 # Options: "ModeSelector"(default), "SilentSpecifiedMinutes"
+# "TauriWinrtToast" method does not implement input element, so this field is not effective.
 
 [[notifications]]
 percentage = "45-"
