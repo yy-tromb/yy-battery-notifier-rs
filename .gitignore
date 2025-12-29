@@ -35,3 +35,6 @@ test.toml
 test_reborn.toml
 test_mode.toml
 test_tauri.toml
+
+hooq.toml
+expand*.rs
