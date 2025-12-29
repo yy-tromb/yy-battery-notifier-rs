@@ -1,4 +1,6 @@
+use anyhow::Context as _;
 use colored::Colorize;
+use hooq::hooq;
 use rustc_hash::FxHashMap;
 
 use crate::notification::NotificationInputType;
@@ -9,7 +11,10 @@ pub struct TOMLSettings {
     pub check_interval: u64,
     pub notification_method: Option<NotificationMethod>,
     pub initial_mode: Option<String>,
+    pub abort_on_error_except_initialize: Option<bool>,
     pub notify_battery_during_change_mode: Option<bool>,
+    pub select_mode_when_starts: Option<bool>,
+    pub wait_seconds_after_select_mode_when_starts: Option<u64>,
     pub notifications: Option<Vec<NotificationTOMLSetting>>,
     pub modes: Option<FxHashMap<String, ModeTOMLSetting>>,
 }
@@ -33,7 +38,10 @@ pub struct Settings {
     pub check_interval: u64,
     pub notification_method: NotificationMethod,
     pub initial_mode: String,
+    pub abort_on_error_except_initialize: bool,
     pub notify_battery_during_change_mode: bool,
+    pub select_mode_when_starts: bool,
+    pub wait_seconds_after_select_mode_when_starts: Option<u64>,
     pub notifications: Vec<NotificationSetting>,
     pub modes: FxHashMap<String, ModeSetting>,
 }
@@ -59,6 +67,7 @@ pub struct ModeSetting {
     pub notifications: Vec<NotificationSetting>,
 }
 
+#[hooq(anyhow)]
 impl TryFrom<TOMLSettings> for Settings {
     type Error = anyhow::Error;
     fn try_from(toml_settings: TOMLSettings) -> anyhow::Result<Self> {
@@ -78,9 +87,20 @@ impl TryFrom<TOMLSettings> for Settings {
                         String::default()
                     }
                 }),
+            abort_on_error_except_initialize: toml_settings
+                .abort_on_error_except_initialize
+                .unwrap_or(false),
             notify_battery_during_change_mode: toml_settings
                 .notify_battery_during_change_mode
                 .unwrap_or(false),
+            select_mode_when_starts: toml_settings.select_mode_when_starts.unwrap_or(true),
+            wait_seconds_after_select_mode_when_starts: match toml_settings
+                .wait_seconds_after_select_mode_when_starts
+            {
+                Some(0) => None, // do not wait
+                Some(seconds) => Some(seconds),
+                None => Some(10), // default seconds
+            },
             notifications: Vec::with_capacity(
                 toml_settings
                     .notifications
@@ -111,6 +131,7 @@ impl TryFrom<TOMLSettings> for Settings {
     }
 }
 
+#[hooq(anyhow)]
 impl TryFrom<ModeTOMLSetting> for ModeSetting {
     type Error = anyhow::Error;
     fn try_from(mode_toml_setting: ModeTOMLSetting) -> anyhow::Result<Self> {
@@ -126,46 +147,34 @@ impl TryFrom<ModeTOMLSetting> for ModeSetting {
     }
 }
 
+#[hooq(anyhow)]
 impl TryFrom<NotificationTOMLSetting> for NotificationSetting {
     type Error = anyhow::Error;
     fn try_from(notification_toml_setting: NotificationTOMLSetting) -> anyhow::Result<Self> {
         let percentage = notification_toml_setting.percentage;
         let Some(percentage_symbol) = percentage.chars().last() else {
-            eprintln!(
-                "{}",
-                format!("percentage may be empty. found:'{}'.", &percentage).red()
-            );
-            return Err(anyhow::anyhow!(
-                "percentage may be empty. found:'{}'.",
-                &percentage
+            return Err(anyhow::Error::msg(
+                format!("percentage may be empty. found:'{}'.", &percentage).red(),
             ));
         };
         let percentage_symbol = match percentage_symbol {
             '+' => PercentageSymbol::Excess,
             '-' => PercentageSymbol::Under,
             _ => {
-                eprintln!(
-                    "{}",
+                return Err(anyhow::Error::msg(
                     format!(
                         "Failed to interpret '{}' as percentage symbol.",
                         &percentage_symbol
                     )
-                    .red()
-                );
-                return Err(anyhow::anyhow!(
-                    "Failed to interpret '{}' as percentage symbol.",
-                    &percentage_symbol
+                    .red(),
                 ));
             }
         };
         let percentage_int: u32 =
             percentage[0..percentage.len() - 1]
                 .parse()
-                .inspect_err(|_e| {
-                    eprintln!(
-                        "{}",
-                        format!("Failed to interpret '{}' as percentage value.", &percentage).red()
-                    );
+                .with_context(|| {
+                    format!("Failed to interpret '{}' as percentage value.", &percentage).red()
                 })?;
         let power_supply: crate::battery::PowerSupply = match notification_toml_setting
             .power_supply
@@ -175,18 +184,10 @@ impl TryFrom<NotificationTOMLSetting> for NotificationSetting {
             "InAdequate" => crate::battery::PowerSupply::InAdequate,
             "None" => crate::battery::PowerSupply::None,
             _ => {
-                eprintln!(
-                            "{}",
-                            format!(
-                                r#"Failed to interpret power_supply:'{}'. Use "Adequate" , "InAdequate" or "None"."#,
-                                &notification_toml_setting.power_supply
-                            )
-                            .red()
-                        );
-                return Err(anyhow::anyhow!(
+                return Err(anyhow::Error::msg(format!(
                     r#"Failed to interpret power_supply:'{}'. Use "Adequate" , "InAdequate" or "None"."#,
                     &notification_toml_setting.power_supply
-                ));
+                ).red()));
             }
         };
         Ok(NotificationSetting {

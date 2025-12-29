@@ -9,10 +9,31 @@ notification_method = "TauriWinrtToast"
 # This field defines notification method (notifier crate).
 # Options now: "TauriWinrtToast"(default), "WinrtToastReborn"
 
+initial_mode = ""
+# Optional field
+# This field defines mode (name of mode) to use initially.
+# The default is modeless ("").
+
+abort_on_error_except_change_mode = false
+# Optional field
+# This field defines whether to abort on error except change mode.
+# Options: true, false(default)
+
 notify_battery_during_change_mode = false
 # Optional field
 # This field defines whether to notify battery level during notify change mode.
 # Options: true, false(default)
+
+select_mode_when_starts = true
+# Optional field
+# This field defines whether to select mode when starts.
+# Options: true(default), false
+
+wait_seconds_after_select_mode_when_starts = 10
+# Optional field
+# This field defines seconds to wait after select mode when starts.
+# The default is 10 seconds.
+
 
 # Optional fields end
 # ==================================================

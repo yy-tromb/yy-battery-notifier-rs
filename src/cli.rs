@@ -29,7 +29,10 @@ impl Cli {
                 &self.settings.initial_mode,
             )?;
         }
-        if let Some(wait_time) = self.settings.wait_seconds_after_select_mode_when_starts {
+        if let Some(wait_time) = self
+            .settings
+            .wait_seconds_after_select_mode_notify_when_starts
+        {
             std::thread::sleep(std::time::Duration::from_secs(wait_time));
         }
         Ok(())
