@@ -1,14 +1,38 @@
-use std::sync::{Arc, Mutex};
-
+use anyhow::Context as _;
 use colored::Colorize;
+use hooq::hooq;
+
+use std::sync::{Arc, Mutex};
 
 pub struct Cli {
     settings: crate::settings::Settings,
 }
 
+// auto insert .with_context() between Result (example:`~~~()`) and `?;`
+#[hooq(anyhow)]
 impl Cli {
     pub fn new(settings: crate::settings::Settings) -> Self {
         Self { settings }
+    }
+
+    #[inline]
+    fn outset(
+        &self,
+        notification_action: Arc<Mutex<Option<crate::notification::NotificationAction>>>,
+        mode_names: &[&String],
+    ) -> anyhow::Result<()> {
+        if self.settings.select_mode_when_starts {
+            crate::notification::mode_change_notify(
+                &self.settings.notification_method,
+                notification_action,
+                mode_names,
+                &self.settings.initial_mode,
+            )?;
+        }
+        if let Some(wait_time) = self.settings.wait_seconds_after_select_mode_when_starts {
+            std::thread::sleep(std::time::Duration::from_secs(wait_time));
+        }
+        Ok(())
     }
 
     pub fn run(&self) -> anyhow::Result<()> {
@@ -19,12 +43,36 @@ impl Cli {
         let notification_method = &self.settings.notification_method;
         let notification_action: Arc<Mutex<Option<NotificationAction>>> =
             Arc::new(Mutex::new(None));
+        self.outset(Arc::clone(&notification_action), &mode_names)?;
+
+        // auto insert below expression and .with_context between Result (example:`~~~()`) and `?;`
+        // most function return Result<()>, so if to recovery, using Ok(())
+        #[hooq::method(.or_else(|e| {
+            if self.settings.abort_on_error_except_initialize {
+                Err(e)
+            } else {
+                // ToDo: Handle error gracefully
+                let path = $path;
+                let line = $line;
+                let col = $col;
+                let expr = hooq::summary!($source);
+                eprintln!("[{path}:{line}:{col}]\n{expr}");
+                Ok(())
+            }
+            .$so_far // inserted anyhow::Result::with_context() as above impl Cli
+        }))]
         loop {
             let mut action_guard = match notification_action.lock() {
                 Ok(action_guard) => action_guard,
                 Err(e) => {
-                    eprintln!("{}", "Failed to read notification action.".red());
-                    eprintln!("{:?}", e.get_ref());
+                    eprintln!(
+                        "[{}:{}:{}] notification_action.lock() in cli::Cli::run\n{}",
+                        file!(),
+                        line!() - 6, // line of notification_action.lock(),
+                        68,          // column of notification_action.lock(),
+                        "poison error of Mutex of notification action.".red()
+                    );
+                    eprintln!("ref: {:?}", e.get_ref());
                     e.into_inner()
                 }
             };
@@ -93,9 +141,18 @@ impl Cli {
             } else {
                 println!("no mode");
             };
-            let battery_report = crate::battery::battery_check().inspect_err(|_e| {
-                eprintln!("{}", "Failed to check battery information.".red());
-            })?;
+            let battery_report = match crate::battery::battery_check() {
+                Ok(report) => report,
+                Err(e) => {
+                    if self.settings.abort_on_error_except_initialize {
+                        return Err(e);
+                    } else {
+                        eprintln!("Error checking battery: {}", e);
+                        std::thread::sleep(duration);
+                        continue; // ToDo: Handle error gracefully
+                    }
+                }
+            };
             dbg!(&battery_report);
             self.settings
                 .notifications
@@ -141,5 +198,7 @@ impl Cli {
             println!("check battery and notifying");
             std::thread::sleep(duration);
         }
+        #[allow(unreachable_code)]
+        Ok(())
     }
 }

@@ -1,15 +1,18 @@
-use crate::registry::{check_deleted, check_registered, delete_tree, register, RegistryValue};
+use crate::registry::{RegistryValue, check_deleted, check_registered, delete_tree, register};
+use anyhow::Context as _;
 use colored::Colorize;
+use hooq::hooq;
 
 pub const AUMID: &str = "yy-tromb.yy-battery-notifier-rs";
 
 #[inline]
+#[hooq(anyhow)]
 pub fn register_and_check_aumid(root: &windows_registry::Key) -> anyhow::Result<()> {
     let keys_and_values = vec![
         ("DisplayName", RegistryValue::String("yy-battery-notifier-rs".to_string())),
         ("IconUri", RegistryValue::String(
             std::env::current_exe()
-                .inspect_err(|_e| eprintln!("{}", "Failed to get current exe".red()))?
+                .with_context(|| "Failed to get current execution file path.")?
                 .to_str()
                 .unwrap_or(r"C:\Program Files\yy-tromb\yy-battery-notifier-rs\yy-battery-notifier-rs.exe")
                 .to_string()
@@ -33,14 +36,11 @@ pub fn register_and_check_aumid(root: &windows_registry::Key) -> anyhow::Result<
 }
 
 #[inline]
+#[hooq(anyhow)]
 pub fn delete_and_check_aumid(root: &windows_registry::Key) -> anyhow::Result<()> {
     let keys = vec!["DisplayName", "IconUri"];
     //delete
-    delete_tree(
-        root,
-        r"SOFTWARE\Classes\AppUserModelId",
-        &AUMID,
-    )?;
+    delete_tree(root, r"SOFTWARE\Classes\AppUserModelId", &AUMID)?;
     check_deleted(
         root,
         format!(r"SOFTWARE\Classes\AppUserModelId\{}", AUMID).as_str(),

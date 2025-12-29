@@ -2,6 +2,8 @@ mod tauri_winrt_toast;
 mod win32_notif;
 mod winrt_toast_reborn;
 
+use anyhow::Context as _;
+use hooq::hooq;
 use std::sync::{Arc, Mutex};
 
 #[derive(serde::Serialize, serde::Deserialize, Debug, Clone, Default)]
@@ -46,6 +48,7 @@ pub fn judge_notification(
 }
 
 #[inline]
+#[hooq(anyhow)]
 pub fn battery_notify(
     method: &NotificationMethod,
     battery_report: &crate::battery::BatteryReport,
@@ -78,6 +81,7 @@ pub fn battery_notify(
 }
 
 #[inline]
+#[hooq(anyhow)]
 pub fn mode_change_notify(
     method: &NotificationMethod,
     notification_action: Arc<Mutex<Option<NotificationAction>>>,

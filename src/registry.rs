@@ -1,4 +1,6 @@
+use anyhow::Context as _;
 use colored::Colorize;
+use hooq::hooq;
 
 pub use windows_registry::{CURRENT_USER, LOCAL_MACHINE};
 pub enum RegistryValue<'a> {
@@ -21,6 +23,7 @@ fn str_to_wide(s: &str) -> windows::core::PCWSTR {
     )
 }
 
+#[hooq(anyhow)]
 pub fn register(
     root: &windows_registry::Key,
     path: &str,
@@ -28,59 +31,43 @@ pub fn register(
 ) -> anyhow::Result<()> {
     let tree = root
         .create(path)
-        .inspect_err(|_e| {
+        .with_context(|| {
             if root.as_raw() == windows_registry::LOCAL_MACHINE.as_raw() {
-                eprintln!("{}", format!(r"Failed to open registry 'HKEY_LOCAL_MACHINE\{}'. You may need to run as administrator.",path).red());
+                format!("Failed to open registry 'HKEY_LOCAL_MACHINE\\{}'. You may need to run as administrator.", path).red()
             } else {
-                eprintln!("{}", format!(r"Failed to open registry 'HKEY_CURRENT_USER\{}'.",path).red());
+                format!("Failed to open registry 'HKEY_CURRENT_USER\\{}'.", path).red()
             }
         })?;
     for (key, value) in keys_and_values {
         match value {
             RegistryValue::String(value_string) => {
-                tree.set_string(key, value_string).inspect_err(|_e| {
+                tree.set_string(key, value_string).with_context(|| {
                     if root.as_raw() == windows_registry::LOCAL_MACHINE.as_raw() {
-                        eprintln!(
-                            "{}",
-                            format!(
-                                r"Failed to set registry 'HKEY_LOCAL_MACHINE\{}\{}'.",
-                                path, key
-                            )
-                            .red()
-                        );
+                        format!(
+                            r"Failed to set registry 'HKEY_LOCAL_MACHINE\{}\{}'.",
+                            path, key
+                        )
                     } else {
-                        eprintln!(
-                            "{}",
-                            format!(
-                                r"Failed to set registry 'HKEY_CURRENT_USER\{}\{}'.",
-                                path, key
-                            )
-                            .red()
-                        );
+                        format!(
+                            r"Failed to set registry 'HKEY_CURRENT_USER\{}\{}'.",
+                            path, key
+                        )
                     }
                 })?;
             }
             RegistryValue::Bytes(value_bytes) => {
                 tree.set_bytes(key, windows_registry::Type::Bytes, value_bytes)
-                    .inspect_err(|_e| {
+                    .with_context(|| {
                         if root.as_raw() == windows_registry::LOCAL_MACHINE.as_raw() {
-                            eprintln!(
-                                "{}",
-                                format!(
-                                    r"Failed to set registry 'HKEY_LOCAL_MACHINE\{}\{}'.",
-                                    path, key
-                                )
-                                .red()
-                            );
+                            format!(
+                                r"Failed to set registry 'HKEY_LOCAL_MACHINE\{}\{}'.",
+                                path, key
+                            )
                         } else {
-                            eprintln!(
-                                "{}",
-                                format!(
-                                    r"Failed to set registry 'HKEY_CURRENT_USER\{}\{}'.",
-                                    path, key
-                                )
-                                .red()
-                            );
+                            format!(
+                                r"Failed to set registry 'HKEY_CURRENT_USER\{}\{}'.",
+                                path, key
+                            )
                         }
                     })?;
             }
@@ -89,6 +76,7 @@ pub fn register(
     anyhow::Ok(())
 }
 
+#[hooq(anyhow)]
 pub fn check_registered(
     root: &windows_registry::Key,
     path: &str,
@@ -96,42 +84,37 @@ pub fn check_registered(
 ) -> anyhow::Result<()> {
     let tree = root
         .create(path)
-        .inspect_err(|_e| {
+        .with_context(|| {
             if root.as_raw() == windows_registry::LOCAL_MACHINE.as_raw() {
-                eprintln!("{}", format!(r"Failed to open registry 'HKEY_LOCAL_MACHINE\{}'. You may need to run as administrator.",path).red());
+                format!("{}", format!(r"Failed to open registry 'HKEY_LOCAL_MACHINE\{}'. You may need to run as administrator.",path)).red()
             } else {
-                eprintln!("{}", format!(r"Failed to open registry 'HKEY_CURRENT_USER\{}'.",path).red());
+                format!("{}", format!(r"Failed to open registry 'HKEY_CURRENT_USER\{}'.",path)).red()
             }
         })?;
     for (key, value) in keys_and_values {
         match value {
             RegistryValue::String(value_string) => {
-                let read_value = tree.get_string(key).inspect_err(|_e| {
+                let read_value = tree.get_string(key).with_context(|| {
                     if root.as_raw() == windows_registry::LOCAL_MACHINE.as_raw() {
-                        eprintln!(
-                            "{}",
-                            format!(
-                                r"Failed to read registry 'HKEY_LOCAL_MACHINE\{}\{}'.",
-                                path, key
-                            )
-                            .red()
-                        );
+                        format!(
+                            r"Failed to read registry 'HKEY_LOCAL_MACHINE\{}\{}'.",
+                            path, key
+                        )
                     } else {
-                        eprintln!(
-                            "{}",
-                            format!(
-                                r"Failed to read registry 'HKEY_CURRENT_USER\{}\{}'.",
-                                path, key
-                            )
-                            .red()
-                        );
+                        format!(
+                            r"Failed to read registry 'HKEY_CURRENT_USER\{}\{}'.",
+                            path, key
+                        )
                     }
                 })?;
                 if &read_value != value_string {
-                    return anyhow::Result::Err(anyhow::anyhow!(format!(
+                    return anyhow::Result::Err(anyhow::Error::msg(format!(
                         r"Registry 'HKEY_CURRENT_USER\{}\{}' has unexpected value. Expected: {}, Found: {}",
-                        path, key, value_string, read_value
-                    )));
+                        path,
+                        key,
+                        value_string,
+                        read_value
+                    ).red()));
                 }
             }
             RegistryValue::Bytes(value_bytes) => {
@@ -139,25 +122,17 @@ pub fn check_registered(
                 let key_wide = str_to_wide(key);
                 let read_value_info = unsafe {
                     tree.raw_get_bytes(&key_wide, &mut buffer)
-                        .inspect_err(|_e| {
+                        .with_context(|| {
                             if root.as_raw() == windows_registry::LOCAL_MACHINE.as_raw() {
-                                eprintln!(
-                                    "{}",
-                                    format!(
-                                        r"Failed to read registry 'HKEY_LOCAL_MACHINE\{}\{}'.",
-                                        path, key
-                                    )
-                                    .red()
-                                );
+                                format!(
+                                    r"Failed to read registry 'HKEY_LOCAL_MACHINE\{}\{}'.",
+                                    path, key
+                                )
                             } else {
-                                eprintln!(
-                                    "{}",
-                                    format!(
-                                        r"Failed to read registry 'HKEY_CURRENT_USER\{}\{}'.",
-                                        path, key
-                                    )
-                                    .red()
-                                );
+                                format!(
+                                    r"Failed to read registry 'HKEY_CURRENT_USER\{}\{}'.",
+                                    path, key
+                                )
                             }
                         })?
                 };
@@ -165,26 +140,24 @@ pub fn check_registered(
                     || read_value_info.1 != *value_bytes
                 {
                     if root.as_raw() == windows_registry::LOCAL_MACHINE.as_raw() {
-                        return anyhow::Result::Err(anyhow::anyhow!(
-                            "{}",
+                        return anyhow::Result::Err(anyhow::Error::msg(
                             format!(
                                 r"'HKEY_LOCAL_MACHINE\{}\{}' has unexpected value.\n\
                     Except: {:?} \n\
                     But Found {:?}",
                                 path, key, value_bytes, &read_value_info.1
                             )
-                            .red()
+                            .red(),
                         ));
                     } else {
-                        return anyhow::Result::Err(anyhow::anyhow!(
-                            "{}",
+                        return anyhow::Result::Err(anyhow::Error::msg(
                             format!(
                                 r"'HKEY_CURRENT_USER\{}\{}' has unexpected value.\n\
                     Except: {:?} \n\
                     But Found {:?}",
                                 path, key, value_bytes, &read_value_info.1
                             )
-                            .red()
+                            .red(),
                         ));
                     }
                 }
@@ -194,6 +167,7 @@ pub fn check_registered(
     anyhow::Ok(())
 }
 
+#[hooq(anyhow)]
 pub fn delete_tree(
     root: &windows_registry::Key,
     parent_path: &str,
@@ -201,73 +175,63 @@ pub fn delete_tree(
 ) -> anyhow::Result<()> {
     let tree = root
         .create(parent_path)
-        .inspect_err(|_e| {
+        .with_context(|| {
             if root.as_raw() == windows_registry::LOCAL_MACHINE.as_raw() {
-                eprintln!("{}", format!(r"Failed to open registry 'HKEY_LOCAL_MACHINE\{}'. You may need to run as administrator.",parent_path).red());
+                format!(r"Failed to open registry 'HKEY_LOCAL_MACHINE\{}'. You may need to run as administrator.",parent_path).red()
             } else {
-                eprintln!("{}", format!(r"Failed to open registry 'HKEY_CURRENT_USER\{}'.",parent_path).red());
+                format!(r"Failed to open registry 'HKEY_CURRENT_USER\{}'.",parent_path).red()
             }
         })?;
-    tree.remove_tree(target_tree).inspect_err(|_e| {
+    tree.remove_tree(target_tree).with_context(|| {
         if root.as_raw() == windows_registry::LOCAL_MACHINE.as_raw() {
-            eprintln!(
-                "{}",
-                format!(
-                    r"Failed to remove registry tree 'HKEY_LOCAL_MACHINE\{}\{}'.",
-                    parent_path, target_tree
-                )
-                .red()
-            );
+            format!(
+                r"Failed to remove registry tree 'HKEY_LOCAL_MACHINE\{}\{}'.",
+                parent_path, target_tree
+            )
         } else {
-            eprintln!(
-                "{}",
-                format!(
-                    r"Failed to remove registry tree 'HKEY_CURRENT_USER\{}\{}'.",
-                    parent_path, target_tree
-                )
-                .red()
-            );
+            format!(
+                r"Failed to remove registry tree 'HKEY_CURRENT_USER\{}\{}'.",
+                parent_path, target_tree
+            )
         }
     })?;
     anyhow::Ok(())
 }
 
-pub fn delete_values(root: &windows_registry::Key, path: &str, keys: &[&str]) -> anyhow::Result<()> {
+#[hooq(anyhow)]
+pub fn delete_values(
+    root: &windows_registry::Key,
+    path: &str,
+    keys: &[&str],
+) -> anyhow::Result<()> {
     let tree = root
         .create(path)
-        .inspect_err(|_e| {
+        .with_context(|| {
             if root.as_raw() == windows_registry::LOCAL_MACHINE.as_raw() {
-                eprintln!("{}", format!(r"Failed to open registry 'HKEY_LOCAL_MACHINE\{}'. You may need to run as administrator.",path).red());
+                format!(r"Failed to open registry 'HKEY_LOCAL_MACHINE\{}'. You may need to run as administrator.",path).red()
             } else {
-                eprintln!("{}", format!(r"Failed to open registry 'HKEY_CURRENT_USER\{}'.",path).red());
+                format!(r"Failed to open registry 'HKEY_CURRENT_USER\{}'.",path).red()
             }
         })?;
     for key in keys {
-        tree.remove_value(key).inspect_err(|_e| {
+        tree.remove_value(key).with_context(|| {
             if root.as_raw() == windows_registry::LOCAL_MACHINE.as_raw() {
-                eprintln!(
-                    "{}",
-                    format!(
-                        r"Failed to remove registry key 'HKEY_LOCAL_MACHINE\{}\{}'.",
-                        path, key
-                    )
-                    .red()
-                );
+                format!(
+                    r"Failed to remove registry key 'HKEY_LOCAL_MACHINE\{}\{}'.",
+                    path, key
+                )
             } else {
-                eprintln!(
-                    "{}",
-                    format!(
-                        r"Failed to remove registry key 'HKEY_CURRENT_USER\{}\{}'.",
-                        path, key
-                    )
-                    .red()
-                );
+                format!(
+                    r"Failed to remove registry key 'HKEY_CURRENT_USER\{}\{}'.",
+                    path, key
+                )
             }
         })?;
     }
     anyhow::Ok(())
 }
 
+#[hooq(anyhow)]
 pub fn check_deleted(
     root: &windows_registry::Key,
     path: &str,
@@ -275,60 +239,55 @@ pub fn check_deleted(
 ) -> anyhow::Result<()> {
     let tree = root
         .create(path)
-        .inspect_err(|_e| {
+        .with_context(|| {
             if root.as_raw() == windows_registry::LOCAL_MACHINE.as_raw() {
-                eprintln!("{}", format!(r"Failed to open registry 'HKEY_LOCAL_MACHINE\{}'. You may need to run as administrator.",path).red());
+                format!(r"Failed to open registry 'HKEY_LOCAL_MACHINE\{}'. You may need to run as administrator.",path).red()
             } else {
-                eprintln!("{}", format!(r"Failed to open registry 'HKEY_CURRENT_USER\{}'.",path).red());
+                format!(r"Failed to open registry 'HKEY_CURRENT_USER\{}'.",path).red()
             }
         })?;
     for key in keys {
         match tree.get_value(key) {
             Ok(v) => {
                 if root.as_raw() == windows_registry::LOCAL_MACHINE.as_raw() {
-                    return anyhow::Result::Err(anyhow::anyhow!(
-                        "{}",
+                    return anyhow::Result::Err(anyhow::Error::msg(
                         format!(
                             r"Failed to delete registry 'HKEY_LOCAL_MACHINE\{}\{}'.\n Found: {:?}",
                             path, key, v
                         )
-                        .red()
+                        .red(),
                     ));
                 } else {
-                    return anyhow::Result::Err(anyhow::anyhow!(
-                        "{}",
+                    return anyhow::Result::Err(anyhow::Error::msg(
                         format!(
                             r"Failed to read registry 'HKEY_CURRENT_USER\{}\{}'.\n Found: {:?}",
                             path, key, v
                         )
-                        .red()
+                        .red(),
                     ));
                 }
             }
             Err(e) => {
-                if e.code() == WIN32_ERROR_E_FILENOTFOUND {
+                if e.code().0 == WIN32_ERROR_E_FILENOTFOUND.0 {
                     // do nothing
                 } else {
                     if root.as_raw() == windows_registry::LOCAL_MACHINE.as_raw() {
-                        eprintln!(
-                            "{}",
+                        anyhow::Result::Err(anyhow::Error::from(e)).with_context(|| {
                             format!(
                                 r"Failed to read registry 'HKEY_LOCAL_MACHINE\{}\{}'.",
                                 path, key
                             )
                             .red()
-                        );
+                        })?;
                     } else {
-                        eprintln!(
-                            "{}",
+                        anyhow::Result::Err(anyhow::Error::from(e)).with_context(|| {
                             format!(
                                 r"Failed to read registry 'HKEY_CURRENT_USER\{}\{}'.",
                                 path, key
                             )
                             .red()
-                        );
+                        })?;
                     }
-                    return anyhow::Result::Err(anyhow::Error::from(e));
                 }
             }
         }

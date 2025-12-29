@@ -1,8 +1,13 @@
-use super::{NotificationAction, NotificationInputType};
-use std::sync::{Arc, Mutex};
+use anyhow::Context as _;
+use hooq::hooq;
 use winrt_toast_reborn::content::input::InputType;
 use winrt_toast_reborn::{Action, Input, Selection, Toast, ToastDuration, ToastManager};
 
+use std::sync::{Arc, Mutex};
+
+use super::{NotificationAction, NotificationInputType};
+
+#[hooq(anyhow)]
 pub(super) fn battery_notify_winrt_toast_reborn(
     battery_report: &crate::battery::BatteryReport,
     title: &str,
@@ -162,6 +167,7 @@ fn handle_battery_notify_activated_action(
     }
 }
 
+#[hooq(anyhow)]
 pub(super) fn mode_change_notify_winrt_toast_reborn(
     notification_action: Arc<Mutex<Option<NotificationAction>>>,
     mode_names: &[&String],

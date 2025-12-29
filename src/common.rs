@@ -1,11 +1,12 @@
 pub fn error_to_string(error: &anyhow::Error) -> String {
     //ToDo: error handle system
-    let msg = format!("{}", error);
+    let msg = format!("{:?}", error);
     msg.replace("\x1b[31m", "")
         .replace("\x1b[1m", "")
         .replace("\x1b[0m", "")
 }
 
+#[hooq::hooq]
 pub fn error_msgbox(error: &anyhow::Error) -> anyhow::Result<()> {
     use windows::Win32::UI::WindowsAndMessaging::{MB_ICONERROR, MESSAGEBOX_RESULT, MessageBoxW};
     use windows::core::HSTRING;

@@ -1,4 +1,6 @@
+use anyhow::Context as _;
 use colored::Colorize;
+use hooq::hooq;
 
 #[derive(Debug, Clone)]
 pub struct BatteryReport {
@@ -26,6 +28,7 @@ impl From<windows::System::Power::PowerSupplyStatus> for PowerSupply {
     }
 }
 
+#[hooq(anyhow)]
 pub fn battery_check() -> anyhow::Result<BatteryReport> {
     let mut battery_report = battery_check_winrt()?;
     dbg!(&battery_report);
@@ -36,12 +39,13 @@ pub fn battery_check() -> anyhow::Result<BatteryReport> {
         if batttery_report_win32.remaining_seconds.is_some() {
             battery_report.remaining_seconds = batttery_report_win32.remaining_seconds;
         }
-        Ok(battery_report)
+        anyhow::Ok(battery_report)
     } else {
-        Ok(battery_report)
+        anyhow::Ok(battery_report)
     }
 }
 
+#[hooq(anyhow)]
 fn battery_check_winrt() -> anyhow::Result<BatteryReport> {
     use windows::System::Power::PowerManager;
     let percentage = PowerManager::RemainingChargePercent()? as u32;
@@ -62,6 +66,7 @@ fn battery_check_winrt() -> anyhow::Result<BatteryReport> {
     })
 }
 
+#[hooq(anyhow)]
 fn battery_check_win32() -> anyhow::Result<BatteryReport> {
     use windows::Win32::System::Power::{GetSystemPowerStatus, SYSTEM_POWER_STATUS};
     let mut system_power_status = SYSTEM_POWER_STATUS::default();
@@ -71,7 +76,7 @@ fn battery_check_win32() -> anyhow::Result<BatteryReport> {
     let percentage = match system_power_status.BatteryLifePercent {
         0..=100 => system_power_status.BatteryLifePercent as u32,
         255 => {
-            return Err(anyhow::anyhow!(format!(
+            return Err(anyhow::Error::msg(format!(
                 "{}",
                 "Battery life percentage is unknown.".red()
             )));

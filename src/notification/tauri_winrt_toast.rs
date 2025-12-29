@@ -1,7 +1,12 @@
-use super::NotificationAction;
-use std::sync::{Arc, Mutex};
+use anyhow::Context as _;
+use hooq::hooq;
 use tauri_winrt_notification::{Duration, Progress, Toast};
 
+use std::sync::{Arc, Mutex};
+
+use super::NotificationAction;
+
+#[hooq(anyhow)]
 pub(super) fn battery_notify_tauri_winrt_toast(
     battery_report: &crate::battery::BatteryReport,
     title: &str,
@@ -80,6 +85,7 @@ fn handle_battery_notify_activated_action(
     }
 }
 
+#[hooq(anyhow)]
 pub(super) fn mode_change_notify_tauri_winrt_toast(
     notification_action: Arc<Mutex<Option<NotificationAction>>>,
     mode_names: &[&String],

@@ -1,5 +1,6 @@
 #![cfg_attr(feature = "gui", windows_subsystem = "windows")]
 
+use anyhow::Context as _;
 use clap::Parser;
 use colored::Colorize;
 
@@ -12,6 +13,7 @@ mod registry;
 mod settings;
 mod startup;
 
+use hooq::hooq;
 use registry::{CURRENT_USER, LOCAL_MACHINE};
 
 #[derive(clap::Parser, Debug)]
@@ -93,6 +95,7 @@ enum StartupSubCommand {
     Delete,
 }
 
+#[hooq(anyhow)]
 fn main() -> anyhow::Result<()> {
     #[cfg(feature = "gui")]
     let mut attach_console_error = windows::core::Result::Ok(());
@@ -130,9 +133,7 @@ fn main() -> anyhow::Result<()> {
             } == MESSAGEBOX_RESULT(0)
         {
             let error = anyhow::Error::from(windows::core::Error::from_thread());
-            eprintln!("{}", error.to_string().red());
-            crate::common::error_msgbox(&error)
-                .inspect_err(|e| eprintln!("{}", e.to_string().red()))?;
+            crate::common::error_msgbox(&error)?;
         }
     }
     if app_args.subcommands.is_some() {
@@ -151,35 +152,30 @@ fn main() -> anyhow::Result<()> {
             },
         };
         if app_args.msgbox {
-            return subcommand.or_else(|e| crate::common::error_msgbox(&e));
+            return subcommand
+                .inspect_err(|e| eprintln!("{:?}", e))
+                .or_else(|e| crate::common::error_msgbox(&e));
         } else {
             return subcommand;
         }
     }
     let toml_settings_path = if app_args.default_settings {
         std::env::current_exe()
-            .inspect_err(|_e| eprintln!("{}", "Failed to get current execution file path.".red()))?
+            .with_context(|| "Failed to get current execution file path.")?
             .with_file_name("default_settings.toml")
     } else {
         std::path::PathBuf::from(&app_args.toml_settings_path)
     };
     dbg!(&toml_settings_path);
-    let toml_settings = std::fs::read_to_string(&toml_settings_path).inspect_err(|_e| {
-        eprintln!(
-            "{}",
-            format!("Failed to read file '{}'.", &toml_settings_path.display()).red()
-        );
-    })?;
-    let toml_settings: crate::settings::TOMLSettings =
-        toml::from_str(&toml_settings).inspect_err(|_e| {
-            eprintln!(
-                "{}",
-                format!(
-                    "Failed to interpret '{}' as TOML.",
-                    &app_args.toml_settings_path
-                )
-                .red()
-            );
+    let toml_settings = std::fs::read_to_string(&toml_settings_path)
+        .with_context(|| format!("Failed to read file {:?}.", &toml_settings_path).red())?;
+    let toml_settings: crate::settings::TOMLSettings = toml::from_str(&toml_settings)
+        .with_context(|| {
+            format!(
+                "Failed to interpret '{}' as TOML.",
+                &app_args.toml_settings_path
+            )
+            .red()
         })?;
     if app_args.msgbox {
         crate::cli::Cli::new(crate::settings::Settings::try_from(toml_settings)?)
