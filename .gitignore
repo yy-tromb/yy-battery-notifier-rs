@@ -28,8 +28,6 @@ settings.toml
 *.msi
 
 /obj
-expand.rs
-expand_s.rs
 
 test.toml
 test_reborn.toml
@@ -37,4 +35,6 @@ test_mode.toml
 test_tauri.toml
 
 hooq.toml
+
+/expand
 expand*.rs
