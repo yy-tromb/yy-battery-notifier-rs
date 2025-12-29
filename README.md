@@ -259,6 +259,6 @@ ToDo!
 
 ## ToDos
 - [x] ~Add mode change button~
-- [ ] Show mode selector button when this program starts
+- [x] ~Show mode selector button when this program starts~
 - [ ] Implement notification with win32_notif
 - [ ] Implement icon in taskbar with tray_icon
