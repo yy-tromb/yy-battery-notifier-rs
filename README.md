@@ -37,6 +37,13 @@ notification_method = "TauriWinrtToast"
 # This field defines notification method (notifier crate).
 # Options now: "TauriWinrtToast"(default), "WinrtToastReborn"
 
+mode_names = [""]
+# Optional field
+# This field defines order of mode.
+# Normally, the order of written in file is unsaved because of using hash.
+# The mode not written in this field will be added to position later than modes written in this field.
+# The mode not defined notifications will not be added to modes list.
+
 initial_mode = ""
 # Optional field
 # This field defines mode (name of mode) to use initially.
@@ -107,6 +114,13 @@ initial_mode = "default"
 # This field defines mode (name of mode) to use initially.
 # The default is modeless.
 
+mode_names = ["default","RetainCharged","RetainMoreChanged"]
+# Optional field
+# This field defines order of mode.
+# Normally, the order of written in file is unsaved because of using hash.
+# The mode not written in this field will be added to position later than modes written in this field.
+# The mode not defined notifications will not be added to modes list.
+
 [[modes.default.notifications]]
 # Name of mode is free, but you must follow the syntax of TOML.
 # This fields define notifications that notify when mode is "default".
@@ -143,6 +157,13 @@ notification_method = "TauriWinrtToast"
 # Optional field
 # This field defines notification method (notifier crate).
 # Options now: "TauriWinrtToast"(default), "WinrtToastReborn"
+
+mode_names = ["default","RetainCharged","RetainMoreChanged"]
+# Optional field
+# This field defines order of mode.
+# Normally, the order of written in file is unsaved because of using hash.
+# The mode not written in this field will be added to position later than modes written in this field.
+# The mode not defined notifications will not be added to modes list.
 
 initial_mode = "default"
 # Optional field

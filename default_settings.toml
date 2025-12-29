@@ -9,6 +9,13 @@ notification_method = "TauriWinrtToast"
 # This field defines notification method (notifier crate).
 # Options now: "TauriWinrtToast"(default), "WinrtToastReborn"
 
+mode_names = [""]
+# Optional field
+# This field defines order of mode.
+# Normally, the order of written in file is unsaved because of using hash.
+# The mode not written in this field will be added to position later than modes written in this field.
+# The mode not defined notifications will not be added to modes list.
+
 initial_mode = ""
 # Optional field
 # This field defines mode (name of mode) to use initially.

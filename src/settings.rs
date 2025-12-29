@@ -1,7 +1,11 @@
+use std::ops::Deref;
+
 use anyhow::Context as _;
 use colored::Colorize;
 use hooq::hooq;
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxBuildHasher, FxHashMap};
+
+type FxIndexMap<K, V> = indexmap::IndexMap<K, V, FxBuildHasher>;
 
 use crate::notification::NotificationInputType;
 use crate::notification::NotificationMethod;
@@ -10,6 +14,7 @@ use crate::notification::NotificationMethod;
 pub struct TOMLSettings {
     pub check_interval: u64,
     pub notification_method: Option<NotificationMethod>,
+    pub mode_names: Option<Vec<String>>,
     pub initial_mode: Option<String>,
     pub abort_on_error_except_initialize: Option<bool>,
     pub notify_battery_during_change_mode: Option<bool>,
@@ -43,7 +48,7 @@ pub struct Settings {
     pub select_mode_when_starts: bool,
     pub wait_seconds_after_select_mode_notify_when_starts: Option<u64>,
     pub notifications: Vec<NotificationSetting>,
-    pub modes: FxHashMap<String, ModeSetting>,
+    pub modes: FxIndexMap<String, ModeSetting>,
 }
 
 #[derive(Debug, Clone)]
@@ -107,7 +112,7 @@ impl TryFrom<TOMLSettings> for Settings {
                     .as_ref()
                     .map_or(0usize, |notifications| notifications.len()),
             ),
-            modes: FxHashMap::with_capacity_and_hasher(
+            modes: FxIndexMap::with_capacity_and_hasher(
                 toml_settings
                     .modes
                     .as_ref()
@@ -121,8 +126,25 @@ impl TryFrom<TOMLSettings> for Settings {
                 .push(notification_toml_setting.try_into()?);
         }
         if let Some(modes) = toml_settings.modes {
-            for (mode, mode_toml_setting) in modes {
-                settings.modes.insert(mode, mode_toml_setting.try_into()?);
+            if let Some(mode_names) = toml_settings.mode_names.as_ref() {
+                for mode_name in mode_names {
+                    if let Some(mode_toml_setting) = modes.get(mode_name) {
+                        settings
+                            .modes
+                            .insert(mode_name.clone(), mode_toml_setting.to_owned().try_into()?);
+                    }
+                }
+            }
+            for (mode, mode_toml_setting) in modes.iter().filter(|(key, _)| {
+                if let Some(mode_names) = toml_settings.mode_names.as_ref() {
+                    !mode_names.contains(key)
+                } else {
+                    true
+                }
+            }) {
+                settings
+                    .modes
+                    .insert(mode.clone(), mode_toml_setting.to_owned().try_into()?);
             }
         }
 

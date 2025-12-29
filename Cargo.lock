@@ -2104,6 +2104,7 @@ dependencies = [
  "clap",
  "colored",
  "hooq",
+ "indexmap",
  "rustc-hash",
  "serde",
  "tauri-winrt-notification",
