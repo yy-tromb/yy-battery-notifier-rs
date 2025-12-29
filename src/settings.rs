@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 use anyhow::Context as _;
 use colored::Colorize;
 use hooq::hooq;
