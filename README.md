@@ -57,7 +57,7 @@ select_mode_when_starts = true
 # This field defines whether to select mode when starts.
 # Options: true(default), false
 
-wait_seconds_after_select_mode_when_starts = 10
+wait_seconds_after_select_mode_notify_when_starts = 10
 # Optional field
 # This field defines seconds to wait after select mode when starts.
 # The default is 10 seconds.

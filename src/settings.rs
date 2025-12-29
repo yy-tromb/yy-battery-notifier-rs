@@ -14,7 +14,7 @@ pub struct TOMLSettings {
     pub abort_on_error_except_initialize: Option<bool>,
     pub notify_battery_during_change_mode: Option<bool>,
     pub select_mode_when_starts: Option<bool>,
-    pub wait_seconds_after_select_mode_when_starts: Option<u64>,
+    pub wait_seconds_after_select_mode_notify_when_starts: Option<u64>,
     pub notifications: Option<Vec<NotificationTOMLSetting>>,
     pub modes: Option<FxHashMap<String, ModeTOMLSetting>>,
 }
@@ -41,7 +41,7 @@ pub struct Settings {
     pub abort_on_error_except_initialize: bool,
     pub notify_battery_during_change_mode: bool,
     pub select_mode_when_starts: bool,
-    pub wait_seconds_after_select_mode_when_starts: Option<u64>,
+    pub wait_seconds_after_select_mode_notify_when_starts: Option<u64>,
     pub notifications: Vec<NotificationSetting>,
     pub modes: FxHashMap<String, ModeSetting>,
 }
@@ -94,8 +94,8 @@ impl TryFrom<TOMLSettings> for Settings {
                 .notify_battery_during_change_mode
                 .unwrap_or(false),
             select_mode_when_starts: toml_settings.select_mode_when_starts.unwrap_or(true),
-            wait_seconds_after_select_mode_when_starts: match toml_settings
-                .wait_seconds_after_select_mode_when_starts
+            wait_seconds_after_select_mode_notify_when_starts: match toml_settings
+                .wait_seconds_after_select_mode_notify_when_starts
             {
                 Some(0) => None, // do not wait
                 Some(seconds) => Some(seconds),
