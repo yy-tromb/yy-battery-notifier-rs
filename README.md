@@ -49,9 +49,9 @@ initial_mode = ""
 # This field defines mode (name of mode) to use initially.
 # The default is modeless ("").
 
-abort_on_error_except_change_mode = false
+abort_on_error_except_initialize = false
 # Optional field
-# This field defines whether to abort on error except change mode.
+# This field defines whether to abort on error except initialize.
 # Options: true, false(default)
 
 notify_battery_during_change_mode = false
@@ -106,7 +106,7 @@ message = "The battery level of Your PC is low. Plug in."
 
 ### settings with modes
 > [!IMPORTANT]
-> `modes` features is not available with the current binary of GitHub releases.
+> `modes` is available from version 0.4.0.
 
 ```settings_mode_partial.toml
 initial_mode = "default"
