@@ -3,6 +3,7 @@
 use anyhow::Context as _;
 use clap::Parser;
 use colored::Colorize;
+use hooq::hooq;
 
 mod aumid;
 mod battery;
@@ -13,7 +14,7 @@ mod registry;
 mod settings;
 mod startup;
 
-use hooq::hooq;
+#[allow(unused_imports)]
 use registry::{CURRENT_USER, LOCAL_MACHINE};
 
 #[derive(clap::Parser, Debug)]

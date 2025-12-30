@@ -10,6 +10,7 @@ pub enum RegistryValue<'a> {
 
 const WIN32_ERROR_E_FILENOTFOUND: windows::core::HRESULT =
     windows::core::HRESULT::from_win32(0x80070002);
+#[allow(unused)]
 const WIN32_ERROR_E_ACCESSDENIED: windows::core::HRESULT =
     windows::core::HRESULT::from_win32(0x80070005);
 

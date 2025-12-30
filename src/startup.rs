@@ -2,6 +2,7 @@ use anyhow::Context as _;
 use colored::Colorize;
 use hooq::hooq;
 
+#[allow(unused)]
 use crate::registry::{
     CURRENT_USER, LOCAL_MACHINE, RegistryValue, check_deleted, check_registered, delete_values,
     register,
