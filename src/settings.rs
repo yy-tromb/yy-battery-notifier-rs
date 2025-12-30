@@ -103,7 +103,7 @@ impl TryFrom<TOMLSettings> for Settings {
             {
                 Some(0) => None, // do not wait
                 Some(seconds) => Some(seconds),
-                None => Some(10), // default seconds
+                None => Some(10), // default seconds: 10s
             },
             notifications: Vec::with_capacity(
                 toml_settings
