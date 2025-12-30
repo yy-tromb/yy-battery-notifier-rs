@@ -84,17 +84,13 @@ impl Cli {
                     NotificationAction::Silent5Mins => {
                         println!("{}", "Silent for 5 minutes action triggered.".yellow());
                         std::thread::sleep(std::time::Duration::from_secs(
-                            300u64
-                                .checked_sub(self.settings.check_interval)
-                                .unwrap_or(0),
+                            300u64.saturating_sub(self.settings.check_interval),
                         ));
                     }
                     NotificationAction::Silent10Mins => {
                         println!("{}", "Silent for 10 minutes action triggered.".yellow());
                         std::thread::sleep(std::time::Duration::from_secs(
-                            600u64
-                                .checked_sub(self.settings.check_interval)
-                                .unwrap_or(0),
+                            600u64.saturating_sub(self.settings.check_interval),
                         ));
                     }
                     NotificationAction::SilentSpecifiedMins(specified_mins) => {
@@ -105,10 +101,8 @@ impl Cli {
                         );
                         std::thread::sleep(std::time::Duration::from_secs(
                             specified_mins
-                                .checked_mul(60)
-                                .unwrap_or(u64::MAX)
-                                .checked_sub(self.settings.check_interval)
-                                .unwrap_or(0),
+                                .saturating_mul(60)
+                                .saturating_sub(self.settings.check_interval),
                         ));
                     }
                     NotificationAction::RequireChangeMode => {
