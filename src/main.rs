@@ -120,10 +120,6 @@ fn main() -> anyhow::Result<()> {
     #[cfg(feature = "gui")]
     {
         use windows::Win32::System::Console::{ATTACH_PARENT_PROCESS, AttachConsole, FreeConsole};
-        use windows::Win32::UI::WindowsAndMessaging::{
-            MB_ICONWARNING, MESSAGEBOX_RESULT, MessageBoxW,
-        };
-        use windows::core::w;
         match unsafe { FreeConsole().and_then(|_| AttachConsole(ATTACH_PARENT_PROCESS)) } {
             Ok(_) => println!("Enabled console"),
             Err(e) => {
@@ -157,8 +153,8 @@ fn main() -> anyhow::Result<()> {
     if let Some(subcommand) = app_args.subcommands {
         match subcommand {
             SubCommand::Aumid { subcommands } => match subcommands {
-                AumidSubCommand::Register => crate::aumid::register_and_check_aumid(&CURRENT_USER)?,
-                AumidSubCommand::Delete => crate::aumid::delete_and_check_aumid(&CURRENT_USER)?,
+                AumidSubCommand::Register => crate::aumid::register_and_check_aumid(CURRENT_USER)?,
+                AumidSubCommand::Delete => crate::aumid::delete_and_check_aumid(CURRENT_USER)?,
             },
             SubCommand::Startup { subcommands } => match subcommands {
                 StartupSubCommand::Register {

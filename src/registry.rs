@@ -87,9 +87,9 @@ pub fn check_registered(
         .create(path)
         .with_context(|| {
             if root.as_raw() == windows_registry::LOCAL_MACHINE.as_raw() {
-                format!("{}", format!(r"Failed to open registry 'HKEY_LOCAL_MACHINE\{}'. You may need to run as administrator.",path)).red()
+                format!(r"Failed to open registry 'HKEY_LOCAL_MACHINE\{}'. You may need to run as administrator.",path).red()
             } else {
-                format!("{}", format!(r"Failed to open registry 'HKEY_CURRENT_USER\{}'.",path)).red()
+                format!(r"Failed to open registry 'HKEY_CURRENT_USER\{}'.",path).red()
             }
         })?;
     for (key, value) in keys_and_values {
@@ -122,20 +122,19 @@ pub fn check_registered(
                 let mut buffer: Vec<u8> = vec![0; 260];
                 let key_wide = str_to_wide(key);
                 let read_value_info = unsafe {
-                    tree.raw_get_bytes(&key_wide, &mut buffer)
-                        .with_context(|| {
-                            if root.as_raw() == windows_registry::LOCAL_MACHINE.as_raw() {
-                                format!(
-                                    r"Failed to read registry 'HKEY_LOCAL_MACHINE\{}\{}'.",
-                                    path, key
-                                )
-                            } else {
-                                format!(
-                                    r"Failed to read registry 'HKEY_CURRENT_USER\{}\{}'.",
-                                    path, key
-                                )
-                            }
-                        })?
+                    tree.raw_get_bytes(key_wide, &mut buffer).with_context(|| {
+                        if root.as_raw() == windows_registry::LOCAL_MACHINE.as_raw() {
+                            format!(
+                                r"Failed to read registry 'HKEY_LOCAL_MACHINE\{}\{}'.",
+                                path, key
+                            )
+                        } else {
+                            format!(
+                                r"Failed to read registry 'HKEY_CURRENT_USER\{}\{}'.",
+                                path, key
+                            )
+                        }
+                    })?
                 };
                 if read_value_info.0 != windows_registry::Type::Bytes
                     || read_value_info.1 != *value_bytes
@@ -271,24 +270,22 @@ pub fn check_deleted(
             Err(e) => {
                 if e.code().0 == WIN32_ERROR_E_FILENOTFOUND.0 {
                     // do nothing
+                } else if root.as_raw() == windows_registry::LOCAL_MACHINE.as_raw() {
+                    anyhow::Result::Err(anyhow::Error::from(e)).with_context(|| {
+                        format!(
+                            r"Failed to read registry 'HKEY_LOCAL_MACHINE\{}\{}'.",
+                            path, key
+                        )
+                        .red()
+                    })?;
                 } else {
-                    if root.as_raw() == windows_registry::LOCAL_MACHINE.as_raw() {
-                        anyhow::Result::Err(anyhow::Error::from(e)).with_context(|| {
-                            format!(
-                                r"Failed to read registry 'HKEY_LOCAL_MACHINE\{}\{}'.",
-                                path, key
-                            )
-                            .red()
-                        })?;
-                    } else {
-                        anyhow::Result::Err(anyhow::Error::from(e)).with_context(|| {
-                            format!(
-                                r"Failed to read registry 'HKEY_CURRENT_USER\{}\{}'.",
-                                path, key
-                            )
-                            .red()
-                        })?;
-                    }
+                    anyhow::Result::Err(anyhow::Error::from(e)).with_context(|| {
+                        format!(
+                            r"Failed to read registry 'HKEY_CURRENT_USER\{}\{}'.",
+                            path, key
+                        )
+                        .red()
+                    })?;
                 }
             }
         }
