@@ -1,4 +1,4 @@
-Languages: [English](https://github.com/yy-tromb/yy-battery-notifier-rs/) | 日本語(Japanese)
+Languages: [English](https://github.com/yy-tromb/yy-battery-notifier-rs) | 日本語(Japanese)
 
 # yy-battery-notifier-rs
 バッテリー残量に応じて通知を表示
