@@ -7,7 +7,7 @@ Languages: [English](https://github.com/yy-tromb/yy-battery-notifier-rs/) | 日�
 > このアプリは現在***windows 10,11 のみ***に対応。これは WinRT API( Windows.Devices.Power.Battery と Windows.System.Power.PowerManager )を使っている関係と、[Rustのプラットフォームサポート](https://doc.rust-lang.org/beta/rustc/platform-support.html)によるもの。
 
 > [!IMPORTANT]
-> WinRT の notification API には Application User Model ID が必要。WIX インストーラでインストールする場合、Application User Model ID が Windows レジストリに設定され、通知可能となる。
+> WinRT の notification API には Application User Model ID が必要。WIX インストーラでインストールする場合、Application User Model ID が Windows レジストリに設定されるため、すぐに通知可能。
 
 ## インストール
 
