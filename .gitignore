@@ -33,6 +33,7 @@ test.toml
 test_reborn.toml
 test_mode.toml
 test_tauri.toml
+test_err_parse.toml
 
 hooq.toml
 
