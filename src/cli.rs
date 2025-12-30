@@ -8,7 +8,7 @@ pub struct Cli {
     settings: crate::settings::Settings,
 }
 
-// auto insert .with_context() between Result (example:`~~~()`) and `?;`
+// auto insert .with_context() between Result (example: func()->Result<>:`func()`) and `?;`
 #[hooq(anyhow)]
 impl Cli {
     pub fn new(settings: crate::settings::Settings) -> Self {

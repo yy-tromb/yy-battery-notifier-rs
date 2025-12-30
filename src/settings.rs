@@ -70,6 +70,7 @@ pub struct ModeSetting {
     pub notifications: Vec<NotificationSetting>,
 }
 
+// auto insert .with_context() between Result (example: func()->Result<>:`func()`) and `?;`
 #[hooq(anyhow)]
 impl TryFrom<TOMLSettings> for Settings {
     type Error = anyhow::Error;
@@ -151,6 +152,7 @@ impl TryFrom<TOMLSettings> for Settings {
     }
 }
 
+// auto insert .with_context() between Result (example: func()->Result<>:`func()`) and `?;`
 #[hooq(anyhow)]
 impl TryFrom<ModeTOMLSetting> for ModeSetting {
     type Error = anyhow::Error;
@@ -167,6 +169,7 @@ impl TryFrom<ModeTOMLSetting> for ModeSetting {
     }
 }
 
+// auto insert .with_context() between Result (example: func()->Result<>:`func()`) and `?;`
 #[hooq(anyhow)]
 impl TryFrom<NotificationTOMLSetting> for NotificationSetting {
     type Error = anyhow::Error;
