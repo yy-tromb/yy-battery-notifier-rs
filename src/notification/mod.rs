@@ -37,16 +37,17 @@ pub fn judge_notification(
 ) -> bool {
     match notification_setting.percentage_symbol {
         crate::settings::PercentageSymbol::Excess => {
-            return (battery_report.percentage > notification_setting.percentage_int)
-                && (battery_report.power_supply == notification_setting.power_supply);
+            (battery_report.percentage > notification_setting.percentage_int)
+                && (battery_report.power_supply == notification_setting.power_supply)
         }
         crate::settings::PercentageSymbol::Under => {
-            return (battery_report.percentage < notification_setting.percentage_int)
-                && (battery_report.power_supply == notification_setting.power_supply);
+            (battery_report.percentage < notification_setting.percentage_int)
+                && (battery_report.power_supply == notification_setting.power_supply)
         }
-    };
+    }
 }
 
+#[allow(clippy::too_many_arguments)]
 #[inline]
 #[hooq(anyhow)]
 pub fn battery_notify(

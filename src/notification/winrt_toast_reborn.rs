@@ -48,7 +48,7 @@ pub(super) fn battery_notify_winrt_toast_reborn(
         .action(Action::new("silent for 5 mins", "silent 5 mins", ""))
         .action(Action::new("silent for 10 mins", "silent 10 mins", ""));
     match input_type {
-        NotificationInputType::ModeSelector if mode_names.len() > 0 => {
+        NotificationInputType::ModeSelector if !mode_names.is_empty() => {
             toast.input(
                 Input::new("mode_selection", InputType::Selection)
                     .with_title("select mode")

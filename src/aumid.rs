@@ -40,7 +40,7 @@ pub fn register_and_check_aumid(root: &windows_registry::Key) -> anyhow::Result<
 pub fn delete_and_check_aumid(root: &windows_registry::Key) -> anyhow::Result<()> {
     let keys = vec!["DisplayName", "IconUri"];
     //delete
-    delete_tree(root, r"SOFTWARE\Classes\AppUserModelId", &AUMID)?;
+    delete_tree(root, r"SOFTWARE\Classes\AppUserModelId", AUMID)?;
     check_deleted(
         root,
         format!(r"SOFTWARE\Classes\AppUserModelId\{}", AUMID).as_str(),
