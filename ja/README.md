@@ -1,28 +1,27 @@
-Languages: English | [日本語(Japanese)](https://github.com/yy-tromb/yy-battery-notifier-rs/blob/main/ja/README.md)
+Languages: [English](https://github.com/yy-tromb/yy-battery-notifier-rs/) | 日本語(Japanese)
 
 # yy-battery-notifier-rs
-check battery level and notify you
+バッテリー残量に応じて通知を表示
 
 > [!IMPORTANT]
-> This application is now for ***windows 10,11 only***. This is because of using WinRT API( Windows.Devices.Power.Battery, Windows.System.Power.PowerManager ) and [the Rust's platform support](https://doc.rust-lang.org/beta/rustc/platform-support.html).
+> このアプリは現在***windows 10,11 のみ***に対応。これは WinRT API( Windows.Devices.Power.Battery と Windows.System.Power.PowerManager )を使っている関係と、[Rustのプラットフォームサポート](https://doc.rust-lang.org/beta/rustc/platform-support.html)によるもの。
 
 > [!IMPORTANT]
-> The notification API of WinRT require Application User Model ID. If you install with WIX installer, Application User Model ID is set in Windows Registry and This app can toast.
+> WinRT の notification API には Application User Model ID が必要。WIX インストーラでインストールする場合、Application User Model ID が Windows レジストリに設定され、通知可能となる。
 
-## Installation
+## インストール
 
-You can install [from here](https://github.com/yy-tromb/yy-battery-notifier-rs/releases).
-I recommend MSI installer.  
-Or, you can build with [Cargo](https://doc.rust-lang.org/cargo/) as below...  
-normal release build: `cargo build --release` or `cargo b -r`  
-with gui feature: `cargo build --release --features gui` or `cargo b -r --features gui`
+[ここ](https://github.com/yy-tromb/yy-battery-notifier-rs/releases)からダウンロード。MSI インストーラによるインストールを推奨。  
+または、[Cargo](https://doc.rust-lang.org/cargo/) を使って以下のようにビルド...  
+通常のリリースビルド: `cargo build --release` か `cargo b -r`  
+gui featureを付けてビルド: `cargo build --release --features gui` か `cargo b -r --features gui`
 
-## About settings.toml
+## settings.toml について
 
-About TOML format, try google this...
+TOML のフォーマットについてはググってください...
 
 > [!NOTE]
-> "TauriWinrtToast" method does not implement input element, so "input_type" field of each notification setting is not effective.
+> `TauriWinrtToast` メソッドは input 要素を実装していないため、`notification_method` が `TauriWinrtToast` のとき、それぞれの notification setting に対しての"input_type" フィールドは反映されません。
 
 ### default_settings.toml
 
@@ -105,9 +104,9 @@ title = "Plug in!"
 message = "The battery level of Your PC is low. Plug in."
 ```
 
-### settings with modes
+### modes を使った設定
 > [!IMPORTANT]
-> `modes` is available from version 0.4.0.
+> `modes` 機能はバージョン 0.4.0 以降で利用可能。
 
 ```settings_mode_partial.toml
 initial_mode = "default"
@@ -148,7 +147,7 @@ input_type = "ModeSelector"
 ```
 
 <details>
-<summary>see full version</summary>
+<summary>全てを展開</summary>
 
 ```settings_mode.toml
 check_interval = 5
@@ -236,30 +235,30 @@ message = "The battery level of Your PC is lower than 70%. Plug in."
 
 </details>
 
-## Usage on notification
-ToDo!
+## 通知の使い方
+後で書く!
 
-## Usage on CLI
-### Start notify with specified settings.toml
+## CLIの使い方
+### 指定された settings.toml の設定で通知を開始
 `yy-battery-notifier-rs.exe -s "path to settings.toml"`
 
-### Start notify with default settings
+### デフォルトの設定 (default_settings.toml) で通知を開始
 `yy-battery-notifier-rs.exe -d`
 
-### Sub commands
-  aumid - register,delete : register or delete Application User Model Id (used to notify as toast) on Windows Registry  
-  startup - register,delete : register or delete this app as startup app. Even if you register twice or more, settings will be overrided.
+### サブコマンド
+  aumid - register,delete : 通知に使われる Application User Model Id を Windows レジストリに登録、または削除。  
+  startup - register,delete : このアプリをスタートアップに登録、または削除。 複数回登録した場合でも設定は上書きされる。
 
-### Options
+### オプション
 
-  -s, --settings "path to settings.toml"  \[default: .\settings.toml]  
-  -d, --default_settings : Use [default_settings.toml](https://github.com/yy-tromb/yy-battery-notifier-rs/blob/main/default_settings.toml)  
-      --msgbox : When error occurs, let you know by messagebox  
-  -h, --help : Print help  
-  -V, --version : Print version  
+  -s, --settings "settings.toml へのパス"  \[デフォルト: .\settings.toml]  
+  -d, --default_settings : [default_settings.toml](https://github.com/yy-tromb/yy-battery-notifier-rs/blob/main/default_settings.toml) を使う  
+      --msgbox : エラー発生をmsgboxで知らせる  
+  -h, --help : ヘルプを表示  
+  -V, --version : バージョンを表示  
 
-## ToDos
-- [x] ~Add mode change button~
-- [x] ~Show mode selector button when this program starts~
-- [ ] Implement notification with win32_notif
-- [ ] Implement icon in taskbar with tray_icon
+## やること
+- [x] ~モード変更ボタン~
+- [x] ~最初のモード選択~
+- [ ] win32_notif クレートを使用した通知
+- [ ] tray_icon クレートを使用してタスクバーにアイコンを表示する
