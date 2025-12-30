@@ -11,7 +11,7 @@ Languages: [English](https://github.com/yy-tromb/yy-battery-notifier-rs/) | 日�
 
 ## インストール
 
-[ここ](https://github.com/yy-tromb/yy-battery-notifier-rs/releases)からダウンロード。MSI インストーラによるインストールを推奨。  
+[ここ](https://github.com/yy-tromb/yy-battery-notifier-rs/releases)からダウンロード可能。MSI インストーラによるインストールを推奨。  
 または、[Cargo](https://doc.rust-lang.org/cargo/) を使って以下のようにビルド...  
 通常のリリースビルド: `cargo build --release` か `cargo b -r`  
 gui featureを付けてビルド: `cargo build --release --features gui` か `cargo b -r --features gui`
@@ -21,7 +21,7 @@ gui featureを付けてビルド: `cargo build --release --features gui` か `ca
 TOML のフォーマットについてはググってください...
 
 > [!NOTE]
-> `TauriWinrtToast` メソッドは input 要素を実装していないため、`notification_method` が `TauriWinrtToast` のとき、それぞれの notification setting に対しての"input_type" フィールドは反映されません。
+> `TauriWinrtToast` メソッドは input 要素を実装していないため、`notification_method` が `TauriWinrtToast` のとき、それぞれの notification setting に対しての"input_type" フィールドは無視されます。
 
 ### default_settings.toml
 
@@ -240,7 +240,7 @@ message = "The battery level of Your PC is lower than 70%. Plug in."
 
 ## CLIの使い方
 ### 指定された settings.toml の設定で通知を開始
-`yy-battery-notifier-rs.exe -s "path to settings.toml"`
+`yy-battery-notifier-rs.exe -s "settings.toml へのパス"`
 
 ### デフォルトの設定 (default_settings.toml) で通知を開始
 `yy-battery-notifier-rs.exe -d`
@@ -259,6 +259,6 @@ message = "The battery level of Your PC is lower than 70%. Plug in."
 
 ## やること
 - [x] ~モード変更ボタン~
-- [x] ~最初のモード選択~
+- [x] ~起動時のモード選択~
 - [ ] win32_notif クレートを使用した通知
-- [ ] tray_icon クレートを使用してタスクバーにアイコンを表示する
+- [ ] tray_icon クレートを使用してタスクバーにアイコンを表示
