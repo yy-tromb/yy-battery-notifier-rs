@@ -95,7 +95,23 @@ enum StartupSubCommand {
     Delete,
 }
 
+// auto insert .with_context() between Result (example: func()->Result<>:`func()`) and `?;`
 #[hooq(anyhow)]
+// auto generate error handling with msgbox flag
+// $expr: `?` or expression of `return Err`
+// $so_far: inserted anyhow::Result::with_context() as above fn main(){ ...
+#[hooq::method(
+    if app_args.msgbox {
+        $expr.$so_far.or_else(|e| {
+            Err(crate::common::error_msgbox(&e)
+                .inspect_err(|_| eprintln!("{:?}",e)) // if error occurs in error_msgbox, print original error to stderr.
+                // ToDo!: better error handling
+                .err().unwrap_or(e)) // if error does not occur in error_msgbox, return original error
+        })
+    } else {
+        $expr.$so_far
+    }
+)]
 fn main() -> anyhow::Result<()> {
     #[cfg(feature = "gui")]
     let mut attach_console_error = windows::core::Result::Ok(());
@@ -136,27 +152,23 @@ fn main() -> anyhow::Result<()> {
             crate::common::error_msgbox(&error)?;
         }
     }
-    if app_args.subcommands.is_some() {
-        let subcommand = match app_args.subcommands.unwrap() {
+
+    if let Some(subcommand) = app_args.subcommands {
+        match subcommand {
             SubCommand::Aumid { subcommands } => match subcommands {
-                AumidSubCommand::Register => crate::aumid::register_and_check_aumid(&CURRENT_USER),
-                AumidSubCommand::Delete => crate::aumid::delete_and_check_aumid(&CURRENT_USER),
+                AumidSubCommand::Register => crate::aumid::register_and_check_aumid(&CURRENT_USER)?,
+                AumidSubCommand::Delete => crate::aumid::delete_and_check_aumid(&CURRENT_USER)?,
             },
             SubCommand::Startup { subcommands } => match subcommands {
                 StartupSubCommand::Register {
                     toml_settings_path,
                     input_mode,
                     default_settings,
-                } => crate::startup::register_cli(toml_settings_path, input_mode, default_settings),
-                StartupSubCommand::Delete => crate::startup::delete_and_check_startup(),
+                } => {
+                    crate::startup::register_cli(toml_settings_path, input_mode, default_settings)?
+                }
+                StartupSubCommand::Delete => crate::startup::delete_and_check_startup()?,
             },
-        };
-        if app_args.msgbox {
-            return subcommand
-                .inspect_err(|e| eprintln!("{:?}", e))
-                .or_else(|e| crate::common::error_msgbox(&e));
-        } else {
-            return subcommand;
         }
     }
     let toml_settings_path = if app_args.default_settings {
@@ -177,11 +189,5 @@ fn main() -> anyhow::Result<()> {
             )
             .red()
         })?;
-    if app_args.msgbox {
-        crate::cli::Cli::new(crate::settings::Settings::try_from(toml_settings)?)
-            .run()
-            .or_else(|e| crate::common::error_msgbox(&e))
-    } else {
-        crate::cli::Cli::new(crate::settings::Settings::try_from(toml_settings)?).run()
-    }
+    crate::cli::Cli::new(toml_settings.try_into()?).run()
 }
