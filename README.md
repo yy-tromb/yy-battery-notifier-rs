@@ -112,6 +112,9 @@ message = "The battery level of Your PC is low. Plug in."
 > `modes` is available from version 0.4.0.
 
 ```settings_mode_partial.toml
+check_interval = 5
+# interval seconds(integer) for check battery level.
+
 mode_names = ["default","RetainCharged","RetainMoreChanged"]
 # Optional field
 # This field defines order of mode.

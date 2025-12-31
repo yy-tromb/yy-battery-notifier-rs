@@ -111,6 +111,9 @@ message = "The battery level of Your PC is low. Plug in."
 > `modes` 機能はバージョン 0.4.0 以降で利用可能。
 
 ```settings_mode_partial.toml
+check_interval = 5
+# バッテリ残量を確認する間隔(秒)
+
 mode_names = ["default","RetainCharged","RetainMoreChanged"]
 # 任意のフィールド
 # モードの順番を定義。
@@ -263,7 +266,7 @@ message = "The battery level of Your PC is lower than 70%. Plug in."
 ### オプション
 
   -s, --settings "settings.toml へのパス"  \[デフォルト: .\settings.toml]  
-  -d, --default_settings : [default_settings.toml](https://github.com/yy-tromb/yy-battery-notifier-rs/blob/main/ja/default_settings.toml) を使う  
+  -d, --default_settings : [ja/default_settings.toml](https://github.com/yy-tromb/yy-battery-notifier-rs/blob/main/ja/default_settings.toml) を使う  
       --msgbox : エラー発生をmsgboxで知らせる  
   -h, --help : ヘルプを表示  
   -V, --version : バージョンを表示  
