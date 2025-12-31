@@ -115,7 +115,7 @@ message = "The battery level of Your PC is low. Plug in."
 check_interval = 60
 # interval seconds(integer) for check battery level.
 
-mode_names = ["default","RetainCharged","RetainMoreChanged"]
+mode_names = ["default","RetainCharged","RetainMoreCharged"]
 # Optional field
 # This field defines order of mode.
 # The order of modes written in file is mostly different because of using hash table.
@@ -168,7 +168,7 @@ notification_method = "TauriWinrtToast"
 # This field defines notification method (notifier crate).
 # Options now: "TauriWinrtToast"(default), "WinrtToastReborn"
 
-mode_names = ["default","RetainCharged","RetainMoreChanged"]
+mode_names = ["default","RetainCharged","RetainMoreCharged"]
 # Optional field
 # This field defines order of mode.
 # The order of modes written in file is mostly different because of using hash table.
@@ -216,14 +216,14 @@ message = "The battery level of Your PC is low. Plug in."
 
 # =======================================================
 
-[[modes.RetainMoreChanged.notifications]]
+[[modes.RetainMoreCharged.notifications]]
 percentage = "96+"
 power_supply = "Adequate"
 title = "Remove the plug!"
 message = "Your PC is now fully charged. Remove the plug."
 
 
-[[modes.RetainMoreChanged.notifications]]
+[[modes.RetainMoreCharged.notifications]]
 percentage = "81-"
 power_supply = "None"
 title = "Plug in!"

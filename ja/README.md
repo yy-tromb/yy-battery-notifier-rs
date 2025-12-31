@@ -114,7 +114,7 @@ message = "The battery level of Your PC is low. Plug in."
 check_interval = 60
 # バッテリ残量を確認する間隔(秒)
 
-mode_names = ["default","RetainCharged","RetainMoreChanged"]
+mode_names = ["default","RetainCharged","RetainMoreCharged"]
 # 任意のフィールド
 # モードの順番を定義。
 # 内部でハッシュテーブルを利用するため、モードの順番は、多くの場合でファイルに書かれた順番とは異なる。
@@ -167,7 +167,7 @@ notification_method = "TauriWinrtToast"
 # 通知方法(通知に使用するクレート)を定義。
 # 現在の選択肢: "TauriWinrtToast"(デフォルト), "WinrtToastReborn"
 
-mode_names = ["default","RetainCharged","RetainMoreChanged"]
+mode_names = ["default","RetainCharged","RetainMoreCharged"]
 # 任意のフィールド
 # モードの順番を定義。
 # 内部でハッシュテーブルを利用するため、モードの順番は、多くの場合でファイルに書かれた順番とは異なる。
@@ -215,14 +215,14 @@ message = "The battery level of Your PC is low. Plug in."
 
 # =======================================================
 
-[[modes.RetainMoreChanged.notifications]]
+[[modes.RetainMoreCharged.notifications]]
 percentage = "96+"
 power_supply = "Adequate"
 title = "Remove the plug!"
 message = "Your PC is now fully charged. Remove the plug."
 
 
-[[modes.RetainMoreChanged.notifications]]
+[[modes.RetainMoreCharged.notifications]]
 percentage = "81-"
 power_supply = "None"
 title = "Plug in!"
