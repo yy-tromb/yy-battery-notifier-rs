@@ -32,6 +32,7 @@ settings.toml
 test.toml
 test_reborn.toml
 test_mode.toml
+test_mode_reborn.toml
 test_tauri.toml
 test_err_parse.toml
 
