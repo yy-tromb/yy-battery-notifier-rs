@@ -23,79 +23,81 @@ TOML のフォーマットについてはググってください...
 > [!NOTE]
 > `TauriWinrtToast` メソッドは input 要素を実装していないため、`notification_method` が `TauriWinrtToast` のとき、それぞれの notification setting に対しての"input_type" フィールドは無視されます。
 
-### default_settings.toml
+### [ja/default_settings.toml](https://github.com/yy-tromb/yy-battery-notifier-rs/blob/main/ja/default_settings.toml)
 
-```default_settings.toml
+```ja/default_settings.toml
 check_interval = 60
-# interval seconds(integer) for check battery level.
+# バッテリ残量を確認する間隔(秒)
 
 # ==================================================
-# Optional fields below:
+# 任意のフィールドここから
 
 notification_method = "TauriWinrtToast"
-# Optional field
-# This field defines notification method (notifier crate).
-# Options now: "TauriWinrtToast"(default), "WinrtToastReborn"
+# 任意のフィールド
+# 通知方法(通知に使用するクレート)を定義。
+# 現在の選択肢: "TauriWinrtToast"(デフォルト), "WinrtToastReborn"
 
 mode_names = [""]
-# Optional field
-# This field defines order of mode.
-# Normally, the order of written in file is unsaved because of using hash.
-# The mode not written in this field will be added to position later than modes written in this field.
-# The mode not defined notifications will not be added to modes list.
+# 任意のフィールド
+# モードの順番を定義。
+# 内部でハッシュテーブルを利用するため、モードの順番は、多くの場合でファイルに書かれた順番とは異なる。
+# そのため、このフィールドを使うことでモードの順番を定められる。
+# このフィールドに記述されていないモードは、記述されているモードの後に追加される。
+# `notifications`が設定されていないモードは追加されない。
 
 initial_mode = ""
-# Optional field
-# This field defines mode (name of mode) to use initially.
-# The default is modeless ("").
+# 任意のフィールド
+# 起動時のモードを定義。
+# デフォルトはモードなし（""）。
 
 abort_on_error_except_initialize = false
-# Optional field
-# This field defines whether to abort on error except initialize.
-# Options: true, false(default)
+# 任意のフィールド
+# 起動時を除き、エラー発生にアプリを終了するかを定義。
+# 選択肢: true, false(デフォルト)
 
 notify_battery_during_change_mode = false
-# Optional field
-# This field defines whether to notify battery level during notify change mode.
-# Options: true, false(default)
+# 任意のフィールド
+# モード変更通知表示時にバッテリ残量を通知するかを定義。
+# 選択肢: true, false(デフォルト)
 
 select_mode_when_starts = true
-# Optional field
-# This field defines whether to select mode when starts.
-# Options: true(default), false
+# 任意のフィールド
+# 起動時にモードを選択するかを定義。
+# 選択肢: true(デフォルト), false
 
 wait_seconds_after_select_mode_notify_when_starts = 10
-# Optional field
-# This field defines seconds to wait after select mode when starts.
-# The default is 10 seconds.
+# 任意のフィールド
+# 起動時のモード変更通知後に待機する時間を定義。
+# デフォルトは10秒。
 
 
-# Optional fields end
+# 任意のフィールドここまで
 # ==================================================
 
 [[notifications]]
-# "notifications" is optional, but each field of a notification setting is required.
-# This fields define notifications that always notify.
+# `notifications` の定義は任意ではあるものの、それぞれの通知設定において任意ではないフィールドは必須。
+# このフィールドでは、モードに関係なく常にされる通知を定義。
 
 percentage = "90+"
-# express condition when notifications should be started.
-# This consists of percentage(integer) and suffix "+" or "-".
-# This example express that notifications will start whether battery level excess 90%
-#
+# 通知が開始される条件を定義。
+# 残量のパーセンテージ(整数)と"+" か "-"の接尾辞からなる。
+# この例では、バッテリ残量が90%を超えたら通知が開始。
+
 power_supply = "Adequate"
-# express power supply status. This consists of "Adequate", "InAdequate", "None".
+# 通知が開始される充電状態を定義。
+# "Adequate"(十分な電力での充電), "InAdequate"(不十分な電力での充電), "None"(充電されていない).
 
 title = "Remove the plug!"
-# notification title
+# 通知のタイトルを定義。
 
 message = "Your PC is now fully charged. Remove the plug"
-# notification message
+# 通知のメッセージを定義。
 
-input_type = "ModeSelector"
-# Optional field
-# This field defines type of input element of notification.
-# Options: "ModeSelector"(default), "SilentSpecifiedMinutes"
-# "TauriWinrtToast" method does not implement input element, so this field is not effective.
+input_type = "SilentSpecifiedMinutes"
+# 任意のフィールド
+# 通知の`input`要素のタイプを定義。
+# 選択肢: "ModeSelector"(デフォルト), "SilentSpecifiedMinutes"(通知停止分数を指定)
+# "TauriWinrtToast" メソッドは`input`要素を実装していないため、このフィールドは無視される。
 
 [[notifications]]
 percentage = "45-"
@@ -109,41 +111,45 @@ message = "The battery level of Your PC is low. Plug in."
 > `modes` 機能はバージョン 0.4.0 以降で利用可能。
 
 ```settings_mode_partial.toml
-initial_mode = "default"
-# Optional field
-# This field defines mode (name of mode) to use initially.
-# The default is modeless.
-
 mode_names = ["default","RetainCharged","RetainMoreChanged"]
-# Optional field
-# This field defines order of mode.
-# Normally, the order of written in file is unsaved because of using hash.
-# The mode not written in this field will be added to position later than modes written in this field.
-# The mode not defined notifications will not be added to modes list.
+# 任意のフィールド
+# モードの順番を定義。
+# 内部でハッシュテーブルを利用するため、モードの順番は、多くの場合でファイルに書かれた順番とは異なる。
+# そのため、このフィールドを使うことでモードの順番を定められる。
+# このフィールドに記述されていないモードは、記述されているモードの後に追加される。
+# `notifications`が設定されていないモードは追加されない。
+
+initial_mode = "default"
+# 任意のフィールド
+# 起動時のモードを定義。
+# デフォルトはモードなし（""）。
+
+# =======================================================
 
 [[modes.default.notifications]]
-# Name of mode is free, but you must follow the syntax of TOML.
-# This fields define notifications that notify when mode is "default".
+# TOMLの構文の中でモードの名前は自由。
+# この例においては、モードが "default" であるときの通知設定を定義。
 
 percentage = "92+"
-# express condition when notifications should be started.
-# This consists of percentage(integer) and suffix "+" or "-".
-# This example express that notifications will start whether battery level excess 90%
+# 通知が開始される条件を定義。
+# 残量のパーセンテージ(整数)と"+" か "-"の接尾辞からなる。
+# この例では、バッテリ残量が90%を超えたら通知が開始。
 
 power_supply = "Adequate"
-# express power supply status. This consists of "Adequate", "InAdequate", "None".
+# 通知が開始される充電状態を定義。
+# "Adequate"(十分な電力での充電), "InAdequate"(不十分な電力での充電), "None"(充電されていない).
 
 title = "Remove the plug!"
-# notification title
+# 通知のタイトルを定義。
 
 message = "Your PC is now fully charged. Remove the plug."
-# notification message
+# 通知のメッセージを定義。
 
 input_type = "ModeSelector"
-# Optional field
-# This field defines type of input element of notification.
-# Options: "ModeSelector"(default), "SilentSpecifiedMinutes"
-# "TauriWinrtToast" method does not implement input element, so this field is not effective.
+# 任意のフィールド
+# 通知の`input`要素のタイプを定義。
+# 選択肢: "ModeSelector"(デフォルト), "SilentSpecifiedMinutes"(通知停止分数を指定)
+# "TauriWinrtToast" メソッドは`input`要素を実装していないため、このフィールドは無視される。
 ```
 
 <details>
@@ -151,50 +157,52 @@ input_type = "ModeSelector"
 
 ```settings_mode.toml
 check_interval = 5
-# interval seconds(integer) for check battery level.
+# バッテリ残量を確認する間隔(秒)
 
 notification_method = "TauriWinrtToast"
-# Optional field
-# This field defines notification method (notifier crate).
-# Options now: "TauriWinrtToast"(default), "WinrtToastReborn"
+# 任意のフィールド
+# 通知方法(通知に使用するクレート)を定義。
+# 現在の選択肢: "TauriWinrtToast"(デフォルト), "WinrtToastReborn"
 
 mode_names = ["default","RetainCharged","RetainMoreChanged"]
-# Optional field
-# This field defines order of mode.
-# Normally, the order of written in file is unsaved because of using hash.
-# The mode not written in this field will be added to position later than modes written in this field.
-# The mode not defined notifications will not be added to modes list.
+# 任意のフィールド
+# モードの順番を定義。
+# 内部でハッシュテーブルを利用するため、モードの順番は、多くの場合でファイルに書かれた順番とは異なる。
+# そのため、このフィールドを使うことでモードの順番を定められる。
+# このフィールドに記述されていないモードは、記述されているモードの後に追加される。
+# `notifications`が設定されていないモードは追加されない。
 
 initial_mode = "default"
-# Optional field
-# This field defines mode (name of mode) to use initially.
-# The default is modeless.
+# 任意のフィールド
+# 起動時のモードを定義。
+# デフォルトはモードなし（""）。
 
 # =======================================================
 
 [[modes.default.notifications]]
-# Name of mode is free, but you must follow the syntax of TOML.
-# This fields define notifications that notify when mode is "default".
+# TOMLの構文の中でモードの名前は自由。
+# この例においては、モードが "default" であるときの通知設定を定義。
 
 percentage = "92+"
-# express condition when notifications should be started.
-# This consists of percentage(integer) and suffix "+" or "-".
-# This example express that notifications will start whether battery level excess 90%
+# 通知が開始される条件を定義。
+# 残量のパーセンテージ(整数)と"+" か "-"の接尾辞からなる。
+# この例では、バッテリ残量が90%を超えたら通知が開始。
 
 power_supply = "Adequate"
-# express power supply status. This consists of "Adequate", "InAdequate", "None".
+# 通知が開始される充電状態を定義。
+# "Adequate"(十分な電力での充電), "InAdequate"(不十分な電力での充電), "None"(充電されていない).
 
 title = "Remove the plug!"
-# notification title
+# 通知のタイトルを定義。
 
 message = "Your PC is now fully charged. Remove the plug."
-# notification message
+# 通知のメッセージを定義。
 
 input_type = "ModeSelector"
-# Optional field
-# This field defines type of input element of notification.
-# Options: "ModeSelector"(default), "SilentSpecifiedMinutes"
-# "TauriWinrtToast" method does not implement input element, so this field is not effective.
+# 任意のフィールド
+# 通知の`input`要素のタイプを定義。
+# 選択肢: "ModeSelector"(デフォルト), "SilentSpecifiedMinutes"(通知停止分数を指定)
+# "TauriWinrtToast" メソッドは`input`要素を実装していないため、このフィールドは無視される。
 
 [[modes.default.notifications]]
 percentage = "30-"
@@ -235,6 +243,9 @@ message = "The battery level of Your PC is lower than 70%. Plug in."
 
 </details>
 
+## MSI インストーラによって生成されたショートカットの使い方
+後で書く！
+
 ## 通知の使い方
 後で書く!
 
@@ -242,7 +253,7 @@ message = "The battery level of Your PC is lower than 70%. Plug in."
 ### 指定された settings.toml の設定で通知を開始
 `yy-battery-notifier-rs.exe -s "settings.toml へのパス"`
 
-### デフォルトの設定 (default_settings.toml) で通知を開始
+### デフォルトの設定 ([ja/default_settings.toml](https://github.com/yy-tromb/yy-battery-notifier-rs/blob/main/ja/default_settings.toml)) で通知を開始
 `yy-battery-notifier-rs.exe -d`
 
 ### サブコマンド
@@ -252,7 +263,7 @@ message = "The battery level of Your PC is lower than 70%. Plug in."
 ### オプション
 
   -s, --settings "settings.toml へのパス"  \[デフォルト: .\settings.toml]  
-  -d, --default_settings : [default_settings.toml](https://github.com/yy-tromb/yy-battery-notifier-rs/blob/main/default_settings.toml) を使う  
+  -d, --default_settings : [default_settings.toml](https://github.com/yy-tromb/yy-battery-notifier-rs/blob/main/ja/default_settings.toml) を使う  
       --msgbox : エラー発生をmsgboxで知らせる  
   -h, --help : ヘルプを表示  
   -V, --version : バージョンを表示  

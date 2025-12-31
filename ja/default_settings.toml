@@ -1,0 +1,78 @@
+check_interval = 60
+# バッテリ残量を確認する間隔(秒)
+
+# ==================================================
+# 任意のフィールドここから
+
+notification_method = "TauriWinrtToast"
+# 任意のフィールド
+# 通知方法(通知に使用するクレート)を定義。
+# 現在の選択肢: "TauriWinrtToast"(デフォルト), "WinrtToastReborn"
+
+mode_names = [""]
+# 任意のフィールド
+# モードの順番を定義。
+# 内部でハッシュテーブルを利用するため、モードの順番は、多くの場合でファイルに書かれた順番とは異なる。
+# そのため、このフィールドを使うことでモードの順番を定められる。
+# このフィールドに記述されていないモードは、記述されているモードの後に追加される。
+# `notifications`が設定されていないモードは追加されない。
+
+initial_mode = ""
+# 任意のフィールド
+# 起動時のモードを定義。
+# デフォルトはモードなし（""）。
+
+abort_on_error_except_initialize = false
+# 任意のフィールド
+# 起動時を除き、エラー発生にアプリを終了するかを定義。
+# 選択肢: true, false(デフォルト)
+
+notify_battery_during_change_mode = false
+# 任意のフィールド
+# モード変更通知表示時にバッテリ残量を通知するかを定義。
+# 選択肢: true, false(デフォルト)
+
+select_mode_when_starts = true
+# 任意のフィールド
+# 起動時にモードを選択するかを定義。
+# 選択肢: true(デフォルト), false
+
+wait_seconds_after_select_mode_notify_when_starts = 10
+# 任意のフィールド
+# 起動時のモード変更通知後に待機する時間を定義。
+# デフォルトは10秒。
+
+
+# 任意のフィールドここまで
+# ==================================================
+
+[[notifications]]
+# `notifications` の定義は任意ではあるものの、それぞれの通知設定において任意ではないフィールドは必須。
+# このフィールドでは、モードに関係なく常にされる通知を定義。
+
+percentage = "90+"
+# 通知が開始される条件を定義。
+# 残量のパーセンテージ(整数)と"+" か "-"の接尾辞からなる。
+# この例では、バッテリ残量が90%を超えたら通知が開始。
+
+power_supply = "Adequate"
+# 通知が開始される充電状態を定義。
+# "Adequate"(十分な電力での充電), "InAdequate"(不十分な電力での充電), "None"(充電されていない).
+
+title = "Remove the plug!"
+# 通知のタイトルを定義。
+
+message = "Your PC is now fully charged. Remove the plug"
+# 通知のメッセージを定義。
+
+input_type = "SilentSpecifiedMinutes"
+# 任意のフィールド
+# 通知の`input`要素のタイプを定義。
+# 選択肢: "ModeSelector"(デフォルト), "SilentSpecifiedMinutes"(通知停止分数を指定)
+# "TauriWinrtToast" メソッドは`input`要素を実装していないため、このフィールドは無視される。
+
+[[notifications]]
+percentage = "45-"
+power_supply = "None"
+title = "Plug in!"
+message = "The battery level of Your PC is low. Plug in."
