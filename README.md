@@ -9,6 +9,9 @@ check battery level and notify you
 > [!IMPORTANT]
 > The notification API of WinRT require Application User Model ID. If you install with MSI installer, Application User Model ID is set in Windows Registry and This app can toast.
 
+## Motivation
+I want to limit max percentage of charging battery, but my PC does not have this feature, so I decided notify at least and manually insert or remove charging cable.
+
 ## Installation
 
 You can install [GitHub Releases](https://github.com/yy-tromb/yy-battery-notifier-rs/releases).
