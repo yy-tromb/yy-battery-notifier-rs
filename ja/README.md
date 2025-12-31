@@ -11,10 +11,20 @@ Languages: [English](https://github.com/yy-tromb/yy-battery-notifier-rs) | 日�
 
 ## インストール
 
-[ここ](https://github.com/yy-tromb/yy-battery-notifier-rs/releases)からダウンロード可能。MSI インストーラによるインストールを推奨。  
+[Github Releases](https://github.com/yy-tromb/yy-battery-notifier-rs/releases)からダウンロード可能。MSI インストーラによるインストールを推奨。  
 または、[Cargo](https://doc.rust-lang.org/cargo/) を使って以下のようにビルド...  
 通常のリリースビルド: `cargo build --release` か `cargo b -r`  
 gui featureを付けてビルド: `cargo build --release --features gui` か `cargo b -r --features gui`
+
+### MSI Installer
+[Github Releases](https://github.com/yy-tromb/yy-battery-notifier-rs/releases)からダウンロード可能。  
+デフォルトのインストール場所は `%ProgramFiles%\yy-tromb\yy-battery-notifier-rs\` です。  
+コントロールパネルまたは設定アプリからアンインストール出来ます。  
+インストーラは、スタートメニューに以下のようにショートカットを作成します...
+![スタートメニュー内のアプリ一覧の一部分のスクリーンショット](../docs/assets/shortcuts_msi_installed.png)
+- Delete Startup: Windows レジストリからスタートアップ設定を削除。
+- Register Startup: Windows レジストリにユーザーが(入力して)指定した設定で、スタートアップとして登録。
+- Register Startup with Default Settings: Windows レジストリに[デフォルトの設定](https://github.com/yy-tromb/yy-battery-notifier-rs/blob/main/ja/default_settings.toml)でスタートアップとして登録。
 
 ## settings.toml について
 
@@ -246,11 +256,24 @@ message = "The battery level of Your PC is lower than 70%. Plug in."
 
 </details>
 
-## MSI インストーラによって生成されたショートカットの使い方
-後で書く！
-
 ## 通知の使い方
-後で書く!
+### 通知メソッド: "TauriWinrtToast"
+#### バッテリ残量の通知
+<img alt="バッテリ残量通知のスクリーンショット" style="width: 60%" src="../docs/assets/tauri_battery_notify.png">
+
+#### モード変更の通知
+<img alt="モード変更通知のスクリーンショット" style="width: 60%" src="../docs/assets/tauri_mode_change_notify.png">
+
+### メソッド: "WinrtToastReborn"
+#### バッテリ残量の通知 (input_type = "ModeSelector")
+<img alt="input_typeをモード選択(ModeSelector)と定義した場合のバッテリ残量通知のスクリーンショット" style="width: 60%" src="../docs/assets/reborn_battery_notify_selector.png">
+
+#### バッテリ残量の通知 (input_type = "SilentSpecifiedMinutes")
+<img alt="input_typeを、指定された分数の通知停止(SilentSpecifiedMinutes)と定義した場合のバッテリ残量通知のスクリーンショット" style="width: 60%" src="../docs/assets/reborn_battery_notify_specified.png">
+
+#### モード変更の通知
+<img alt="モード変更通知のスクリーンショット" style="width: 60%" src="../docs/assets/reborn_mode_change_notify.png">
+<img alt="モード変更通知で、セレクターを展開したときのスクリーンショット" style="width: 60%" src="../docs/assets/reborn_mode_change_notify_expand-selector.png">
 
 ## CLIの使い方
 ### 指定された settings.toml の設定で通知を開始

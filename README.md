@@ -11,11 +11,21 @@ check battery level and notify you
 
 ## Installation
 
-You can install [from here](https://github.com/yy-tromb/yy-battery-notifier-rs/releases).
+You can install [GitHub Releases](https://github.com/yy-tromb/yy-battery-notifier-rs/releases).
 I recommend MSI installer.  
 Or, you can build with [Cargo](https://doc.rust-lang.org/cargo/) as below...  
 normal release build: `cargo build --release` or `cargo b -r`  
 with gui feature: `cargo build --release --features gui` or `cargo b -r --features gui`
+
+### MSI Installer
+You can find from [GitHub Releases](https://github.com/yy-tromb/yy-battery-notifier-rs/releases).  
+The default install location is `%ProgramFiles%\yy-tromb\yy-battery-notifier-rs\`.  
+You can uninstall from Control Panel or Windows Settings.  
+The installer also create shortcuts on start menu as below...
+![Screenshot of part of list of apps in start menu](docs/assets/shortcuts_msi_installed.png)
+- Delete Startup: delete startup settings from Windows registry.
+- Register Startup: register startup settings to Windows registry with user specified settings (as input).
+- Register Startup with Default Settings: register startup settings to Windows registry with default settings with [default_settings.toml](https://github.com/yy-tromb/yy-battery-notifier-rs/blob/main/default_settings.toml).
 
 ## About settings.toml
 
@@ -247,11 +257,24 @@ message = "The battery level of Your PC is lower than 70%. Plug in."
 
 </details>
 
-## Usage on MSI installer
-ToDo!
-
 ## Usage on notification
-ToDo!
+### method: "TauriWinrtToast"
+#### notify battery level
+<img alt="screenshot of notification of battery level" style="width: 60%" src="docs/assets/tauri_battery_notify.png">
+
+#### notification of mode changing
+<img alt="screenshot of notification of mode changing" style="width: 60%" src="docs/assets/tauri_mode_change_notify.png">
+
+### method: "WinrtToastReborn"
+#### notify battery level (input_type = "ModeSelector")
+<img alt="screenshot of notification of battery level with settings that input_type defines as mode selector" style="width: 60%" src="docs/assets/reborn_battery_notify_selector.png">
+
+#### notify battery level (input_type = "SilentSpecifiedMinutes")
+<img alt="screenshot of notification of battery level with settings that input_type defines as silent specified minutes" style="width: 60%" src="docs/assets/reborn_battery_notify_specified.png">
+
+#### notification of mode changing
+<img alt="screenshot of notification of mode changing" style="width: 60%" src="docs/assets/reborn_mode_change_notify.png">
+<img alt="screenshot of notification of mode changing with expand selector" style="width: 60%" src="docs/assets/reborn_mode_change_notify_expand-selector.png">
 
 ## Usage on CLI
 ### Start notify with specified settings.toml
