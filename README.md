@@ -7,7 +7,7 @@ check battery level and notify you
 > This application is now for ***windows 10,11 only***. This is because of using WinRT API( Windows.Devices.Power.Battery, Windows.System.Power.PowerManager ) and [the Rust's platform support](https://doc.rust-lang.org/beta/rustc/platform-support.html).
 
 > [!IMPORTANT]
-> The notification API of WinRT require Application User Model ID. If you install with WIX installer, Application User Model ID is set in Windows Registry and This app can toast.
+> The notification API of WinRT require Application User Model ID. If you install with MSI installer, Application User Model ID is set in Windows Registry and This app can toast.
 
 ## Installation
 
@@ -24,7 +24,7 @@ About TOML format, try google this...
 > [!NOTE]
 > "TauriWinrtToast" method does not implement input element, so "input_type" field of each notification setting is not effective.
 
-### default_settings.toml
+### [default_settings.toml](https://github.com/yy-tromb/yy-battery-notifier-rs/blob/main/default_settings.toml)
 
 ```default_settings.toml
 check_interval = 60
@@ -41,13 +41,14 @@ notification_method = "TauriWinrtToast"
 mode_names = [""]
 # Optional field
 # This field defines order of mode.
-# Normally, the order of written in file is unsaved because of using hash.
-# The mode not written in this field will be added to position later than modes written in this field.
-# The mode not defined notifications will not be added to modes list.
+# The order of modes written in file is mostly different because of using hash table.
+# This field exists to set the order of modes as you defined.
+# The modes not written in this field will be added to position later than modes written in this field.
+# The modes not defined `notifications` will not be added to modes list.
 
 initial_mode = ""
 # Optional field
-# This field defines mode (name of mode) to use initially.
+# This field defines mode to use initially.
 # The default is modeless ("").
 
 abort_on_error_except_initialize = false
@@ -75,28 +76,29 @@ wait_seconds_after_select_mode_notify_when_starts = 10
 # ==================================================
 
 [[notifications]]
-# "notifications" is optional, but each field of a notification setting is required.
-# This fields define notifications that always notify.
+# `notifications` is optional, but each field (not optional) of a notification setting is required.
+# This fields define notifications that always notify regardless of mode.
 
 percentage = "90+"
-# express condition when notifications should be started.
+# define condition when notifications should be started.
 # This consists of percentage(integer) and suffix "+" or "-".
 # This example express that notifications will start whether battery level excess 90%
-#
+
 power_supply = "Adequate"
-# express power supply status. This consists of "Adequate", "InAdequate", "None".
+# define power supply status.
+# This consists of "Adequate", "InAdequate", "None".
 
 title = "Remove the plug!"
-# notification title
+# define notification title
 
 message = "Your PC is now fully charged. Remove the plug"
-# notification message
+# define notification message
 
-input_type = "ModeSelector"
+input_type = "SilentSpecifiedMinutes"
 # Optional field
-# This field defines type of input element of notification.
+# This field defines type of `input` element of notification.
 # Options: "ModeSelector"(default), "SilentSpecifiedMinutes"
-# "TauriWinrtToast" method does not implement input element, so this field is not effective.
+# "TauriWinrtToast" method does not implement input element, so this field is ignored.
 
 [[notifications]]
 percentage = "45-"
@@ -110,41 +112,45 @@ message = "The battery level of Your PC is low. Plug in."
 > `modes` is available from version 0.4.0.
 
 ```settings_mode_partial.toml
-initial_mode = "default"
-# Optional field
-# This field defines mode (name of mode) to use initially.
-# The default is modeless.
-
 mode_names = ["default","RetainCharged","RetainMoreChanged"]
 # Optional field
 # This field defines order of mode.
-# Normally, the order of written in file is unsaved because of using hash.
-# The mode not written in this field will be added to position later than modes written in this field.
-# The mode not defined notifications will not be added to modes list.
+# The order of modes written in file is mostly different because of using hash table.
+# This field exists to set the order of modes as you defined.
+# The modes not written in this field will be added to position later than modes written in this field.
+# The modes not defined `notifications` will not be added to modes list.
+
+initial_mode = "default"
+# Optional field
+# This field defines mode to use initially.
+# The default is modeless ("").
+
+# =======================================================
 
 [[modes.default.notifications]]
-# Name of mode is free, but you must follow the syntax of TOML.
-# This fields define notifications that notify when mode is "default".
+# Name of mode is free, but you must follow the syntax rules of TOML.
+# This fields of example define notifications that notify when mode is "default".
 
 percentage = "92+"
-# express condition when notifications should be started.
+# define condition when notifications should be started.
 # This consists of percentage(integer) and suffix "+" or "-".
 # This example express that notifications will start whether battery level excess 90%
 
 power_supply = "Adequate"
-# express power supply status. This consists of "Adequate", "InAdequate", "None".
+# define power supply status.
+# This consists of "Adequate", "InAdequate", "None".
 
 title = "Remove the plug!"
-# notification title
+# define notification title
 
 message = "Your PC is now fully charged. Remove the plug."
-# notification message
+# define notification message
 
 input_type = "ModeSelector"
 # Optional field
-# This field defines type of input element of notification.
+# This field defines type of `input` element of notification.
 # Options: "ModeSelector"(default), "SilentSpecifiedMinutes"
-# "TauriWinrtToast" method does not implement input element, so this field is not effective.
+# "TauriWinrtToast" method does not implement input element, so this field is ignored.
 ```
 
 <details>
@@ -162,40 +168,42 @@ notification_method = "TauriWinrtToast"
 mode_names = ["default","RetainCharged","RetainMoreChanged"]
 # Optional field
 # This field defines order of mode.
-# Normally, the order of written in file is unsaved because of using hash.
-# The mode not written in this field will be added to position later than modes written in this field.
-# The mode not defined notifications will not be added to modes list.
+# The order of modes written in file is mostly different because of using hash table.
+# This field exists to set the order of modes as you defined.
+# The modes not written in this field will be added to position later than modes written in this field.
+# The modes not defined `notifications` will not be added to modes list.
 
 initial_mode = "default"
 # Optional field
-# This field defines mode (name of mode) to use initially.
-# The default is modeless.
+# This field defines mode to use initially.
+# The default is modeless ("").
 
 # =======================================================
 
 [[modes.default.notifications]]
-# Name of mode is free, but you must follow the syntax of TOML.
+# Name of mode is free, but you must follow the rules of TOML.
 # This fields define notifications that notify when mode is "default".
 
 percentage = "92+"
-# express condition when notifications should be started.
+# define condition when notifications should be started.
 # This consists of percentage(integer) and suffix "+" or "-".
 # This example express that notifications will start whether battery level excess 90%
 
 power_supply = "Adequate"
-# express power supply status. This consists of "Adequate", "InAdequate", "None".
+# define power supply status.
+# This consists of "Adequate", "InAdequate", "None".
 
 title = "Remove the plug!"
-# notification title
+# define notification title
 
 message = "Your PC is now fully charged. Remove the plug."
-# notification message
+# define notification message
 
 input_type = "ModeSelector"
 # Optional field
-# This field defines type of input element of notification.
+# This field defines type of `input` element of notification.
 # Options: "ModeSelector"(default), "SilentSpecifiedMinutes"
-# "TauriWinrtToast" method does not implement input element, so this field is not effective.
+# "TauriWinrtToast" method does not implement input element, so this field is ignored.
 
 [[modes.default.notifications]]
 percentage = "30-"
@@ -236,6 +244,9 @@ message = "The battery level of Your PC is lower than 70%. Plug in."
 
 </details>
 
+## Usage on MSI installer
+ToDo!
+
 ## Usage on notification
 ToDo!
 
@@ -243,7 +254,7 @@ ToDo!
 ### Start notify with specified settings.toml
 `yy-battery-notifier-rs.exe -s "path to settings.toml"`
 
-### Start notify with default settings
+### Start notify with default settings ([this](https://github.com/yy-tromb/yy-battery-notifier-rs/blob/main/default_settings.toml))
 `yy-battery-notifier-rs.exe -d`
 
 ### Sub commands

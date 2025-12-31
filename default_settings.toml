@@ -12,13 +12,14 @@ notification_method = "TauriWinrtToast"
 mode_names = [""]
 # Optional field
 # This field defines order of mode.
-# Normally, the order of written in file is unsaved because of using hash.
-# The mode not written in this field will be added to position later than modes written in this field.
-# The mode not defined notifications will not be added to modes list.
+# The order of modes written in file is mostly different because of using hash table.
+# This field exists to set the order of modes as you defined.
+# The modes not written in this field will be added to position later than modes written in this field.
+# The modes not defined `notifications` will not be added to modes list.
 
 initial_mode = ""
 # Optional field
-# This field defines mode (name of mode) to use initially.
+# This field defines mode to use initially.
 # The default is modeless ("").
 
 abort_on_error_except_initialize = false
@@ -46,28 +47,29 @@ wait_seconds_after_select_mode_notify_when_starts = 10
 # ==================================================
 
 [[notifications]]
-# "notifications" is optional, but each field of a notification setting is required.
-# This fields define notifications that always notify.
+# `notifications` is optional, but each field (not optional) of a notification setting is required.
+# This fields define notifications that always notify regardless of mode.
 
 percentage = "90+"
-# express condition when notifications should be started.
+# define condition when notifications should be started.
 # This consists of percentage(integer) and suffix "+" or "-".
 # This example express that notifications will start whether battery level excess 90%
-#
+
 power_supply = "Adequate"
-# express power supply status. This consists of "Adequate", "InAdequate", "None".
+# define power supply status.
+# This consists of "Adequate", "InAdequate", "None".
 
 title = "Remove the plug!"
-# notification title
+# define notification title
 
 message = "Your PC is now fully charged. Remove the plug"
-# notification message
+# define notification message
 
 input_type = "SilentSpecifiedMinutes"
 # Optional field
-# This field defines type of input element of notification.
+# This field defines type of `input` element of notification.
 # Options: "ModeSelector"(default), "SilentSpecifiedMinutes"
-# "TauriWinrtToast" method does not implement input element, so this field is not effective.
+# "TauriWinrtToast" method does not implement input element, so this field is ignored.
 
 [[notifications]]
 percentage = "45-"
