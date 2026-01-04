@@ -47,7 +47,7 @@ pub(super) fn battery_notify_winrt_toast_reborn(
         .duration(ToastDuration::Short)
         .action(Action::new("silent for 5 mins", "silent 5 mins", ""))
         .action(Action::new("silent for 10 mins", "silent 10 mins", ""));
-    let guard = match crate::cli::MODE.read() {
+    let mode_guard = match crate::cli::MODE.read() {
         Ok(mode) => mode,
         Err(e) => e.into_inner(),
     };
@@ -56,10 +56,10 @@ pub(super) fn battery_notify_winrt_toast_reborn(
             toast.input(
                 Input::new("mode_selection", InputType::Selection)
                     .with_title("select mode")
-                    .with_default_input(if guard.is_empty() {
+                    .with_default_input(if mode_guard.is_empty() {
                         "mode_no_mode".into()
                     } else {
-                        format!("mode:{}", guard)
+                        format!("mode:{}", mode_guard)
                     }),
             );
             toast.selection(Selection::new("mode_no_mode", "<no mode>"));
@@ -88,7 +88,7 @@ pub(super) fn battery_notify_winrt_toast_reborn(
                 .action(Action::new("change mode", "require change mode", ""));
         }
     }
-    drop(guard); // for fast unlock RwLockGuard
+    drop(mode_guard); // for fast unlock RwLockGuard
 
     toast_manager
         .on_activated(None, move |action| {
@@ -143,6 +143,7 @@ fn handle_battery_notify_activated_action(
                     ) {
                         if let Ok(mut action_guard) = notification_action.lock() {
                             *action_guard = Some(NotificationAction::Error(e)); // anyway put error
+                            drop(action_guard); // explicit drop to ensure the lock is released
                         }
                     }
                     let mut guard = match notification_action.lock() {
@@ -187,7 +188,7 @@ pub(super) fn mode_change_notify_winrt_toast_reborn(
 ) -> anyhow::Result<()> {
     let toast_manager = ToastManager::new(crate::aumid::AUMID);
     let mut toast = Toast::new();
-    let guard = match crate::cli::MODE.read() {
+    let mode_guard = match crate::cli::MODE.read() {
         Ok(mode) => mode,
         Err(e) => e.into_inner(),
     };
@@ -197,14 +198,14 @@ pub(super) fn mode_change_notify_winrt_toast_reborn(
         .input(
             Input::new("mode_selection", InputType::Selection)
                 .with_title("select mode")
-                .with_default_input(if guard.is_empty() {
+                .with_default_input(if mode_guard.is_empty() {
                     "mode_no_mode".into()
                 } else {
-                    format!("mode:{}", guard)
+                    format!("mode:{}", mode_guard)
                 }),
         )
         .selection(Selection::new("mode_no_mode", "<no mode>"));
-    drop(guard); // for fast unlock RwLockGuard
+    drop(mode_guard); // for fast unlock RwLockGuard
     crate::cli::MODE_NAMES
         .get()
         .ok_or_else(|| {

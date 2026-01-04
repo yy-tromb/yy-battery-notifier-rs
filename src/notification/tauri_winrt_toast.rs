@@ -82,6 +82,7 @@ fn handle_battery_notify_activated_action(
                     Err(e) => e.into_inner(),
                 };
                 *action_guard = Some(NotificationAction::Error(e)); // anyway put error
+                drop(action_guard); // explicit drop to ensure the lock is released
             }
             if let Ok(mut action_guard) = notification_action.lock() {
                 *action_guard = Some(NotificationAction::RequireChangeMode);
