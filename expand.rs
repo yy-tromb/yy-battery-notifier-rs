@@ -1,3 +1,6 @@
+// This is result of `cargo expand`
+// You can check the result of macro expansion by seeing this.
+
 #![feature(prelude_import)]
 #[macro_use]
 extern crate std;
