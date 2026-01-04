@@ -7,10 +7,10 @@ use hooq::hooq;
 
 mod aumid;
 mod battery;
-mod cli;
 mod common;
 mod notification;
 mod registry;
+mod runner;
 mod settings;
 mod startup;
 
@@ -187,5 +187,5 @@ fn main() -> anyhow::Result<()> {
             )
             .red()
         })?;
-    crate::cli::Cli::new(toml_settings.try_into()?).run()
+    crate::runner::Runner::new(toml_settings.try_into()?).run()
 }

@@ -105,7 +105,7 @@ pub(super) fn mode_change_notify_tauri_winrt_toast(
         .title("Notify Mode Change")
         .duration(Duration::Long)
         .add_button("&lt;no mode&gt;", "mode_no_mode");
-    for mode_name in crate::cli::MODE_NAMES.get().ok_or_else(|| {
+    for mode_name in crate::runner::MODE_NAMES.get().ok_or_else(|| {
         anyhow::Error::msg("MODE_NAMES is not initilized. This can not happen.".red())
     })? {
         toast = toast.add_button(mode_name, format!("mode:{}", mode_name).as_str());

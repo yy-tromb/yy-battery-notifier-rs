@@ -7,13 +7,13 @@ use std::sync::{Arc, LazyLock, Mutex, OnceLock, RwLock};
 pub static MODE_NAMES: OnceLock<Vec<String>> = OnceLock::new();
 pub static MODE: LazyLock<RwLock<String>> = LazyLock::new(|| RwLock::new("".into())); // unset value is "" (modeless).
 
-pub struct Cli {
+pub struct Runner {
     settings: crate::settings::Settings,
 }
 
 // auto insert .with_context() between Result (example: func()->Result<>:`func()`) and `?;`
 #[hooq(anyhow)]
-impl Cli {
+impl Runner {
     pub fn new(settings: crate::settings::Settings) -> Self {
         Self { settings }
     }

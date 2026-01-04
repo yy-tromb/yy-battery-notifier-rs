@@ -47,7 +47,7 @@ pub(super) fn battery_notify_winrt_toast_reborn(
         .duration(ToastDuration::Short)
         .action(Action::new("silent for 5 mins", "silent 5 mins", ""))
         .action(Action::new("silent for 10 mins", "silent 10 mins", ""));
-    let mode_guard = match crate::cli::MODE.read() {
+    let mode_guard = match crate::runner::MODE.read() {
         Ok(mode) => mode,
         Err(e) => e.into_inner(),
     };
@@ -188,7 +188,7 @@ pub(super) fn mode_change_notify_winrt_toast_reborn(
 ) -> anyhow::Result<()> {
     let toast_manager = ToastManager::new(crate::aumid::AUMID);
     let mut toast = Toast::new();
-    let mode_guard = match crate::cli::MODE.read() {
+    let mode_guard = match crate::runner::MODE.read() {
         Ok(mode) => mode,
         Err(e) => e.into_inner(),
     };
@@ -206,7 +206,7 @@ pub(super) fn mode_change_notify_winrt_toast_reborn(
         )
         .selection(Selection::new("mode_no_mode", "<no mode>"));
     drop(mode_guard); // for fast unlock RwLockGuard
-    crate::cli::MODE_NAMES
+    crate::runner::MODE_NAMES
         .get()
         .ok_or_else(|| {
             anyhow::Error::msg("MODE_NAMES is not initilized. This can not happen.".red())
