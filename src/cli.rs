@@ -67,9 +67,13 @@ impl Cli {
             Ok(mut guard) => {
                 *guard = self.settings.initial_mode.clone();
             }
-            Err(_) => {
+            Err(e) => {
                 return Err(anyhow::Error::msg(
-                    "Failed to lock MODE. Unknown poison error!".red(),
+                    format!(
+                        "Failed to lock MODE. Unknown poison error!\n Error: {:?}",
+                        e
+                    )
+                    .red(),
                 ));
             }
         };
@@ -80,9 +84,10 @@ impl Cli {
 
         // auto insert below expression and .with_context between Result (example:`~~~()`) and `?;`
         // most function return Result<()>, so if to recovery, using Ok(())
-        #[hooq::method(.or_else(|e| {
+        #[hooq::method(
+            .or_else(|e| {
             if self.settings.abort_on_error_except_initialize {
-                Err(e)
+                Err(e).$so_far // inserted anyhow::Result::with_context() as above impl Cli
             } else {
                 // ToDo: Handle error gracefully
                 let path = $path;
@@ -92,7 +97,6 @@ impl Cli {
                 eprintln!("[{path}:{line}:{col}]\n{expr}");
                 Ok(())
             }
-            .$so_far // inserted anyhow::Result::with_context() as above impl Cli
         }))]
         loop {
             let mut action_guard = match notification_action.lock() {
@@ -155,8 +159,9 @@ impl Cli {
                         );
                         if mode_names.contains(&*mode.read().unwrap_or_else(|e| e.into_inner())) {
                             match mode.write() {
-                                Ok(mut mode) => {
-                                    *mode = mode_to_change.clone();
+                                Ok(mut mode_guard) => {
+                                    *mode_guard = mode_to_change.clone();
+                                    drop(mode_guard); // explicit drop to ensure lock is released
                                 }
                                 Err(e) => {
                                     eprintln!(
@@ -167,14 +172,17 @@ impl Cli {
                                         "poison error of RwLock of mode.".red()
                                     );
                                     eprintln!("ref: {:?}", e.get_ref());
-                                    *e.into_inner() = mode_to_change.clone();
+                                    let mut mode_guard = e.into_inner();
+                                    *mode_guard = mode_to_change.clone();
+                                    drop(mode_guard); // explicit drop to ensure lock is released
                                 }
                             }
                         }
                     }
-                    NotificationAction::Error(_e) => {
-                        // Err(e)?;
-                        // ToDo!
+                    NotificationAction::Error(e) => {
+                        Err(anyhow::Error::msg(e.to_string()))?;
+                        // cannot convert or deref e to anyhow::Error directly
+                        // so must do via String
                     }
                 }
                 *action_guard = None; // clear action for next check
@@ -184,13 +192,22 @@ impl Cli {
                 "mode: {:?}",
                 mode.read().unwrap_or_else(|e| e.into_inner(),)
             );
+            #[hooq::method(
+                .with_context(||{
+                    let path = $path;
+                    let line = $line;
+                    let col = $col;
+                    let expr = hooq::summary!($source);
+                    format!("[{path}:{line}:{col}]\n{expr}")
+                })
+            )]
             let battery_report = match crate::battery::battery_check() {
                 Ok(report) => report,
                 Err(e) => {
                     if self.settings.abort_on_error_except_initialize {
                         return Err(e);
                     } else {
-                        eprintln!("Error checking battery: {}", e);
+                        eprintln!("Error on checking battery:\n{:?}", e);
                         std::thread::sleep(duration);
                         continue; // ToDo: Handle error gracefully
                     }
