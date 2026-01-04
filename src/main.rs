@@ -166,7 +166,8 @@ fn main() -> anyhow::Result<()> {
                 }
                 StartupSubCommand::Delete => crate::startup::delete_and_check_startup()?,
             },
-        }
+        };
+        return Ok(());
     }
     let toml_settings_path = if app_args.default_settings {
         std::env::current_exe()
