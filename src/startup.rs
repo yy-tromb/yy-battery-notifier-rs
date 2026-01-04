@@ -96,7 +96,7 @@ pub fn register_cli(
         })?;
     let toml_settings_path_absolute = toml_settings_path_absolute
         .to_str()
-        .with_context(|| "path to current exe is empty. Unknown error may occured.".red())?;
+        .with_context(|| "Failed to get absolute path string".red())?;
     println!(
         "Now start register. settings.toml file: '{}'",
         toml_settings_path_absolute //for remove "\\?\" prefix: &toml_settings_path_absolute[4..]
