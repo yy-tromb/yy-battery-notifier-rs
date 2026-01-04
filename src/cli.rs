@@ -172,8 +172,9 @@ impl Cli {
                             }
                         }
                     }
-                    NotificationAction::Error(e) => {
+                    NotificationAction::Error(_e) => {
                         // Err(e)?;
+                        // ToDo!
                     }
                 }
                 *action_guard = None; // clear action for next check
