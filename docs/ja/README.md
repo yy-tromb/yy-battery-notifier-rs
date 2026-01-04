@@ -7,7 +7,7 @@ Languages: [English](https://github.com/yy-tromb/yy-battery-notifier-rs) | 日�
 > このアプリは現在***windows 10,11 のみ***に対応。これは WinRT API( Windows.Devices.Power.Battery と Windows.System.Power.PowerManager )を使っている関係と、[Rustのプラットフォームサポート](https://doc.rust-lang.org/beta/rustc/platform-support.html)によるもの。
 
 > [!IMPORTANT]
-> WinRT の notification API には Application User Model ID が必要。WIX インストーラでインストールする場合、Application User Model ID が Windows レジストリに設定されるため、すぐに通知可能。
+> WinRT の notification API には Application User Model ID が必要。MSI インストーラでインストールする場合、Application User Model ID が Windows レジストリに設定されるため、すぐに通知可能。
 
 ## インストール
 
@@ -21,10 +21,51 @@ gui featureを付けてビルド: `cargo build --release --features gui` か `ca
 デフォルトのインストール場所は `%ProgramFiles%\yy-tromb\yy-battery-notifier-rs\` です。  
 コントロールパネルまたは設定アプリからアンインストール出来ます。  
 インストーラは、スタートメニューに以下のようにショートカットを作成します...
-![スタートメニュー内のアプリ一覧の一部分のスクリーンショット](../docs/assets/shortcuts_msi_installed.png)
+![スタートメニュー内のアプリ一覧の一部分のスクリーンショット](../assets/shortcuts_msi_installed.png)
 - Delete Startup: Windows レジストリからスタートアップ設定を削除。
 - Register Startup: Windows レジストリにユーザーが(入力して)指定した設定で、スタートアップとして登録。
-- Register Startup with Default Settings: Windows レジストリに[デフォルトの設定](https://github.com/yy-tromb/yy-battery-notifier-rs/blob/main/ja/default_settings.toml)でスタートアップとして登録。
+- Register Startup with Default Settings: Windows レジストリに[デフォルトの設定](https://github.com/yy-tromb/yy-battery-notifier-rs/blob/main/docs/ja/default_settings.toml)でスタートアップとして登録。
+
+</details>
+
+## 通知の使い方
+### 通知メソッド: "TauriWinrtToast"
+#### バッテリ残量の通知
+<img alt="バッテリ残量通知のスクリーンショット" style="width: 60%" src="../assets/tauri_battery_notify.png">
+
+#### モード変更の通知
+<img alt="モード変更通知のスクリーンショット" style="width: 60%" src="../assets/tauri_mode_change_notify.png">
+
+### メソッド: "WinrtToastReborn"
+#### バッテリ残量の通知 (input_type = "ModeSelector")
+<img alt="input_typeをモード選択(ModeSelector)と定義した場合のバッテリ残量通知のスクリーンショット" style="width: 60%" src="../assets/reborn_battery_notify_selector.png">
+
+#### バッテリ残量の通知 (input_type = "SilentSpecifiedMinutes")
+<img alt="input_typeを、指定された分数の通知停止(SilentSpecifiedMinutes)と定義した場合のバッテリ残量通知のスクリーンショット" style="width: 60%" src="../assets/reborn_battery_notify_specified.png">
+
+#### モード変更の通知
+<img alt="モード変更通知のスクリーンショット" style="width: 60%" src="../assets/reborn_mode_change_notify.png">
+<img alt="モード変更通知で、セレクターを展開したときのスクリーンショット" style="width: 60%" src="../assets/reborn_mode_change_notify_expand-selector.png">
+
+## CLIの使い方
+### 指定された settings.toml の設定で通知を開始
+`yy-battery-notifier-rs.exe -s "settings.toml へのパス"`
+
+### デフォルトの設定 ([ja/default_settings.toml](https://github.com/yy-tromb/yy-battery-notifier-rs/blob/main/docs/ja/default_settings.toml)) で通知を開始
+`yy-battery-notifier-rs.exe -d`
+
+### サブコマンド
+  aumid - register,delete : 通知に使われる Application User Model Id を Windows レジストリに登録、または削除。  
+  startup - register,delete : このアプリをスタートアップに登録、または削除。 複数回登録した場合でも設定は上書きされる。
+
+### オプション
+
+  -s, --settings "settings.toml へのパス"  \[デフォルト: .\settings.toml]  
+  -d, --default_settings : [ja/default_settings.toml](https://github.com/yy-tromb/yy-battery-notifier-rs/blob/main/docs/ja/default_settings.toml) を使う  
+      --msgbox : エラー発生をmsgboxで知らせる  
+  -h, --help : ヘルプを表示  
+  -V, --version : バージョンを表示  
+
 
 ## settings.toml について
 
@@ -33,7 +74,7 @@ TOML のフォーマットについてはググってください...
 > [!NOTE]
 > `TauriWinrtToast` メソッドは input 要素を実装していないため、`notification_method` が `TauriWinrtToast` のとき、それぞれの notification setting に対しての"input_type" フィールドは無視されます。
 
-### [ja/default_settings.toml](https://github.com/yy-tromb/yy-battery-notifier-rs/blob/main/ja/default_settings.toml)
+### [ja/default_settings.toml](https://github.com/yy-tromb/yy-battery-notifier-rs/blob/main/docs/ja/default_settings.toml)
 
 ```ja/default_settings.toml
 check_interval = 60
@@ -253,46 +294,6 @@ power_supply = "None"
 title = "Plug in!"
 message = "The battery level of Your PC is lower than 70%. Plug in."
 ```
-
-</details>
-
-## 通知の使い方
-### 通知メソッド: "TauriWinrtToast"
-#### バッテリ残量の通知
-<img alt="バッテリ残量通知のスクリーンショット" style="width: 60%" src="../docs/assets/tauri_battery_notify.png">
-
-#### モード変更の通知
-<img alt="モード変更通知のスクリーンショット" style="width: 60%" src="../docs/assets/tauri_mode_change_notify.png">
-
-### メソッド: "WinrtToastReborn"
-#### バッテリ残量の通知 (input_type = "ModeSelector")
-<img alt="input_typeをモード選択(ModeSelector)と定義した場合のバッテリ残量通知のスクリーンショット" style="width: 60%" src="../docs/assets/reborn_battery_notify_selector.png">
-
-#### バッテリ残量の通知 (input_type = "SilentSpecifiedMinutes")
-<img alt="input_typeを、指定された分数の通知停止(SilentSpecifiedMinutes)と定義した場合のバッテリ残量通知のスクリーンショット" style="width: 60%" src="../docs/assets/reborn_battery_notify_specified.png">
-
-#### モード変更の通知
-<img alt="モード変更通知のスクリーンショット" style="width: 60%" src="../docs/assets/reborn_mode_change_notify.png">
-<img alt="モード変更通知で、セレクターを展開したときのスクリーンショット" style="width: 60%" src="../docs/assets/reborn_mode_change_notify_expand-selector.png">
-
-## CLIの使い方
-### 指定された settings.toml の設定で通知を開始
-`yy-battery-notifier-rs.exe -s "settings.toml へのパス"`
-
-### デフォルトの設定 ([ja/default_settings.toml](https://github.com/yy-tromb/yy-battery-notifier-rs/blob/main/ja/default_settings.toml)) で通知を開始
-`yy-battery-notifier-rs.exe -d`
-
-### サブコマンド
-  aumid - register,delete : 通知に使われる Application User Model Id を Windows レジストリに登録、または削除。  
-  startup - register,delete : このアプリをスタートアップに登録、または削除。 複数回登録した場合でも設定は上書きされる。
-
-### オプション
-
-  -s, --settings "settings.toml へのパス"  \[デフォルト: .\settings.toml]  
-  -d, --default_settings : [ja/default_settings.toml](https://github.com/yy-tromb/yy-battery-notifier-rs/blob/main/ja/default_settings.toml) を使う  
-      --msgbox : エラー発生をmsgboxで知らせる  
-  -h, --help : ヘルプを表示  
-  -V, --version : バージョンを表示  
 
 ## やること
 - [x] ~モード変更ボタン~

@@ -1,4 +1,4 @@
-Languages: English | [日本語(Japanese)](https://github.com/yy-tromb/yy-battery-notifier-rs/blob/main/ja/README.md)
+Languages: English | [日本語(Japanese)](https://github.com/yy-tromb/yy-battery-notifier-rs/blob/main/docs/ja/README.md)
 
 # yy-battery-notifier-rs
 check battery level and notify you
@@ -26,6 +26,46 @@ The installer also create shortcuts on start menu as below...
 - Delete Startup: delete startup settings from Windows registry.
 - Register Startup: register startup settings to Windows registry with user specified settings (as input).
 - Register Startup with Default Settings: register startup settings to Windows registry with default settings with [default_settings.toml](https://github.com/yy-tromb/yy-battery-notifier-rs/blob/main/default_settings.toml).
+
+</details>
+
+## Usage on notification
+### method: "TauriWinrtToast"
+#### notify battery level
+<img alt="screenshot of notification of battery level" style="width: 60%" src="docs/assets/tauri_battery_notify.png">
+
+#### notification of mode changing
+<img alt="screenshot of notification of mode changing" style="width: 60%" src="docs/assets/tauri_mode_change_notify.png">
+
+### method: "WinrtToastReborn"
+#### notify battery level (input_type = "ModeSelector")
+<img alt="screenshot of notification of battery level with settings that input_type defines as mode selector" style="width: 60%" src="docs/assets/reborn_battery_notify_selector.png">
+
+#### notify battery level (input_type = "SilentSpecifiedMinutes")
+<img alt="screenshot of notification of battery level with settings that input_type defines as silent specified minutes" style="width: 60%" src="docs/assets/reborn_battery_notify_specified.png">
+
+#### notification of mode changing
+<img alt="screenshot of notification of mode changing" style="width: 60%" src="docs/assets/reborn_mode_change_notify.png">
+<img alt="screenshot of notification of mode changing with expand selector" style="width: 60%" src="docs/assets/reborn_mode_change_notify_expand-selector.png">
+
+## Usage on CLI
+### Start notify with specified settings.toml
+`yy-battery-notifier-rs.exe -s "path to settings.toml"`
+
+### Start notify with default settings ([this](https://github.com/yy-tromb/yy-battery-notifier-rs/blob/main/default_settings.toml))
+`yy-battery-notifier-rs.exe -d`
+
+### Sub commands
+  aumid - register,delete : register or delete Application User Model Id (used to notify as toast) on Windows Registry  
+  startup - register,delete : register or delete this app as startup app. Even if you register twice or more, settings will be overrided.
+
+### Options
+
+  -s, --settings "path to settings.toml"  \[default: .\settings.toml]  
+  -d, --default_settings : Use [default_settings.toml](https://github.com/yy-tromb/yy-battery-notifier-rs/blob/main/default_settings.toml)  
+      --msgbox : When error occurs, let you know by messagebox  
+  -h, --help : Print help  
+  -V, --version : Print version  
 
 ## About settings.toml
 
@@ -254,46 +294,6 @@ power_supply = "None"
 title = "Plug in!"
 message = "The battery level of Your PC is lower than 70%. Plug in."
 ```
-
-</details>
-
-## Usage on notification
-### method: "TauriWinrtToast"
-#### notify battery level
-<img alt="screenshot of notification of battery level" style="width: 60%" src="docs/assets/tauri_battery_notify.png">
-
-#### notification of mode changing
-<img alt="screenshot of notification of mode changing" style="width: 60%" src="docs/assets/tauri_mode_change_notify.png">
-
-### method: "WinrtToastReborn"
-#### notify battery level (input_type = "ModeSelector")
-<img alt="screenshot of notification of battery level with settings that input_type defines as mode selector" style="width: 60%" src="docs/assets/reborn_battery_notify_selector.png">
-
-#### notify battery level (input_type = "SilentSpecifiedMinutes")
-<img alt="screenshot of notification of battery level with settings that input_type defines as silent specified minutes" style="width: 60%" src="docs/assets/reborn_battery_notify_specified.png">
-
-#### notification of mode changing
-<img alt="screenshot of notification of mode changing" style="width: 60%" src="docs/assets/reborn_mode_change_notify.png">
-<img alt="screenshot of notification of mode changing with expand selector" style="width: 60%" src="docs/assets/reborn_mode_change_notify_expand-selector.png">
-
-## Usage on CLI
-### Start notify with specified settings.toml
-`yy-battery-notifier-rs.exe -s "path to settings.toml"`
-
-### Start notify with default settings ([this](https://github.com/yy-tromb/yy-battery-notifier-rs/blob/main/default_settings.toml))
-`yy-battery-notifier-rs.exe -d`
-
-### Sub commands
-  aumid - register,delete : register or delete Application User Model Id (used to notify as toast) on Windows Registry  
-  startup - register,delete : register or delete this app as startup app. Even if you register twice or more, settings will be overrided.
-
-### Options
-
-  -s, --settings "path to settings.toml"  \[default: .\settings.toml]  
-  -d, --default_settings : Use [default_settings.toml](https://github.com/yy-tromb/yy-battery-notifier-rs/blob/main/default_settings.toml)  
-      --msgbox : When error occurs, let you know by messagebox  
-  -h, --help : Print help  
-  -V, --version : Print version  
 
 ## ToDos
 - [x] ~Add mode change button~
