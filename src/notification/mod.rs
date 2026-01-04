@@ -21,13 +21,14 @@ pub enum NotificationInputType {
     SilentSpecifiedMinutes,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum NotificationAction {
     Silent5Mins,
     Silent10Mins,
     SilentSpecifiedMins(u64),
     RequireChangeMode,
     ChangeMode(String),
+    Error(anyhow::Error),
 }
 
 #[inline]
@@ -57,8 +58,7 @@ pub fn battery_notify(
     message: &str,
     notification_action: Arc<Mutex<Option<NotificationAction>>>,
     input_type: &NotificationInputType,
-    mode_names: &[&String],
-    mode: &str,
+    mode_names: &[String],
 ) -> anyhow::Result<()> {
     match method {
         NotificationMethod::TauriWinrtToast => tauri_winrt_toast::battery_notify_tauri_winrt_toast(
@@ -75,7 +75,6 @@ pub fn battery_notify(
                 notification_action,
                 input_type,
                 mode_names,
-                mode,
             )
         }
     }
@@ -86,19 +85,13 @@ pub fn battery_notify(
 pub fn mode_change_notify(
     method: &NotificationMethod,
     notification_action: Arc<Mutex<Option<NotificationAction>>>,
-    mode_names: &[&String],
-    mode: &str,
 ) -> anyhow::Result<()> {
     match method {
         NotificationMethod::TauriWinrtToast => {
-            tauri_winrt_toast::mode_change_notify_tauri_winrt_toast(notification_action, mode_names)
+            tauri_winrt_toast::mode_change_notify_tauri_winrt_toast(notification_action)
         }
         NotificationMethod::WinrtToastReborn => {
-            winrt_toast_reborn::mode_change_notify_winrt_toast_reborn(
-                notification_action,
-                mode_names,
-                mode,
-            )
+            winrt_toast_reborn::mode_change_notify_winrt_toast_reborn(notification_action)
         }
     }
 }

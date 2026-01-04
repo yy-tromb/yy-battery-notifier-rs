@@ -2,7 +2,10 @@ use anyhow::Context as _;
 use colored::Colorize;
 use hooq::hooq;
 
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, LazyLock, Mutex, OnceLock, RwLock};
+
+pub static MODE_NAMES: OnceLock<Vec<String>> = OnceLock::new();
+pub static MODE: LazyLock<RwLock<String>> = LazyLock::new(|| RwLock::new("".into())); // unset value is "" (modeless).
 
 pub struct Cli {
     settings: crate::settings::Settings,
@@ -19,14 +22,11 @@ impl Cli {
     fn outset(
         &self,
         notification_action: Arc<Mutex<Option<crate::notification::NotificationAction>>>,
-        mode_names: &[&String],
     ) -> anyhow::Result<()> {
         if self.settings.select_mode_when_starts {
             crate::notification::mode_change_notify(
                 &self.settings.notification_method,
                 notification_action,
-                mode_names,
-                &self.settings.initial_mode,
             )?;
         }
         if let Some(wait_time) = self
@@ -38,15 +38,45 @@ impl Cli {
         Ok(())
     }
 
-    pub fn run(&self) -> anyhow::Result<()> {
+    pub fn run(self) -> anyhow::Result<()> {
         use crate::notification::{NotificationAction, battery_notify};
         let duration = std::time::Duration::from_secs(self.settings.check_interval);
-        let mode_names: Vec<&String> = self.settings.modes.keys().collect();
-        let mut mode = self.settings.initial_mode.clone();
+        let mode_names = MODE_NAMES.get();
+        MODE_NAMES
+            .set(
+                self.settings
+                    .modes
+                    .keys()
+                    .map(ToString::to_string)
+                    .collect::<Vec<String>>(),
+            )
+            .map_err(|_| {
+                anyhow::Error::msg(
+                    format!(
+                        "MODE_NAMES is initialized. Found: {:?} \nThis can not be happen.",
+                        mode_names
+                    )
+                    .red(),
+                )
+            })?;
+        let mode_names = MODE_NAMES.get().ok_or_else(|| {
+            anyhow::Error::msg("MODE_NAMES is not initilized. This can not happen.".red())
+        })?;
+        let mode = &*MODE;
+        match mode.write() {
+            Ok(mut guard) => {
+                *guard = self.settings.initial_mode.clone();
+            }
+            Err(_) => {
+                return Err(anyhow::Error::msg(
+                    "Failed to lock MODE. Unknown poison error!".red(),
+                ));
+            }
+        };
         let notification_method = &self.settings.notification_method;
         let notification_action: Arc<Mutex<Option<NotificationAction>>> =
             Arc::new(Mutex::new(None));
-        self.outset(Arc::clone(&notification_action), &mode_names)?;
+        self.outset(Arc::clone(&notification_action))?;
 
         // auto insert below expression and .with_context between Result (example:`~~~()`) and `?;`
         // most function return Result<()>, so if to recovery, using Ok(())
@@ -109,8 +139,6 @@ impl Cli {
                         crate::notification::mode_change_notify(
                             notification_method,
                             Arc::clone(&notification_action),
-                            &mode_names,
-                            &mode,
                         )?;
                         if !self.settings.notify_battery_during_change_mode {
                             // do not clear action for user to miss dismiss change mode notification
@@ -125,19 +153,36 @@ impl Cli {
                             format!(r#"change mode to "{}" action triggered."#, mode_to_change)
                                 .yellow()
                         );
-                        if mode_names.contains(&&mode) {
-                            mode = mode_to_change.clone();
+                        if mode_names.contains(&*mode.read().unwrap_or_else(|e| e.into_inner())) {
+                            match mode.write() {
+                                Ok(mut mode) => {
+                                    *mode = mode_to_change.clone();
+                                }
+                                Err(e) => {
+                                    eprintln!(
+                                        "[{}:{}:{}] mode.lock() in cli::Cli::run\n{}",
+                                        file!(),
+                                        line!() - 8, // line of notification_action.lock(),
+                                        47,          // column of notification_action.lock(),
+                                        "poison error of RwLock of mode.".red()
+                                    );
+                                    eprintln!("ref: {:?}", e.get_ref());
+                                    *e.into_inner() = mode_to_change.clone();
+                                }
+                            }
                         }
+                    }
+                    NotificationAction::Error(e) => {
+                        // Err(e)?;
                     }
                 }
                 *action_guard = None; // clear action for next check
             }
             drop(action_guard); // Release the lock before checking battery
-            if !mode.is_empty() {
-                println!(r#"mode: "{}""#, mode)
-            } else {
-                println!("no mode");
-            };
+            println!(
+                "mode: {:?}",
+                mode.read().unwrap_or_else(|e| e.into_inner(),)
+            );
             let battery_report = match crate::battery::battery_check() {
                 Ok(report) => report,
                 Err(e) => {
@@ -165,11 +210,14 @@ impl Cli {
                         &notification_setting.message,
                         Arc::clone(&notification_action),
                         &notification_setting.input_type,
-                        &mode_names,
-                        &mode,
+                        mode_names,
                     )
                 })?;
-            if let Some(mode_setting) = self.settings.modes.get(&mode) {
+            if let Some(mode_setting) = self
+                .settings
+                .modes
+                .get(&*mode.read().unwrap_or_else(|e| e.into_inner()))
+            {
                 mode_setting
                     .notifications
                     .iter()
@@ -187,8 +235,7 @@ impl Cli {
                             &notification_setting.message,
                             Arc::clone(&notification_action),
                             &notification_setting.input_type,
-                            &mode_names,
-                            &mode,
+                            mode_names,
                         )
                     })?;
             };

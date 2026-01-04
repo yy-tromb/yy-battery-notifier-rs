@@ -1,4 +1,5 @@
 use anyhow::Context as _;
+use colored::Colorize;
 use hooq::hooq;
 use tauri_winrt_notification::{Duration, Progress, Toast};
 
@@ -72,6 +73,16 @@ fn handle_battery_notify_activated_action(
         }
         Some("require change mode") => {
             println!("Toast activated with action: require change mode");
+            if let Err(e) = crate::notification::mode_change_notify(
+                &crate::notification::NotificationMethod::TauriWinrtToast,
+                Arc::clone(notification_action),
+            ) {
+                let mut action_guard = match notification_action.lock() {
+                    Ok(guard) => guard,
+                    Err(e) => e.into_inner(),
+                };
+                *action_guard = Some(NotificationAction::Error(e)); // anyway put error
+            }
             if let Ok(mut action_guard) = notification_action.lock() {
                 *action_guard = Some(NotificationAction::RequireChangeMode);
             }
@@ -88,13 +99,14 @@ fn handle_battery_notify_activated_action(
 #[hooq(anyhow)]
 pub(super) fn mode_change_notify_tauri_winrt_toast(
     notification_action: Arc<Mutex<Option<NotificationAction>>>,
-    mode_names: &[&String],
 ) -> anyhow::Result<()> {
     let mut toast = Toast::new(crate::aumid::AUMID)
         .title("Notify Mode Change")
         .duration(Duration::Long)
         .add_button("&lt;no mode&gt;", "mode_no_mode");
-    for mode_name in mode_names {
+    for mode_name in crate::cli::MODE_NAMES.get().ok_or_else(|| {
+        anyhow::Error::msg("MODE_NAMES is not initilized. This can not happen.".red())
+    })? {
         toast = toast.add_button(mode_name, format!("mode:{}", mode_name).as_str());
     }
 

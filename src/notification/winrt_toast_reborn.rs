@@ -1,4 +1,5 @@
 use anyhow::Context as _;
+use colored::Colorize;
 use hooq::hooq;
 use winrt_toast_reborn::content::input::InputType;
 use winrt_toast_reborn::{Action, Input, Selection, Toast, ToastDuration, ToastManager};
@@ -14,8 +15,7 @@ pub(super) fn battery_notify_winrt_toast_reborn(
     message: &str,
     notification_action: Arc<Mutex<Option<NotificationAction>>>,
     input_type: &NotificationInputType,
-    mode_names: &[&String],
-    mode: &str,
+    mode_names: &[String],
 ) -> anyhow::Result<()> {
     let toast_manager = ToastManager::new(crate::aumid::AUMID);
 
@@ -47,21 +47,25 @@ pub(super) fn battery_notify_winrt_toast_reborn(
         .duration(ToastDuration::Short)
         .action(Action::new("silent for 5 mins", "silent 5 mins", ""))
         .action(Action::new("silent for 10 mins", "silent 10 mins", ""));
+    let guard = match crate::cli::MODE.read() {
+        Ok(mode) => mode,
+        Err(e) => e.into_inner(),
+    };
     match input_type {
         NotificationInputType::ModeSelector if !mode_names.is_empty() => {
             toast.input(
                 Input::new("mode_selection", InputType::Selection)
                     .with_title("select mode")
-                    .with_default_input(if mode.is_empty() {
+                    .with_default_input(if guard.is_empty() {
                         "mode_no_mode".into()
                     } else {
-                        format!("mode:{}", mode)
+                        format!("mode:{}", guard)
                     }),
             );
             toast.selection(Selection::new("mode_no_mode", "<no mode>"));
             mode_names
                 .iter()
-                .map(|mode_name| Selection::new(format!("mode:{}", mode_name), *mode_name))
+                .map(|mode_name| Selection::new(format!("mode:{}", mode_name), mode_name))
                 .for_each(|selection| {
                     toast.selection(selection);
                 });
@@ -84,6 +88,7 @@ pub(super) fn battery_notify_winrt_toast_reborn(
                 .action(Action::new("change mode", "require change mode", ""));
         }
     }
+    drop(guard); // for fast unlock RwLockGuard
 
     toast_manager
         .on_activated(None, move |action| {
@@ -129,8 +134,17 @@ fn handle_battery_notify_activated_action(
                         println!("No input value found for silent time.");
                     }
                 }
+                #[allow(clippy::collapsible_if)]
                 "require change mode" => {
                     println!("Required change mode");
+                    if let Err(e) = crate::notification::mode_change_notify(
+                        &crate::notification::NotificationMethod::WinrtToastReborn,
+                        Arc::clone(notification_action),
+                    ) {
+                        if let Ok(mut action_guard) = notification_action.lock() {
+                            *action_guard = Some(NotificationAction::Error(e)); // anyway put error
+                        }
+                    }
                     let mut guard = match notification_action.lock() {
                         Ok(guard) => guard,
                         Err(e) => e.into_inner(),
@@ -170,27 +184,34 @@ fn handle_battery_notify_activated_action(
 #[hooq(anyhow)]
 pub(super) fn mode_change_notify_winrt_toast_reborn(
     notification_action: Arc<Mutex<Option<NotificationAction>>>,
-    mode_names: &[&String],
-    mode: &str,
 ) -> anyhow::Result<()> {
     let toast_manager = ToastManager::new(crate::aumid::AUMID);
     let mut toast = Toast::new();
+    let guard = match crate::cli::MODE.read() {
+        Ok(mode) => mode,
+        Err(e) => e.into_inner(),
+    };
     toast
         .text1("Notify Mode Change")
         .duration(ToastDuration::Long)
         .input(
             Input::new("mode_selection", InputType::Selection)
                 .with_title("select mode")
-                .with_default_input(if mode.is_empty() {
+                .with_default_input(if guard.is_empty() {
                     "mode_no_mode".into()
                 } else {
-                    format!("mode:{}", mode)
+                    format!("mode:{}", guard)
                 }),
         )
         .selection(Selection::new("mode_no_mode", "<no mode>"));
-    mode_names
+    drop(guard); // for fast unlock RwLockGuard
+    crate::cli::MODE_NAMES
+        .get()
+        .ok_or_else(|| {
+            anyhow::Error::msg("MODE_NAMES is not initilized. This can not happen.".red())
+        })?
         .iter()
-        .map(|mode_name| Selection::new(format!("mode:{}", mode_name), *mode_name))
+        .map(|mode_name| Selection::new(format!("mode:{}", mode_name), mode_name))
         .for_each(|selection| {
             toast.selection(selection);
         });
@@ -212,6 +233,7 @@ fn handle_mode_change_notify_winrt_toast_reborn(
             let message = format!("Toast activated with action: {}", action.arg);
             println!("{}", message);
             match action.arg.as_str() {
+                #[allow(clippy::collapsible_if)]
                 "change mode" => {
                     if let Some(mode_to_change) = action.values.get("mode_selection") {
                         let mut guard = match notification_action.lock() {
