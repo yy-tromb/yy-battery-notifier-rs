@@ -32,21 +32,21 @@ The installer also create shortcuts on start menu as below...
 ## Usage on notification
 ### method: "TauriWinrtToast"
 #### notify battery level
-<img alt="screenshot of notification of battery level" style="width: 70%" src="docs/assets/tauri_battery_notify.png">
+<img alt="screenshot of notification of battery level" style="width: 65%" src="docs/assets/tauri_battery_notify.png">
 
 #### notification of mode changing
-<img alt="screenshot of notification of mode changing" style="width: 70%" src="docs/assets/tauri_mode_change_notify.png">
+<img alt="screenshot of notification of mode changing" style="width: 65%" src="docs/assets/tauri_mode_change_notify.png">
 
 ### method: "WinrtToastReborn"
 #### notify battery level (input_type = "ModeSelector")
-<img alt="screenshot of notification of battery level with settings that input_type defines as mode selector" style="width: 70%" src="docs/assets/reborn_battery_notify_selector.png">
+<img alt="screenshot of notification of battery level with settings that input_type defines as mode selector" style="width: 65%" src="docs/assets/reborn_battery_notify_selector.png">
 
 #### notify battery level (input_type = "SilentSpecifiedMinutes")
-<img alt="screenshot of notification of battery level with settings that input_type defines as silent specified minutes" style="width: 70%" src="docs/assets/reborn_battery_notify_specified.png">
+<img alt="screenshot of notification of battery level with settings that input_type defines as silent specified minutes" style="width: 65%" src="docs/assets/reborn_battery_notify_specified.png">
 
 #### notification of mode changing
-<img alt="screenshot of notification of mode changing" style="width: 70%" src="docs/assets/reborn_mode_change_notify.png">
-<img alt="screenshot of notification of mode changing with expand selector" style="width: 70%" src="docs/assets/reborn_mode_change_notify_expand-selector.png">
+<img alt="screenshot of notification of mode changing" style="width: 65%" src="docs/assets/reborn_mode_change_notify.png">
+<img alt="screenshot of notification of mode changing with expand selector" style="width: 65%" src="docs/assets/reborn_mode_change_notify_expand-selector.png">
 
 ## Usage on CLI
 ### Start notify with specified settings.toml
@@ -292,7 +292,7 @@ message = "Your PC is now fully charged. Remove the plug."
 percentage = "70-"
 power_supply = "None"
 title = "Plug in!"
-message = "The battery level of Your PC is lower than 70%. Plug in."
+message = "The battery level of Your PC is lower than 65%. Plug in."
 ```
 
 ## ToDos
