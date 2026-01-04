@@ -435,493 +435,6 @@ mod battery {
         })
     }
 }
-mod cli {
-    use anyhow::Context as _;
-    use colored::Colorize;
-    use hooq::hooq;
-    use std::sync::{Arc, LazyLock, Mutex, OnceLock, RwLock};
-    pub static MODE_NAMES: OnceLock<Vec<String>> = OnceLock::new();
-    pub static MODE: LazyLock<RwLock<String>> = LazyLock::new(|| RwLock::new("".into()));
-    pub struct Cli {
-        settings: crate::settings::Settings,
-    }
-    impl Cli {
-        pub fn new(settings: crate::settings::Settings) -> Self {
-            Self { settings }
-        }
-        #[inline]
-        fn outset(
-            &self,
-            notification_action: Arc<
-                Mutex<Option<crate::notification::NotificationAction>>,
-            >,
-        ) -> anyhow::Result<()> {
-            if self.settings.select_mode_when_starts {
-                crate::notification::mode_change_notify(
-                        &self.settings.notification_method,
-                        notification_action,
-                    )
-                    .with_context(|| {
-                        let path = "src\\cli.rs";
-                        let line = 30usize;
-                        let col = 14usize;
-                        let expr = "  27>    crate::notification::mode_change_notify(\n  28|                &self.settings.notification_method,\n  29|                notification_action,\n  30|            )?\n    |";
-                        ::alloc::__export::must_use({
-                            ::alloc::fmt::format(
-                                format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
-                            )
-                        })
-                    })?;
-            }
-            if let Some(wait_time) = self
-                .settings
-                .wait_seconds_after_select_mode_notify_when_starts
-            {
-                std::thread::sleep(std::time::Duration::from_secs(wait_time));
-            }
-            Ok(())
-        }
-        pub fn run(self) -> anyhow::Result<()> {
-            use crate::notification::{NotificationAction, battery_notify};
-            let duration = std::time::Duration::from_secs(self.settings.check_interval);
-            let mode_names = MODE_NAMES.get();
-            MODE_NAMES
-                .set(
-                    self
-                        .settings
-                        .modes
-                        .keys()
-                        .map(ToString::to_string)
-                        .collect::<Vec<String>>(),
-                )
-                .map_err(|_| {
-                    anyhow::Error::msg(
-                        ::alloc::__export::must_use({
-                                ::alloc::fmt::format(
-                                    format_args!(
-                                        "MODE_NAMES is initialized. Found: {0:?} \nThis can not be happen.",
-                                        mode_names,
-                                    ),
-                                )
-                            })
-                            .red(),
-                    )
-                })
-                .with_context(|| {
-                    let path = "src\\cli.rs";
-                    let line = 61usize;
-                    let col = 15usize;
-                    let expr = "  45>    MODE_NAMES\n...\n  58|                    )\n  59|                    .red(),\n  60|                )\n  61|            })?\n    |";
-                    ::alloc::__export::must_use({
-                        ::alloc::fmt::format(
-                            format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
-                        )
-                    })
-                })?;
-            let mode_names = MODE_NAMES
-                .get()
-                .ok_or_else(|| {
-                    anyhow::Error::msg(
-                        "MODE_NAMES is not initilized. This can not happen.".red(),
-                    )
-                })
-                .with_context(|| {
-                    let path = "src\\cli.rs";
-                    let line = 64usize;
-                    let col = 11usize;
-                    let expr = "  62>    MODE_NAMES.get().ok_or_else(|| {\n  63|            anyhow::Error::msg(\"MODE..pen.\".red())\n  64|        })?\n    |";
-                    ::alloc::__export::must_use({
-                        ::alloc::fmt::format(
-                            format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
-                        )
-                    })
-                })?;
-            let mode = &*MODE;
-            match mode.write() {
-                Ok(mut guard) => {
-                    *guard = self.settings.initial_mode.clone();
-                }
-                Err(_) => {
-                    return Err(
-                            anyhow::Error::msg(
-                                "Failed to lock MODE. Unknown poison error!".red(),
-                            ),
-                        )
-                        .with_context(|| {
-                            let path = "src\\cli.rs";
-                            let line = 71usize;
-                            let col = 17usize;
-                            let expr = "  71>    return Err(anyhow::Error::msg(\n  72|                    \"Fail..ror!\".red(),\n  73|                ))\n    |";
-                            ::alloc::__export::must_use({
-                                ::alloc::fmt::format(
-                                    format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
-                                )
-                            })
-                        });
-                }
-            };
-            let notification_method = &self.settings.notification_method;
-            let notification_action: Arc<Mutex<Option<NotificationAction>>> = Arc::new(
-                Mutex::new(None),
-            );
-            self.outset(Arc::clone(&notification_action))
-                .with_context(|| {
-                    let path = "src\\cli.rs";
-                    let line = 79usize;
-                    let col = 54usize;
-                    let expr = "  79>    self.outset(Arc::clone(&notification_action))?\n    |";
-                    ::alloc::__export::must_use({
-                        ::alloc::fmt::format(
-                            format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
-                        )
-                    })
-                })?;
-            loop {
-                let mut action_guard = match notification_action.lock() {
-                    Ok(action_guard) => action_guard,
-                    Err(e) => {
-                        {
-                            ::std::io::_eprint(
-                                format_args!(
-                                    "[{0}:{1}:{2}] notification_action.lock() in cli::Cli::run\n{3}\n",
-                                    "src\\cli.rs",
-                                    104u32 - 6,
-                                    68,
-                                    "poison error of Mutex of notification action.".red(),
-                                ),
-                            );
-                        };
-                        {
-                            ::std::io::_eprint(
-                                format_args!("ref: {0:?}\n", e.get_ref()),
-                            );
-                        };
-                        e.into_inner()
-                    }
-                };
-                if let Some(action) = &*action_guard {
-                    match action {
-                        NotificationAction::Silent5Mins => {
-                            {
-                                ::std::io::_print(
-                                    format_args!(
-                                        "{0}\n",
-                                        "Silent for 5 minutes action triggered.".yellow(),
-                                    ),
-                                );
-                            };
-                            std::thread::sleep(
-                                std::time::Duration::from_secs(
-                                    300u64.saturating_sub(self.settings.check_interval),
-                                ),
-                            );
-                        }
-                        NotificationAction::Silent10Mins => {
-                            {
-                                ::std::io::_print(
-                                    format_args!(
-                                        "{0}\n",
-                                        "Silent for 10 minutes action triggered.".yellow(),
-                                    ),
-                                );
-                            };
-                            std::thread::sleep(
-                                std::time::Duration::from_secs(
-                                    600u64.saturating_sub(self.settings.check_interval),
-                                ),
-                            );
-                        }
-                        NotificationAction::SilentSpecifiedMins(specified_mins) => {
-                            {
-                                ::std::io::_print(
-                                    format_args!(
-                                        "{0}\n",
-                                        ::alloc::__export::must_use({
-                                                ::alloc::fmt::format(
-                                                    format_args!(
-                                                        "Silent for {0} minutes action triggered.",
-                                                        specified_mins,
-                                                    ),
-                                                )
-                                            })
-                                            .yellow(),
-                                    ),
-                                );
-                            };
-                            std::thread::sleep(
-                                std::time::Duration::from_secs(
-                                    specified_mins
-                                        .saturating_mul(60)
-                                        .saturating_sub(self.settings.check_interval),
-                                ),
-                            );
-                        }
-                        NotificationAction::RequireChangeMode => {
-                            crate::notification::mode_change_notify(
-                                    notification_method,
-                                    Arc::clone(&notification_action),
-                                )
-                                .or_else(|e| {
-                                    if self.settings.abort_on_error_except_initialize {
-                                        Err(e)
-                                    } else {
-                                        let path = "src\\cli.rs";
-                                        let line = 142usize;
-                                        let col = 26usize;
-                                        let expr = " 139>    crate::notification::mode_change_notify(\n 140|                            notification_method,\n 141|                            Arc::clone(&notification_action),\n 142|                        )?\n    |";
-                                        {
-                                            ::std::io::_eprint(
-                                                format_args!("[{0}:{1}:{2}]\n{3}\n", path, line, col, expr),
-                                            );
-                                        };
-                                        Ok(())
-                                    }
-                                        .with_context(|| {
-                                            let path = "src\\cli.rs";
-                                            let line = 142usize;
-                                            let col = 26usize;
-                                            let expr = " 139>    crate::notification::mode_change_notify(\n 140|                            notification_method,\n 141|                            Arc::clone(&notification_action),\n 142|                        )?\n    |";
-                                            ::alloc::__export::must_use({
-                                                ::alloc::fmt::format(
-                                                    format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
-                                                )
-                                            })
-                                        })
-                                })?;
-                            if !self.settings.notify_battery_during_change_mode {
-                                drop(action_guard);
-                                std::thread::sleep(duration);
-                                continue;
-                            }
-                        }
-                        NotificationAction::ChangeMode(mode_to_change) => {
-                            {
-                                ::std::io::_print(
-                                    format_args!(
-                                        "{0}\n",
-                                        ::alloc::__export::must_use({
-                                                ::alloc::fmt::format(
-                                                    format_args!(
-                                                        "change mode to \"{0}\" action triggered.",
-                                                        mode_to_change,
-                                                    ),
-                                                )
-                                            })
-                                            .yellow(),
-                                    ),
-                                );
-                            };
-                            if mode_names
-                                .contains(&*mode.read().unwrap_or_else(|e| e.into_inner()))
-                            {
-                                match mode.write() {
-                                    Ok(mut mode) => {
-                                        *mode = mode_to_change.clone();
-                                    }
-                                    Err(e) => {
-                                        {
-                                            ::std::io::_eprint(
-                                                format_args!(
-                                                    "[{0}:{1}:{2}] mode.lock() in cli::Cli::run\n{3}\n",
-                                                    "src\\cli.rs",
-                                                    165u32 - 8,
-                                                    47,
-                                                    "poison error of RwLock of mode.".red(),
-                                                ),
-                                            );
-                                        };
-                                        {
-                                            ::std::io::_eprint(
-                                                format_args!("ref: {0:?}\n", e.get_ref()),
-                                            );
-                                        };
-                                        *e.into_inner() = mode_to_change.clone();
-                                    }
-                                }
-                            }
-                        }
-                        NotificationAction::Error(e) => {}
-                    }
-                    *action_guard = None;
-                }
-                drop(action_guard);
-                {
-                    ::std::io::_print(
-                        format_args!(
-                            "mode: {0:?}\n",
-                            mode.read().unwrap_or_else(|e| e.into_inner()),
-                        ),
-                    );
-                };
-                let battery_report = match crate::battery::battery_check() {
-                    Ok(report) => report,
-                    Err(e) => {
-                        if self.settings.abort_on_error_except_initialize {
-                            return Err(e)
-                                .or_else(|e| {
-                                    if self.settings.abort_on_error_except_initialize {
-                                        Err(e)
-                                    } else {
-                                        let path = "src\\cli.rs";
-                                        let line = 190usize;
-                                        let col = 25usize;
-                                        let expr = " 190>    return Err(e)\n    |";
-                                        {
-                                            ::std::io::_eprint(
-                                                format_args!("[{0}:{1}:{2}]\n{3}\n", path, line, col, expr),
-                                            );
-                                        };
-                                        Ok(())
-                                    }
-                                        .with_context(|| {
-                                            let path = "src\\cli.rs";
-                                            let line = 190usize;
-                                            let col = 25usize;
-                                            let expr = " 190>    return Err(e)\n    |";
-                                            ::alloc::__export::must_use({
-                                                ::alloc::fmt::format(
-                                                    format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
-                                                )
-                                            })
-                                        })
-                                });
-                        } else {
-                            {
-                                ::std::io::_eprint(
-                                    format_args!("Error checking battery: {0}\n", e),
-                                );
-                            };
-                            std::thread::sleep(duration);
-                            continue;
-                        }
-                    }
-                };
-                match &battery_report {
-                    tmp => {
-                        {
-                            ::std::io::_eprint(
-                                format_args!(
-                                    "[{0}:{1}:{2}] {3} = {4:#?}\n",
-                                    "src\\cli.rs",
-                                    198u32,
-                                    13u32,
-                                    "& battery_report",
-                                    &&tmp as &dyn ::std::fmt::Debug,
-                                ),
-                            );
-                        };
-                        tmp
-                    }
-                };
-                self.settings
-                    .notifications
-                    .iter()
-                    .filter(|notification_setting| {
-                        crate::notification::judge_notification(
-                            notification_setting,
-                            &battery_report,
-                        )
-                    })
-                    .try_for_each(|notification_setting| {
-                        battery_notify(
-                            notification_method,
-                            &battery_report,
-                            &notification_setting.title,
-                            &notification_setting.message,
-                            Arc::clone(&notification_action),
-                            &notification_setting.input_type,
-                            mode_names,
-                        )
-                    })
-                    .or_else(|e| {
-                        if self.settings.abort_on_error_except_initialize {
-                            Err(e)
-                        } else {
-                            let path = "src\\cli.rs";
-                            let line = 215usize;
-                            let col = 19usize;
-                            let expr = " 199>    self.settings\n...\n 212|                        &notification_setting.input_type,\n 213|                        mode_names,\n 214|                    )\n 215|                })?\n    |";
-                            {
-                                ::std::io::_eprint(
-                                    format_args!("[{0}:{1}:{2}]\n{3}\n", path, line, col, expr),
-                                );
-                            };
-                            Ok(())
-                        }
-                            .with_context(|| {
-                                let path = "src\\cli.rs";
-                                let line = 215usize;
-                                let col = 19usize;
-                                let expr = " 199>    self.settings\n...\n 212|                        &notification_setting.input_type,\n 213|                        mode_names,\n 214|                    )\n 215|                })?\n    |";
-                                ::alloc::__export::must_use({
-                                    ::alloc::fmt::format(
-                                        format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
-                                    )
-                                })
-                            })
-                    })?;
-                if let Some(mode_setting) = self
-                    .settings
-                    .modes
-                    .get(&*mode.read().unwrap_or_else(|e| e.into_inner()))
-                {
-                    mode_setting
-                        .notifications
-                        .iter()
-                        .filter(|notification_setting| {
-                            crate::notification::judge_notification(
-                                notification_setting,
-                                &battery_report,
-                            )
-                        })
-                        .try_for_each(|notification_setting| {
-                            battery_notify(
-                                notification_method,
-                                &battery_report,
-                                &notification_setting.title,
-                                &notification_setting.message,
-                                Arc::clone(&notification_action),
-                                &notification_setting.input_type,
-                                mode_names,
-                            )
-                        })
-                        .or_else(|e| {
-                            if self.settings.abort_on_error_except_initialize {
-                                Err(e)
-                            } else {
-                                let path = "src\\cli.rs";
-                                let line = 240usize;
-                                let col = 23usize;
-                                let expr = " 221>    mode_setting\n...\n 237|                            &notification_setting.input_type,\n 238|                            mode_names,\n 239|                        )\n 240|                    })?\n    |";
-                                {
-                                    ::std::io::_eprint(
-                                        format_args!("[{0}:{1}:{2}]\n{3}\n", path, line, col, expr),
-                                    );
-                                };
-                                Ok(())
-                            }
-                                .with_context(|| {
-                                    let path = "src\\cli.rs";
-                                    let line = 240usize;
-                                    let col = 23usize;
-                                    let expr = " 221>    mode_setting\n...\n 237|                            &notification_setting.input_type,\n 238|                            mode_names,\n 239|                        )\n 240|                    })?\n    |";
-                                    ::alloc::__export::must_use({
-                                        ::alloc::fmt::format(
-                                            format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
-                                        )
-                                    })
-                                })
-                        })?;
-                }
-                {
-                    ::std::io::_print(format_args!("check battery and notifying\n"));
-                };
-                std::thread::sleep(duration);
-            }
-            #[allow(unreachable_code)] Ok(())
-        }
-    }
-}
 mod common {
     pub fn error_to_string(error: &anyhow::Error) -> String {
         let msg = ::alloc::__export::must_use({
@@ -1107,6 +620,7 @@ mod notification {
                             Err(e) => e.into_inner(),
                         };
                         *action_guard = Some(NotificationAction::Error(e));
+                        drop(action_guard);
                     }
                     if let Ok(mut action_guard) = notification_action.lock() {
                         *action_guard = Some(NotificationAction::RequireChangeMode);
@@ -1138,7 +652,7 @@ mod notification {
                 .title("Notify Mode Change")
                 .duration(Duration::Long)
                 .add_button("&lt;no mode&gt;", "mode_no_mode");
-            for mode_name in crate::cli::MODE_NAMES
+            for mode_name in crate::runner::MODE_NAMES
                 .get()
                 .ok_or_else(|| {
                     anyhow::Error::msg(
@@ -1147,9 +661,9 @@ mod notification {
                 })
                 .with_context(|| {
                     let path = "src\\notification\\tauri_winrt_toast.rs";
-                    let line = 109usize;
+                    let line = 110usize;
                     let col = 7usize;
-                    let expr = " 107>    crate::cli::MODE_NAMES.get().ok_or_else(|| {\n 108|        anyhow::Error::msg(\"MODE..pen.\".red())\n 109|    })?\n    |";
+                    let expr = " 108>    crate::runner::MODE_NAMES.get().ok_or_else(|| {\n 109|        anyhow::Error::msg(\"MODE..pen.\".red())\n 110|    })?\n    |";
                     ::alloc::__export::must_use({
                         ::alloc::fmt::format(
                             format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
@@ -1182,9 +696,9 @@ mod notification {
                 })
                 .with_context(|| {
                     let path = "src\\notification\\tauri_winrt_toast.rs";
-                    let line = 121usize;
+                    let line = 122usize;
                     let col = 7usize;
-                    let expr = " 118>    toast.show().map_err(|error| match error {\n 119|        tauri_winrt_notification::Error::Os(e) => anyhow::Error::from(e),\n 120|        tauri_winrt_notification::Error::Io(e) => anyhow::Error::from(e),\n 121|    })?\n    |";
+                    let expr = " 119>    toast.show().map_err(|error| match error {\n 120|        tauri_winrt_notification::Error::Os(e) => anyhow::Error::from(e),\n 121|        tauri_winrt_notification::Error::Io(e) => anyhow::Error::from(e),\n 122|    })?\n    |";
                     ::alloc::__export::must_use({
                         ::alloc::fmt::format(
                             format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
@@ -1299,7 +813,7 @@ mod notification {
                 .duration(ToastDuration::Short)
                 .action(Action::new("silent for 5 mins", "silent 5 mins", ""))
                 .action(Action::new("silent for 10 mins", "silent 10 mins", ""));
-            let guard = match crate::cli::MODE.read() {
+            let mode_guard = match crate::runner::MODE.read() {
                 Ok(mode) => mode,
                 Err(e) => e.into_inner(),
             };
@@ -1310,11 +824,11 @@ mod notification {
                             Input::new("mode_selection", InputType::Selection)
                                 .with_title("select mode")
                                 .with_default_input(
-                                    if guard.is_empty() {
+                                    if mode_guard.is_empty() {
                                         "mode_no_mode".into()
                                     } else {
                                         ::alloc::__export::must_use({
-                                            ::alloc::fmt::format(format_args!("mode:{0}", guard))
+                                            ::alloc::fmt::format(format_args!("mode:{0}", mode_guard))
                                         })
                                     },
                                 ),
@@ -1352,7 +866,7 @@ mod notification {
                         .action(Action::new("change mode", "require change mode", ""));
                 }
             }
-            drop(guard);
+            drop(mode_guard);
             toast_manager
                 .on_activated(
                     None,
@@ -1454,6 +968,7 @@ mod notification {
                             ) {
                                 if let Ok(mut action_guard) = notification_action.lock() {
                                     *action_guard = Some(NotificationAction::Error(e));
+                                    drop(action_guard);
                                 }
                             }
                             let mut guard = match notification_action.lock() {
@@ -1519,7 +1034,7 @@ mod notification {
         ) -> anyhow::Result<()> {
             let toast_manager = ToastManager::new(crate::aumid::AUMID);
             let mut toast = Toast::new();
-            let guard = match crate::cli::MODE.read() {
+            let mode_guard = match crate::runner::MODE.read() {
                 Ok(mode) => mode,
                 Err(e) => e.into_inner(),
             };
@@ -1530,18 +1045,18 @@ mod notification {
                     Input::new("mode_selection", InputType::Selection)
                         .with_title("select mode")
                         .with_default_input(
-                            if guard.is_empty() {
+                            if mode_guard.is_empty() {
                                 "mode_no_mode".into()
                             } else {
                                 ::alloc::__export::must_use({
-                                    ::alloc::fmt::format(format_args!("mode:{0}", guard))
+                                    ::alloc::fmt::format(format_args!("mode:{0}", mode_guard))
                                 })
                             },
                         ),
                 )
                 .selection(Selection::new("mode_no_mode", "<no mode>"));
-            drop(guard);
-            crate::cli::MODE_NAMES
+            drop(mode_guard);
+            crate::runner::MODE_NAMES
                 .get()
                 .ok_or_else(|| {
                     anyhow::Error::msg(
@@ -1550,9 +1065,9 @@ mod notification {
                 })
                 .with_context(|| {
                     let path = "src\\notification\\winrt_toast_reborn.rs";
-                    let line = 212usize;
+                    let line = 213usize;
                     let col = 11usize;
-                    let expr = " 208>    crate::cli::MODE_NAMES\n 209|        .get()\n 210|        .ok_or_else(|| {\n 211|            anyhow::Error::msg(\"MODE..pen.\".red())\n 212|        })?\n    |";
+                    let expr = " 209>    crate::runner::MODE_NAMES\n 210|        .get()\n 211|        .ok_or_else(|| {\n 212|            anyhow::Error::msg(\"MODE..pen.\".red())\n 213|        })?\n    |";
                     ::alloc::__export::must_use({
                         ::alloc::fmt::format(
                             format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
@@ -1587,9 +1102,9 @@ mod notification {
                 .show(&toast)
                 .with_context(|| {
                     let path = "src\\notification\\winrt_toast_reborn.rs";
-                    let line = 223usize;
+                    let line = 224usize;
                     let col = 22usize;
-                    let expr = " 219>    toast_manager\n 220|        .on_activated(None, move |action| {\n 221|            handle_mode_change_notify_winrt_toast_reborn(action, &notification_action);\n 222|        })\n 223|        .show(&toast)?\n    |";
+                    let expr = " 220>    toast_manager\n 221|        .on_activated(None, move |action| {\n 222|            handle_mode_change_notify_winrt_toast_reborn(action, &notification_action);\n 223|        })\n 224|        .show(&toast)?\n    |";
                     ::alloc::__export::must_use({
                         ::alloc::fmt::format(
                             format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
@@ -2996,6 +2511,517 @@ mod registry {
             }
         }
         anyhow::Ok(())
+    }
+}
+mod runner {
+    use anyhow::Context as _;
+    use colored::Colorize;
+    use hooq::hooq;
+    use std::sync::{Arc, LazyLock, Mutex, OnceLock, RwLock};
+    pub static MODE_NAMES: OnceLock<Vec<String>> = OnceLock::new();
+    pub static MODE: LazyLock<RwLock<String>> = LazyLock::new(|| RwLock::new("".into()));
+    pub struct Runner {
+        settings: crate::settings::Settings,
+    }
+    impl Runner {
+        pub fn new(settings: crate::settings::Settings) -> Self {
+            Self { settings }
+        }
+        #[inline]
+        fn outset(
+            &self,
+            notification_action: Arc<
+                Mutex<Option<crate::notification::NotificationAction>>,
+            >,
+        ) -> anyhow::Result<()> {
+            if self.settings.select_mode_when_starts {
+                crate::notification::mode_change_notify(
+                        &self.settings.notification_method,
+                        notification_action,
+                    )
+                    .with_context(|| {
+                        let path = "src\\runner.rs";
+                        let line = 30usize;
+                        let col = 14usize;
+                        let expr = "  27>    crate::notification::mode_change_notify(\n  28|                &self.settings.notification_method,\n  29|                notification_action,\n  30|            )?\n    |";
+                        ::alloc::__export::must_use({
+                            ::alloc::fmt::format(
+                                format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
+                            )
+                        })
+                    })?;
+            }
+            if let Some(wait_time) = self
+                .settings
+                .wait_seconds_after_select_mode_notify_when_starts
+            {
+                std::thread::sleep(std::time::Duration::from_secs(wait_time));
+            }
+            Ok(())
+        }
+        pub fn run(self) -> anyhow::Result<()> {
+            use crate::notification::{NotificationAction, battery_notify};
+            let duration = std::time::Duration::from_secs(self.settings.check_interval);
+            let mode_names = MODE_NAMES.get();
+            MODE_NAMES
+                .set(
+                    self
+                        .settings
+                        .modes
+                        .keys()
+                        .map(ToString::to_string)
+                        .collect::<Vec<String>>(),
+                )
+                .map_err(|_| {
+                    anyhow::Error::msg(
+                        ::alloc::__export::must_use({
+                                ::alloc::fmt::format(
+                                    format_args!(
+                                        "MODE_NAMES is initialized. Found: {0:?} \nThis can not be happen.",
+                                        mode_names,
+                                    ),
+                                )
+                            })
+                            .red(),
+                    )
+                })
+                .with_context(|| {
+                    let path = "src\\runner.rs";
+                    let line = 61usize;
+                    let col = 15usize;
+                    let expr = "  45>    MODE_NAMES\n...\n  58|                    )\n  59|                    .red(),\n  60|                )\n  61|            })?\n    |";
+                    ::alloc::__export::must_use({
+                        ::alloc::fmt::format(
+                            format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
+                        )
+                    })
+                })?;
+            let mode_names = MODE_NAMES
+                .get()
+                .ok_or_else(|| {
+                    anyhow::Error::msg(
+                        "MODE_NAMES is not initilized. This can not happen.".red(),
+                    )
+                })
+                .with_context(|| {
+                    let path = "src\\runner.rs";
+                    let line = 64usize;
+                    let col = 11usize;
+                    let expr = "  62>    MODE_NAMES.get().ok_or_else(|| {\n  63|            anyhow::Error::msg(\"MODE..pen.\".red())\n  64|        })?\n    |";
+                    ::alloc::__export::must_use({
+                        ::alloc::fmt::format(
+                            format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
+                        )
+                    })
+                })?;
+            let mode = &*MODE;
+            match mode.write() {
+                Ok(mut guard) => {
+                    *guard = self.settings.initial_mode.clone();
+                }
+                Err(e) => {
+                    return Err(
+                            anyhow::Error::msg(
+                                ::alloc::__export::must_use({
+                                        ::alloc::fmt::format(
+                                            format_args!(
+                                                "Failed to lock MODE. Unknown poison error!\n Error: {0:?}",
+                                                e,
+                                            ),
+                                        )
+                                    })
+                                    .red(),
+                            ),
+                        )
+                        .with_context(|| {
+                            let path = "src\\runner.rs";
+                            let line = 71usize;
+                            let col = 17usize;
+                            let expr = "  71>    return Err(anyhow::Error::msg(\n...\n  74|                        e\n  75|                    )\n  76|                    .red(),\n  77|                ))\n    |";
+                            ::alloc::__export::must_use({
+                                ::alloc::fmt::format(
+                                    format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
+                                )
+                            })
+                        });
+                }
+            };
+            let notification_method = &self.settings.notification_method;
+            let notification_action: Arc<Mutex<Option<NotificationAction>>> = Arc::new(
+                Mutex::new(None),
+            );
+            self.outset(Arc::clone(&notification_action))
+                .with_context(|| {
+                    let path = "src\\runner.rs";
+                    let line = 83usize;
+                    let col = 54usize;
+                    let expr = "  83>    self.outset(Arc::clone(&notification_action))?\n    |";
+                    ::alloc::__export::must_use({
+                        ::alloc::fmt::format(
+                            format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
+                        )
+                    })
+                })?;
+            loop {
+                let mut action_guard = match notification_action.lock() {
+                    Ok(action_guard) => action_guard,
+                    Err(e) => {
+                        {
+                            ::std::io::_eprint(
+                                format_args!(
+                                    "[{0}:{1}:{2}] notification_action.lock() in cli::Cli::run\n{3}\n",
+                                    "src\\runner.rs",
+                                    108u32 - 6,
+                                    68,
+                                    "poison error of Mutex of notification action.".red(),
+                                ),
+                            );
+                        };
+                        {
+                            ::std::io::_eprint(
+                                format_args!("ref: {0:?}\n", e.get_ref()),
+                            );
+                        };
+                        e.into_inner()
+                    }
+                };
+                if let Some(action) = &*action_guard {
+                    match action {
+                        NotificationAction::Silent5Mins => {
+                            {
+                                ::std::io::_print(
+                                    format_args!(
+                                        "{0}\n",
+                                        "Silent for 5 minutes action triggered.".yellow(),
+                                    ),
+                                );
+                            };
+                            std::thread::sleep(
+                                std::time::Duration::from_secs(
+                                    300u64.saturating_sub(self.settings.check_interval),
+                                ),
+                            );
+                        }
+                        NotificationAction::Silent10Mins => {
+                            {
+                                ::std::io::_print(
+                                    format_args!(
+                                        "{0}\n",
+                                        "Silent for 10 minutes action triggered.".yellow(),
+                                    ),
+                                );
+                            };
+                            std::thread::sleep(
+                                std::time::Duration::from_secs(
+                                    600u64.saturating_sub(self.settings.check_interval),
+                                ),
+                            );
+                        }
+                        NotificationAction::SilentSpecifiedMins(specified_mins) => {
+                            {
+                                ::std::io::_print(
+                                    format_args!(
+                                        "{0}\n",
+                                        ::alloc::__export::must_use({
+                                                ::alloc::fmt::format(
+                                                    format_args!(
+                                                        "Silent for {0} minutes action triggered.",
+                                                        specified_mins,
+                                                    ),
+                                                )
+                                            })
+                                            .yellow(),
+                                    ),
+                                );
+                            };
+                            std::thread::sleep(
+                                std::time::Duration::from_secs(
+                                    specified_mins
+                                        .saturating_mul(60)
+                                        .saturating_sub(self.settings.check_interval),
+                                ),
+                            );
+                        }
+                        NotificationAction::RequireChangeMode => {
+                            crate::notification::mode_change_notify(
+                                    notification_method,
+                                    Arc::clone(&notification_action),
+                                )
+                                .or_else(|e| {
+                                    if self.settings.abort_on_error_except_initialize {
+                                        Err(e)
+                                            .with_context(|| {
+                                                let path = "src\\runner.rs";
+                                                let line = 146usize;
+                                                let col = 26usize;
+                                                let expr = " 143>    crate::notification::mode_change_notify(\n 144|                            notification_method,\n 145|                            Arc::clone(&notification_action),\n 146|                        )?\n    |";
+                                                ::alloc::__export::must_use({
+                                                    ::alloc::fmt::format(
+                                                        format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
+                                                    )
+                                                })
+                                            })
+                                    } else {
+                                        let path = "src\\runner.rs";
+                                        let line = 146usize;
+                                        let col = 26usize;
+                                        let expr = " 143>    crate::notification::mode_change_notify(\n 144|                            notification_method,\n 145|                            Arc::clone(&notification_action),\n 146|                        )?\n    |";
+                                        {
+                                            ::std::io::_eprint(
+                                                format_args!("[{0}:{1}:{2}]\n{3}\n", path, line, col, expr),
+                                            );
+                                        };
+                                        Ok(())
+                                    }
+                                })?;
+                            if !self.settings.notify_battery_during_change_mode {
+                                drop(action_guard);
+                                std::thread::sleep(duration);
+                                continue;
+                            }
+                        }
+                        NotificationAction::ChangeMode(mode_to_change) => {
+                            {
+                                ::std::io::_print(
+                                    format_args!(
+                                        "{0}\n",
+                                        ::alloc::__export::must_use({
+                                                ::alloc::fmt::format(
+                                                    format_args!(
+                                                        "change mode to \"{0}\" action triggered.",
+                                                        mode_to_change,
+                                                    ),
+                                                )
+                                            })
+                                            .yellow(),
+                                    ),
+                                );
+                            };
+                            if mode_names
+                                .contains(&*mode.read().unwrap_or_else(|e| e.into_inner()))
+                            {
+                                match mode.write() {
+                                    Ok(mut mode_guard) => {
+                                        *mode_guard = mode_to_change.clone();
+                                        drop(mode_guard);
+                                    }
+                                    Err(e) => {
+                                        {
+                                            ::std::io::_eprint(
+                                                format_args!(
+                                                    "[{0}:{1}:{2}] mode.lock() in cli::Cli::run\n{3}\n",
+                                                    "src\\runner.rs",
+                                                    170u32 - 8,
+                                                    47,
+                                                    "poison error of RwLock of mode.".red(),
+                                                ),
+                                            );
+                                        };
+                                        {
+                                            ::std::io::_eprint(
+                                                format_args!("ref: {0:?}\n", e.get_ref()),
+                                            );
+                                        };
+                                        let mut mode_guard = e.into_inner();
+                                        *mode_guard = mode_to_change.clone();
+                                        drop(mode_guard);
+                                    }
+                                }
+                            }
+                        }
+                        NotificationAction::Error(e) => {
+                            Err(anyhow::Error::msg(e.to_string()))
+                                .or_else(|e| {
+                                    if self.settings.abort_on_error_except_initialize {
+                                        Err(e)
+                                            .with_context(|| {
+                                                let path = "src\\runner.rs";
+                                                let line = 183usize;
+                                                let col = 63usize;
+                                                let expr = " 183>    Err(anyhow::Error::msg(e.to_string()))?\n    |";
+                                                ::alloc::__export::must_use({
+                                                    ::alloc::fmt::format(
+                                                        format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
+                                                    )
+                                                })
+                                            })
+                                    } else {
+                                        let path = "src\\runner.rs";
+                                        let line = 183usize;
+                                        let col = 63usize;
+                                        let expr = " 183>    Err(anyhow::Error::msg(e.to_string()))?\n    |";
+                                        {
+                                            ::std::io::_eprint(
+                                                format_args!("[{0}:{1}:{2}]\n{3}\n", path, line, col, expr),
+                                            );
+                                        };
+                                        Ok(())
+                                    }
+                                })?;
+                        }
+                    }
+                    *action_guard = None;
+                }
+                drop(action_guard);
+                {
+                    ::std::io::_print(
+                        format_args!(
+                            "mode: {0:?}\n",
+                            mode.read().unwrap_or_else(|e| e.into_inner()),
+                        ),
+                    );
+                };
+                let battery_report = match crate::battery::battery_check() {
+                    Ok(report) => report,
+                    Err(e) => {
+                        if self.settings.abort_on_error_except_initialize {
+                            return Err(e)
+                                .with_context(|| {
+                                    let path = "src\\runner.rs";
+                                    let line = 208usize;
+                                    let col = 25usize;
+                                    let expr = " 208>    return Err(e)\n    |";
+                                    ::alloc::__export::must_use({
+                                        ::alloc::fmt::format(
+                                            format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
+                                        )
+                                    })
+                                });
+                        } else {
+                            {
+                                ::std::io::_eprint(
+                                    format_args!("Error on checking battery:\n{0:?}\n", e),
+                                );
+                            };
+                            std::thread::sleep(duration);
+                            continue;
+                        }
+                    }
+                };
+                match &battery_report {
+                    tmp => {
+                        {
+                            ::std::io::_eprint(
+                                format_args!(
+                                    "[{0}:{1}:{2}] {3} = {4:#?}\n",
+                                    "src\\runner.rs",
+                                    216u32,
+                                    13u32,
+                                    "& battery_report",
+                                    &&tmp as &dyn ::std::fmt::Debug,
+                                ),
+                            );
+                        };
+                        tmp
+                    }
+                };
+                self.settings
+                    .notifications
+                    .iter()
+                    .filter(|notification_setting| {
+                        crate::notification::judge_notification(
+                            notification_setting,
+                            &battery_report,
+                        )
+                    })
+                    .try_for_each(|notification_setting| {
+                        battery_notify(
+                            notification_method,
+                            &battery_report,
+                            &notification_setting.title,
+                            &notification_setting.message,
+                            Arc::clone(&notification_action),
+                            &notification_setting.input_type,
+                            mode_names,
+                        )
+                    })
+                    .or_else(|e| {
+                        if self.settings.abort_on_error_except_initialize {
+                            Err(e)
+                                .with_context(|| {
+                                    let path = "src\\runner.rs";
+                                    let line = 233usize;
+                                    let col = 19usize;
+                                    let expr = " 217>    self.settings\n...\n 230|                        &notification_setting.input_type,\n 231|                        mode_names,\n 232|                    )\n 233|                })?\n    |";
+                                    ::alloc::__export::must_use({
+                                        ::alloc::fmt::format(
+                                            format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
+                                        )
+                                    })
+                                })
+                        } else {
+                            let path = "src\\runner.rs";
+                            let line = 233usize;
+                            let col = 19usize;
+                            let expr = " 217>    self.settings\n...\n 230|                        &notification_setting.input_type,\n 231|                        mode_names,\n 232|                    )\n 233|                })?\n    |";
+                            {
+                                ::std::io::_eprint(
+                                    format_args!("[{0}:{1}:{2}]\n{3}\n", path, line, col, expr),
+                                );
+                            };
+                            Ok(())
+                        }
+                    })?;
+                if let Some(mode_setting) = self
+                    .settings
+                    .modes
+                    .get(&*mode.read().unwrap_or_else(|e| e.into_inner()))
+                {
+                    mode_setting
+                        .notifications
+                        .iter()
+                        .filter(|notification_setting| {
+                            crate::notification::judge_notification(
+                                notification_setting,
+                                &battery_report,
+                            )
+                        })
+                        .try_for_each(|notification_setting| {
+                            battery_notify(
+                                notification_method,
+                                &battery_report,
+                                &notification_setting.title,
+                                &notification_setting.message,
+                                Arc::clone(&notification_action),
+                                &notification_setting.input_type,
+                                mode_names,
+                            )
+                        })
+                        .or_else(|e| {
+                            if self.settings.abort_on_error_except_initialize {
+                                Err(e)
+                                    .with_context(|| {
+                                        let path = "src\\runner.rs";
+                                        let line = 258usize;
+                                        let col = 23usize;
+                                        let expr = " 239>    mode_setting\n...\n 255|                            &notification_setting.input_type,\n 256|                            mode_names,\n 257|                        )\n 258|                    })?\n    |";
+                                        ::alloc::__export::must_use({
+                                            ::alloc::fmt::format(
+                                                format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
+                                            )
+                                        })
+                                    })
+                            } else {
+                                let path = "src\\runner.rs";
+                                let line = 258usize;
+                                let col = 23usize;
+                                let expr = " 239>    mode_setting\n...\n 255|                            &notification_setting.input_type,\n 256|                            mode_names,\n 257|                        )\n 258|                    })?\n    |";
+                                {
+                                    ::std::io::_eprint(
+                                        format_args!("[{0}:{1}:{2}]\n{3}\n", path, line, col, expr),
+                                    );
+                                };
+                                Ok(())
+                            }
+                        })?;
+                }
+                {
+                    ::std::io::_print(format_args!("check battery and notifying\n"));
+                };
+                std::thread::sleep(duration);
+            }
+            #[allow(unreachable_code)] Ok(())
+        }
     }
 }
 mod settings {
@@ -5329,14 +5355,12 @@ mod startup {
             })?;
         let toml_settings_path_absolute = toml_settings_path_absolute
             .to_str()
-            .with_context(|| {
-                "path to current exe is empty. Unknown error may occured.".red()
-            })
+            .with_context(|| "Failed to get absolute path string".red())
             .with_context(|| {
                 let path = "src\\startup.rs";
                 let line = 99usize;
-                let col = 91usize;
-                let expr = "  97>    toml_settings_path_absolute\n  98|        .to_str()\n  99|        .with_context(|| \"path..red.\".red())?\n    |";
+                let col = 69usize;
+                let expr = "  97>    toml_settings_path_absolute\n  98|        .to_str()\n  99|        .with_context(|| \"Fail..ring\".red())?\n    |";
                 ::alloc::__export::must_use({
                     ::alloc::fmt::format(
                         format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
@@ -7264,14 +7288,14 @@ fn main() -> anyhow::Result<()> {
             })
     }?;
     if app_args.msgbox {
-        crate::cli::Cli::new(
+        crate::runner::Runner::new(
                 if app_args.msgbox {
                     toml_settings
                         .try_into()
                         .with_context(|| {
                             let path = "src\\main.rs";
                             let line = 190usize;
-                            let col = 50usize;
+                            let col = 56usize;
                             let expr = " 190>    toml_settings.try_into()?\n    |";
                             ::alloc::__export::must_use({
                                 ::alloc::fmt::format(
@@ -7295,7 +7319,7 @@ fn main() -> anyhow::Result<()> {
                         .with_context(|| {
                             let path = "src\\main.rs";
                             let line = 190usize;
-                            let col = 50usize;
+                            let col = 56usize;
                             let expr = " 190>    toml_settings.try_into()?\n    |";
                             ::alloc::__export::must_use({
                                 ::alloc::fmt::format(
@@ -7310,7 +7334,7 @@ fn main() -> anyhow::Result<()> {
                 let path = "src\\main.rs";
                 let line = 190usize;
                 let col = 5usize;
-                let expr = " 190>    crate::cli::Cli::new(toml_settings.try_into()?).run()\n    |";
+                let expr = " 190>    crate::runner::Runner::new(toml_settings.try_into()?).run()\n    |";
                 ::alloc::__export::must_use({
                     ::alloc::fmt::format(
                         format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
@@ -7328,14 +7352,14 @@ fn main() -> anyhow::Result<()> {
                 )
             })
     } else {
-        crate::cli::Cli::new(
+        crate::runner::Runner::new(
                 if app_args.msgbox {
                     toml_settings
                         .try_into()
                         .with_context(|| {
                             let path = "src\\main.rs";
                             let line = 190usize;
-                            let col = 50usize;
+                            let col = 56usize;
                             let expr = " 190>    toml_settings.try_into()?\n    |";
                             ::alloc::__export::must_use({
                                 ::alloc::fmt::format(
@@ -7359,7 +7383,7 @@ fn main() -> anyhow::Result<()> {
                         .with_context(|| {
                             let path = "src\\main.rs";
                             let line = 190usize;
-                            let col = 50usize;
+                            let col = 56usize;
                             let expr = " 190>    toml_settings.try_into()?\n    |";
                             ::alloc::__export::must_use({
                                 ::alloc::fmt::format(
@@ -7374,7 +7398,7 @@ fn main() -> anyhow::Result<()> {
                 let path = "src\\main.rs";
                 let line = 190usize;
                 let col = 5usize;
-                let expr = " 190>    crate::cli::Cli::new(toml_settings.try_into()?).run()\n    |";
+                let expr = " 190>    crate::runner::Runner::new(toml_settings.try_into()?).run()\n    |";
                 ::alloc::__export::must_use({
                     ::alloc::fmt::format(
                         format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
