@@ -35,6 +35,7 @@ test_mode.toml
 test_mode_reborn.toml
 test_tauri.toml
 test_err_parse.toml
+test_reborn_specified.toml
 
 hooq.toml
 
