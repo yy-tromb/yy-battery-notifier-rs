@@ -3,7 +3,7 @@ name = "yy-battery-notifier-rs"
 description = "Check battery level & Notify you!"
 authors = ["yy-tromb"]
 license = "MIT"
-version = "0.4.0"
+version = "0.4.1"
 edition = "2024"
 
 [dependencies]

@@ -5,12 +5,17 @@
     <Package
         Name='yy-battery-notifier-rs'
         Manufacturer='yy-tromb'
-        Version='0.4.0'
+        Version='0.4.1'
         Compressed='yes'
         UpgradeCode='9efd67b9-13ae-4969-939f-834521b42e75'
     >
         <SummaryInformation Description='check battery level and notify you!' />
         <MediaTemplate EmbedCab='yes' />
+
+        <MajorUpgrade
+            DowngradeErrorMessage='A newer version of yy-battery-notifier-rs is already installed.'
+            IgnoreRemoveFailure='no'
+        />
 
         <Property Id='WIXUI_INSTALLDIR' Value='INSTALLDIR' />
         <ui:WixUI Id='WixUI_InstallDir' />
