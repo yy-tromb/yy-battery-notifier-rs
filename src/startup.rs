@@ -25,10 +25,10 @@ pub fn register_cli(
     let toml_settings_path: String = match toml_settings_path {
         Some(toml_settings_path) => toml_settings_path,
         None => {
-            if (!input_mode) & (!default_settings) {
+            if input_mode && default_settings {
                 return anyhow::Result::Err(anyhow::Error::msg(
                     format!(
-                        "This session is {} nor {}.\n\
+                        "This session is {} and {}.\n\
                     {}. If you want to enable input mode, you can use --input",
                         "input mode".bold(),
                         "using default_settings".bold(),
@@ -36,7 +36,7 @@ pub fn register_cli(
                     )
                     .red(),
                 ));
-            } else if input_mode & (!default_settings) {
+            } else if input_mode && (!default_settings) {
                 let mut toml_settings_path_input = String::with_capacity(256);
                 loop {
                     println!(
@@ -67,7 +67,7 @@ pub fn register_cli(
             } else {
                 return anyhow::Result::Err(anyhow::Error::msg(
                     format!(
-                        "This session is {} and {}.\n\
+                        "This session is {} nor {}.\n\
                     {}. If you want to enable input mode, you can use --input",
                         "input mode".bold(),
                         "using default_settings".bold(),
@@ -78,8 +78,22 @@ pub fn register_cli(
             }
         }
     };
-    let toml_settings_path_absolute = std::fs::canonicalize(toml_settings_path.trim())
-        .with_context(|| format!("Failed to canonicalize path: {}", toml_settings_path).red())?;
+    let toml_settings_path = toml_settings_path.trim();
+    let mut toml_settings_path_iter = toml_settings_path.chars();
+    let start_index = match toml_settings_path_iter.next() {
+        Some('"') | Some('\'') | Some('`') => 1,
+        Some(_) => 0,
+        None => unreachable!(),
+    };
+    let end_index = match toml_settings_path_iter.nth_back(0) {
+        Some('"') | Some('\'') | Some('`') => toml_settings_path.len() - 1,
+        Some(_) => toml_settings_path.len(),
+        None => unreachable!(),
+    };
+    let toml_settings_path_absolute =
+        std::fs::canonicalize(&toml_settings_path[start_index..end_index]).with_context(|| {
+            format!("Failed to canonicalize path: {}", toml_settings_path).red()
+        })?;
     let toml_settings_path_absolute = toml_settings_path_absolute
         .to_str()
         .with_context(|| "path to current exe is empty. Unknown error may occured.".red())?;
