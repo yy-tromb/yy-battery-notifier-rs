@@ -31,21 +31,21 @@ gui featureを付けてビルド: `cargo build --release --features gui` か `ca
 ## 通知の使い方
 ### 通知メソッド: "TauriWinrtToast"
 #### バッテリ残量の通知
-<img alt="バッテリ残量通知のスクリーンショット" style="width: 60%" src="../assets/tauri_battery_notify.png">
+<img alt="バッテリ残量通知のスクリーンショット" style="width: 70%" src="../assets/tauri_battery_notify.png">
 
 #### モード変更の通知
-<img alt="モード変更通知のスクリーンショット" style="width: 60%" src="../assets/tauri_mode_change_notify.png">
+<img alt="モード変更通知のスクリーンショット" style="width: 70%" src="../assets/tauri_mode_change_notify.png">
 
 ### メソッド: "WinrtToastReborn"
 #### バッテリ残量の通知 (input_type = "ModeSelector")
-<img alt="input_typeをモード選択(ModeSelector)と定義した場合のバッテリ残量通知のスクリーンショット" style="width: 60%" src="../assets/reborn_battery_notify_selector.png">
+<img alt="input_typeをモード選択(ModeSelector)と定義した場合のバッテリ残量通知のスクリーンショット" style="width: 70%" src="../assets/reborn_battery_notify_selector.png">
 
 #### バッテリ残量の通知 (input_type = "SilentSpecifiedMinutes")
-<img alt="input_typeを、指定された分数の通知停止(SilentSpecifiedMinutes)と定義した場合のバッテリ残量通知のスクリーンショット" style="width: 60%" src="../assets/reborn_battery_notify_specified.png">
+<img alt="input_typeを、指定された分数の通知停止(SilentSpecifiedMinutes)と定義した場合のバッテリ残量通知のスクリーンショット" style="width: 70%" src="../assets/reborn_battery_notify_specified.png">
 
 #### モード変更の通知
-<img alt="モード変更通知のスクリーンショット" style="width: 60%" src="../assets/reborn_mode_change_notify.png">
-<img alt="モード変更通知で、セレクターを展開したときのスクリーンショット" style="width: 60%" src="../assets/reborn_mode_change_notify_expand-selector.png">
+<img alt="モード変更通知のスクリーンショット" style="width: 70%" src="../assets/reborn_mode_change_notify.png">
+<img alt="モード変更通知で、セレクターを展開したときのスクリーンショット" style="width: 70%" src="../assets/reborn_mode_change_notify_expand-selector.png">
 
 ## CLIの使い方
 ### 指定された settings.toml の設定で通知を開始
