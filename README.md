@@ -27,8 +27,6 @@ The installer also create shortcuts on start menu as below...
 - Register Startup: register startup settings to Windows registry with user specified settings (as input).
 - Register Startup with Default Settings: register startup settings to Windows registry with default settings with [default_settings.toml](https://github.com/yy-tromb/yy-battery-notifier-rs/blob/main/default_settings.toml).
 
-</details>
-
 ## Usage on notification
 ### method: "TauriWinrtToast"
 #### notify battery level
@@ -294,6 +292,8 @@ power_supply = "None"
 title = "Plug in!"
 message = "The battery level of Your PC is lower than 60%. Plug in."
 ```
+
+</details>
 
 ## ToDos
 - [x] ~Add mode change button~

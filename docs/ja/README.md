@@ -26,7 +26,6 @@ gui featureを付けてビルド: `cargo build --release --features gui` か `ca
 - Register Startup: Windows レジストリにユーザーが(入力して)指定した設定で、スタートアップとして登録。
 - Register Startup with Default Settings: Windows レジストリに[デフォルトの設定](https://github.com/yy-tromb/yy-battery-notifier-rs/blob/main/docs/ja/default_settings.toml)でスタートアップとして登録。
 
-</details>
 
 ## 通知の使い方
 ### 通知メソッド: "TauriWinrtToast"
@@ -294,6 +293,8 @@ power_supply = "None"
 title = "Plug in!"
 message = "The battery level of Your PC is lower than 60%. Plug in."
 ```
+</details>
+
 
 ## やること
 - [x] ~モード変更ボタン~
