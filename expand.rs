@@ -1,8 +1,4 @@
-// This is result of `cargo expand`
-// You can check the result of macro expansion by seeing this.
-
 #![feature(prelude_import)]
-#[macro_use]
 extern crate std;
 #[prelude_import]
 use std::prelude::rust_2024::*;
@@ -816,10 +812,7 @@ mod notification {
                 .duration(ToastDuration::Short)
                 .action(Action::new("silent for 5 mins", "silent 5 mins", ""))
                 .action(Action::new("silent for 10 mins", "silent 10 mins", ""));
-            let mode_guard = match crate::runner::MODE.read() {
-                Ok(mode) => mode,
-                Err(e) => e.into_inner(),
-            };
+            let mode_guard = crate::runner::MODE.get();
             match input_type {
                 NotificationInputType::ModeSelector if !mode_names.is_empty() => {
                     toast
@@ -827,12 +820,12 @@ mod notification {
                             Input::new("mode_selection", InputType::Selection)
                                 .with_title("select mode")
                                 .with_default_input(
-                                    if mode_guard.is_empty() {
-                                        "mode_no_mode".into()
-                                    } else {
+                                    if let Some(mode) = mode_guard.as_deref() {
                                         ::alloc::__export::must_use({
-                                            ::alloc::fmt::format(format_args!("mode:{0}", mode_guard))
+                                            ::alloc::fmt::format(format_args!("mode:{0}", mode))
                                         })
+                                    } else {
+                                        "mode_no_mode".into()
                                     },
                                 ),
                         );
@@ -883,9 +876,9 @@ mod notification {
                 .show(&toast)
                 .with_context(|| {
                     let path = "src\\notification\\winrt_toast_reborn.rs";
-                    let line = 97usize;
+                    let line = 94usize;
                     let col = 22usize;
-                    let expr = "  93>    toast_manager\n  94|        .on_activated(None, move |action| {\n  95|            handle_battery_notify_activated_action(action, &notification_action);\n  96|        })\n  97|        .show(&toast)?\n    |";
+                    let expr = "  90>    toast_manager\n  91|        .on_activated(None, move |action| {\n  92|            handle_battery_notify_activated_action(action, &notification_action);\n  93|        })\n  94|        .show(&toast)?\n    |";
                     ::alloc::__export::must_use({
                         ::alloc::fmt::format(
                             format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
@@ -1037,10 +1030,7 @@ mod notification {
         ) -> anyhow::Result<()> {
             let toast_manager = ToastManager::new(crate::aumid::AUMID);
             let mut toast = Toast::new();
-            let mode_guard = match crate::runner::MODE.read() {
-                Ok(mode) => mode,
-                Err(e) => e.into_inner(),
-            };
+            let mode_guard = crate::runner::MODE.get();
             toast
                 .text1("Notify Mode Change")
                 .duration(ToastDuration::Long)
@@ -1048,12 +1038,12 @@ mod notification {
                     Input::new("mode_selection", InputType::Selection)
                         .with_title("select mode")
                         .with_default_input(
-                            if mode_guard.is_empty() {
-                                "mode_no_mode".into()
-                            } else {
+                            if let Some(mode) = mode_guard.as_deref() {
                                 ::alloc::__export::must_use({
-                                    ::alloc::fmt::format(format_args!("mode:{0}", mode_guard))
+                                    ::alloc::fmt::format(format_args!("mode:{0}", mode))
                                 })
+                            } else {
+                                "mode_no_mode".into()
                             },
                         ),
                 )
@@ -1068,9 +1058,9 @@ mod notification {
                 })
                 .with_context(|| {
                     let path = "src\\notification\\winrt_toast_reborn.rs";
-                    let line = 213usize;
+                    let line = 207usize;
                     let col = 11usize;
-                    let expr = " 209>    crate::runner::MODE_NAMES\n 210|        .get()\n 211|        .ok_or_else(|| {\n 212|            anyhow::Error::msg(\"MODE..pen.\".red())\n 213|        })?\n    |";
+                    let expr = " 203>    crate::runner::MODE_NAMES\n 204|        .get()\n 205|        .ok_or_else(|| {\n 206|            anyhow::Error::msg(\"MODE..pen.\".red())\n 207|        })?\n    |";
                     ::alloc::__export::must_use({
                         ::alloc::fmt::format(
                             format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
@@ -1105,9 +1095,9 @@ mod notification {
                 .show(&toast)
                 .with_context(|| {
                     let path = "src\\notification\\winrt_toast_reborn.rs";
-                    let line = 224usize;
+                    let line = 218usize;
                     let col = 22usize;
-                    let expr = " 220>    toast_manager\n 221|        .on_activated(None, move |action| {\n 222|            handle_mode_change_notify_winrt_toast_reborn(action, &notification_action);\n 223|        })\n 224|        .show(&toast)?\n    |";
+                    let expr = " 214>    toast_manager\n 215|        .on_activated(None, move |action| {\n 216|            handle_mode_change_notify_winrt_toast_reborn(action, &notification_action);\n 217|        })\n 218|        .show(&toast)?\n    |";
                     ::alloc::__export::must_use({
                         ::alloc::fmt::format(
                             format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
@@ -2520,9 +2510,58 @@ mod runner {
     use anyhow::Context as _;
     use colored::Colorize;
     use hooq::hooq;
-    use std::sync::{Arc, LazyLock, Mutex, OnceLock, RwLock};
+    use std::sync::{PoisonError, RwLockWriteGuard};
+    use std::{
+        ops::Deref, sync::{Arc, LazyLock, Mutex, OnceLock, RwLock, RwLockReadGuard},
+    };
     pub static MODE_NAMES: OnceLock<Vec<String>> = OnceLock::new();
-    pub static MODE: LazyLock<RwLock<String>> = LazyLock::new(|| RwLock::new("".into()));
+    pub static MODE: LazyLock<Mode> = LazyLock::new(Mode::default);
+    pub struct Mode(RwLock<Option<String>>);
+    #[automatically_derived]
+    impl ::core::default::Default for Mode {
+        #[inline]
+        fn default() -> Mode {
+            Mode(::core::default::Default::default())
+        }
+    }
+    impl Mode {
+        pub fn get(&self) -> RwLockReadGuard<'_, Option<String>> {
+            self.0.read().unwrap_or_else(|e| e.into_inner())
+        }
+        pub fn set(&self, value: Option<String>) {
+            match self.0.write() {
+                Ok(mut guard) => {
+                    *guard = value;
+                    drop(guard);
+                }
+                Err(e) => {
+                    {
+                        ::std::io::_eprint(
+                            format_args!(
+                                "[{0}:{1}:{2}] mode.lock() in {3}::Mode::set\n{4}\n",
+                                "src\\runner.rs",
+                                31u32 - 9,
+                                29,
+                                "yy_battery_notifier_rs::runner",
+                                "poison error of RwLock of mode.".red(),
+                            ),
+                        );
+                    };
+                    {
+                        ::std::io::_eprint(format_args!("ref: {0:?}\n", e.get_ref()));
+                    };
+                    let mut guard = e.into_inner();
+                    *guard = value;
+                    drop(guard);
+                }
+            }
+        }
+        pub fn check_write_lock_error(
+            &self,
+        ) -> Option<PoisonError<RwLockWriteGuard<'_, Option<String>>>> {
+            self.0.write().err()
+        }
+    }
     pub struct Runner {
         settings: crate::settings::Settings,
     }
@@ -2544,9 +2583,9 @@ mod runner {
                     )
                     .with_context(|| {
                         let path = "src\\runner.rs";
-                        let line = 30usize;
+                        let line = 82usize;
                         let col = 14usize;
-                        let expr = "  27>    crate::notification::mode_change_notify(\n  28|                &self.settings.notification_method,\n  29|                notification_action,\n  30|            )?\n    |";
+                        let expr = "  79>    crate::notification::mode_change_notify(\n  80|                &self.settings.notification_method,\n  81|                notification_action,\n  82|            )?\n    |";
                         ::alloc::__export::must_use({
                             ::alloc::fmt::format(
                                 format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
@@ -2590,9 +2629,9 @@ mod runner {
                 })
                 .with_context(|| {
                     let path = "src\\runner.rs";
-                    let line = 61usize;
+                    let line = 113usize;
                     let col = 15usize;
-                    let expr = "  45>    MODE_NAMES\n...\n  58|                    )\n  59|                    .red(),\n  60|                )\n  61|            })?\n    |";
+                    let expr = "  97>    MODE_NAMES\n...\n 110|                    )\n 111|                    .red(),\n 112|                )\n 113|            })?\n    |";
                     ::alloc::__export::must_use({
                         ::alloc::fmt::format(
                             format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
@@ -2608,9 +2647,9 @@ mod runner {
                 })
                 .with_context(|| {
                     let path = "src\\runner.rs";
-                    let line = 64usize;
+                    let line = 116usize;
                     let col = 11usize;
-                    let expr = "  62>    MODE_NAMES.get().ok_or_else(|| {\n  63|            anyhow::Error::msg(\"MODE..pen.\".red())\n  64|        })?\n    |";
+                    let expr = " 114>    MODE_NAMES.get().ok_or_else(|| {\n 115|            anyhow::Error::msg(\"MODE..pen.\".red())\n 116|        })?\n    |";
                     ::alloc::__export::must_use({
                         ::alloc::fmt::format(
                             format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
@@ -2618,37 +2657,33 @@ mod runner {
                     })
                 })?;
             let mode = &*MODE;
-            match mode.write() {
-                Ok(mut guard) => {
-                    *guard = self.settings.initial_mode.clone();
-                }
-                Err(e) => {
-                    return Err(
-                            anyhow::Error::msg(
-                                ::alloc::__export::must_use({
-                                        ::alloc::fmt::format(
-                                            format_args!(
-                                                "Failed to lock MODE. Unknown poison error!\n Error: {0:?}",
-                                                e,
-                                            ),
-                                        )
-                                    })
-                                    .red(),
-                            ),
-                        )
-                        .with_context(|| {
-                            let path = "src\\runner.rs";
-                            let line = 71usize;
-                            let col = 17usize;
-                            let expr = "  71>    return Err(anyhow::Error::msg(\n...\n  74|                        e\n  75|                    )\n  76|                    .red(),\n  77|                ))\n    |";
+            if let Some(e) = mode.check_write_lock_error() {
+                return Err(
+                        anyhow::Error::msg(
                             ::alloc::__export::must_use({
-                                ::alloc::fmt::format(
-                                    format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
-                                )
-                            })
-                        });
-                }
-            };
+                                    ::alloc::fmt::format(
+                                        format_args!(
+                                            "Failed to lock MODE. Unknown poison error!\n Error: {0:?}",
+                                            e,
+                                        ),
+                                    )
+                                })
+                                .red(),
+                        ),
+                    )
+                    .with_context(|| {
+                        let path = "src\\runner.rs";
+                        let line = 119usize;
+                        let col = 13usize;
+                        let expr = " 119>    return Err(anyhow::Error::msg(\n...\n 122|                    e\n 123|                )\n 124|                .red(),\n 125|            ))\n    |";
+                        ::alloc::__export::must_use({
+                            ::alloc::fmt::format(
+                                format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
+                            )
+                        })
+                    });
+            }
+            mode.set(self.settings.initial_mode.clone());
             let notification_method = &self.settings.notification_method;
             let notification_action: Arc<Mutex<Option<NotificationAction>>> = Arc::new(
                 Mutex::new(None),
@@ -2656,9 +2691,9 @@ mod runner {
             self.outset(Arc::clone(&notification_action))
                 .with_context(|| {
                     let path = "src\\runner.rs";
-                    let line = 83usize;
+                    let line = 131usize;
                     let col = 54usize;
-                    let expr = "  83>    self.outset(Arc::clone(&notification_action))?\n    |";
+                    let expr = " 131>    self.outset(Arc::clone(&notification_action))?\n    |";
                     ::alloc::__export::must_use({
                         ::alloc::fmt::format(
                             format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
@@ -2674,7 +2709,7 @@ mod runner {
                                 format_args!(
                                     "[{0}:{1}:{2}] notification_action.lock() in cli::Cli::run\n{3}\n",
                                     "src\\runner.rs",
-                                    108u32 - 6,
+                                    156u32 - 6,
                                     68,
                                     "poison error of Mutex of notification action.".red(),
                                 ),
@@ -2755,9 +2790,9 @@ mod runner {
                                         Err(e)
                                             .with_context(|| {
                                                 let path = "src\\runner.rs";
-                                                let line = 146usize;
+                                                let line = 194usize;
                                                 let col = 26usize;
-                                                let expr = " 143>    crate::notification::mode_change_notify(\n 144|                            notification_method,\n 145|                            Arc::clone(&notification_action),\n 146|                        )?\n    |";
+                                                let expr = " 191>    crate::notification::mode_change_notify(\n 192|                            notification_method,\n 193|                            Arc::clone(&notification_action),\n 194|                        )?\n    |";
                                                 ::alloc::__export::must_use({
                                                     ::alloc::fmt::format(
                                                         format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
@@ -2766,9 +2801,9 @@ mod runner {
                                             })
                                     } else {
                                         let path = "src\\runner.rs";
-                                        let line = 146usize;
+                                        let line = 194usize;
                                         let col = 26usize;
-                                        let expr = " 143>    crate::notification::mode_change_notify(\n 144|                            notification_method,\n 145|                            Arc::clone(&notification_action),\n 146|                        )?\n    |";
+                                        let expr = " 191>    crate::notification::mode_change_notify(\n 192|                            notification_method,\n 193|                            Arc::clone(&notification_action),\n 194|                        )?\n    |";
                                         {
                                             ::std::io::_eprint(
                                                 format_args!("[{0}:{1}:{2}]\n{3}\n", path, line, col, expr),
@@ -2800,36 +2835,10 @@ mod runner {
                                     ),
                                 );
                             };
-                            if mode_names
-                                .contains(&*mode.read().unwrap_or_else(|e| e.into_inner()))
+                            if let Some(current_mode) = &*mode.get()
+                                && mode_names.contains(current_mode)
                             {
-                                match mode.write() {
-                                    Ok(mut mode_guard) => {
-                                        *mode_guard = mode_to_change.clone();
-                                        drop(mode_guard);
-                                    }
-                                    Err(e) => {
-                                        {
-                                            ::std::io::_eprint(
-                                                format_args!(
-                                                    "[{0}:{1}:{2}] mode.lock() in cli::Cli::run\n{3}\n",
-                                                    "src\\runner.rs",
-                                                    170u32 - 8,
-                                                    47,
-                                                    "poison error of RwLock of mode.".red(),
-                                                ),
-                                            );
-                                        };
-                                        {
-                                            ::std::io::_eprint(
-                                                format_args!("ref: {0:?}\n", e.get_ref()),
-                                            );
-                                        };
-                                        let mut mode_guard = e.into_inner();
-                                        *mode_guard = mode_to_change.clone();
-                                        drop(mode_guard);
-                                    }
-                                }
+                                mode.set(Some(mode_to_change.clone()));
                             }
                         }
                         NotificationAction::Error(e) => {
@@ -2839,9 +2848,9 @@ mod runner {
                                         Err(e)
                                             .with_context(|| {
                                                 let path = "src\\runner.rs";
-                                                let line = 183usize;
+                                                let line = 215usize;
                                                 let col = 63usize;
-                                                let expr = " 183>    Err(anyhow::Error::msg(e.to_string()))?\n    |";
+                                                let expr = " 215>    Err(anyhow::Error::msg(e.to_string()))?\n    |";
                                                 ::alloc::__export::must_use({
                                                     ::alloc::fmt::format(
                                                         format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
@@ -2850,9 +2859,9 @@ mod runner {
                                             })
                                     } else {
                                         let path = "src\\runner.rs";
-                                        let line = 183usize;
+                                        let line = 215usize;
                                         let col = 63usize;
-                                        let expr = " 183>    Err(anyhow::Error::msg(e.to_string()))?\n    |";
+                                        let expr = " 215>    Err(anyhow::Error::msg(e.to_string()))?\n    |";
                                         {
                                             ::std::io::_eprint(
                                                 format_args!("[{0}:{1}:{2}]\n{3}\n", path, line, col, expr),
@@ -2867,12 +2876,7 @@ mod runner {
                 }
                 drop(action_guard);
                 {
-                    ::std::io::_print(
-                        format_args!(
-                            "mode: {0:?}\n",
-                            mode.read().unwrap_or_else(|e| e.into_inner()),
-                        ),
-                    );
+                    ::std::io::_print(format_args!("mode: {0:?}\n", mode.get().deref()));
                 };
                 let battery_report = match crate::battery::battery_check() {
                     Ok(report) => report,
@@ -2881,9 +2885,9 @@ mod runner {
                             return Err(e)
                                 .with_context(|| {
                                     let path = "src\\runner.rs";
-                                    let line = 208usize;
+                                    let line = 237usize;
                                     let col = 25usize;
-                                    let expr = " 208>    return Err(e)\n    |";
+                                    let expr = " 237>    return Err(e)\n    |";
                                     ::alloc::__export::must_use({
                                         ::alloc::fmt::format(
                                             format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
@@ -2908,7 +2912,7 @@ mod runner {
                                 format_args!(
                                     "[{0}:{1}:{2}] {3} = {4:#?}\n",
                                     "src\\runner.rs",
-                                    216u32,
+                                    245u32,
                                     13u32,
                                     "& battery_report",
                                     &&tmp as &dyn ::std::fmt::Debug,
@@ -2943,9 +2947,9 @@ mod runner {
                             Err(e)
                                 .with_context(|| {
                                     let path = "src\\runner.rs";
-                                    let line = 233usize;
+                                    let line = 262usize;
                                     let col = 19usize;
-                                    let expr = " 217>    self.settings\n...\n 230|                        &notification_setting.input_type,\n 231|                        mode_names,\n 232|                    )\n 233|                })?\n    |";
+                                    let expr = " 246>    self.settings\n...\n 259|                        &notification_setting.input_type,\n 260|                        mode_names,\n 261|                    )\n 262|                })?\n    |";
                                     ::alloc::__export::must_use({
                                         ::alloc::fmt::format(
                                             format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
@@ -2954,9 +2958,9 @@ mod runner {
                                 })
                         } else {
                             let path = "src\\runner.rs";
-                            let line = 233usize;
+                            let line = 262usize;
                             let col = 19usize;
-                            let expr = " 217>    self.settings\n...\n 230|                        &notification_setting.input_type,\n 231|                        mode_names,\n 232|                    )\n 233|                })?\n    |";
+                            let expr = " 246>    self.settings\n...\n 259|                        &notification_setting.input_type,\n 260|                        mode_names,\n 261|                    )\n 262|                })?\n    |";
                             {
                                 ::std::io::_eprint(
                                     format_args!("[{0}:{1}:{2}]\n{3}\n", path, line, col, expr),
@@ -2965,10 +2969,8 @@ mod runner {
                             Ok(())
                         }
                     })?;
-                if let Some(mode_setting) = self
-                    .settings
-                    .modes
-                    .get(&*mode.read().unwrap_or_else(|e| e.into_inner()))
+                if let Some(mode) = mode.get().deref()
+                    && let Some(mode_setting) = self.settings.modes.get(mode)
                 {
                     mode_setting
                         .notifications
@@ -2995,9 +2997,9 @@ mod runner {
                                 Err(e)
                                     .with_context(|| {
                                         let path = "src\\runner.rs";
-                                        let line = 258usize;
+                                        let line = 285usize;
                                         let col = 23usize;
-                                        let expr = " 239>    mode_setting\n...\n 255|                            &notification_setting.input_type,\n 256|                            mode_names,\n 257|                        )\n 258|                    })?\n    |";
+                                        let expr = " 266>    mode_setting\n...\n 282|                            &notification_setting.input_type,\n 283|                            mode_names,\n 284|                        )\n 285|                    })?\n    |";
                                         ::alloc::__export::must_use({
                                             ::alloc::fmt::format(
                                                 format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
@@ -3006,9 +3008,9 @@ mod runner {
                                     })
                             } else {
                                 let path = "src\\runner.rs";
-                                let line = 258usize;
+                                let line = 285usize;
                                 let col = 23usize;
-                                let expr = " 239>    mode_setting\n...\n 255|                            &notification_setting.input_type,\n 256|                            mode_names,\n 257|                        )\n 258|                    })?\n    |";
+                                let expr = " 266>    mode_setting\n...\n 282|                            &notification_setting.input_type,\n 283|                            mode_names,\n 284|                        )\n 285|                    })?\n    |";
                                 {
                                     ::std::io::_eprint(
                                         format_args!("[{0}:{1}:{2}]\n{3}\n", path, line, col, expr),
@@ -4498,7 +4500,7 @@ mod settings {
     pub struct Settings {
         pub check_interval: u64,
         pub notification_method: NotificationMethod,
-        pub initial_mode: String,
+        pub initial_mode: Option<String>,
         pub abort_on_error_except_initialize: bool,
         pub notify_battery_during_change_mode: bool,
         pub select_mode_when_starts: bool,
@@ -4880,16 +4882,16 @@ mod settings {
                 initial_mode: toml_settings
                     .initial_mode
                     .map_or_else(
-                        String::default,
+                        Default::default,
                         |initial_mode| {
                             if let Some(modes) = toml_settings.modes.as_ref() {
                                 if modes.keys().any(|key| key == &initial_mode) {
-                                    initial_mode
+                                    Some(initial_mode)
                                 } else {
-                                    String::default()
+                                    None
                                 }
                             } else {
-                                String::default()
+                                None
                             }
                         },
                     ),
@@ -4931,9 +4933,9 @@ mod settings {
                             .try_into()
                             .with_context(|| {
                                 let path = "src\\settings.rs";
-                                let line = 125usize;
+                                let line = 126usize;
                                 let col = 59usize;
-                                let expr = " 125>    notification_toml_setting.try_into()?\n    |";
+                                let expr = " 126>    notification_toml_setting.try_into()?\n    |";
                                 ::alloc::__export::must_use({
                                     ::alloc::fmt::format(
                                         format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
@@ -4955,9 +4957,9 @@ mod settings {
                                         .try_into()
                                         .with_context(|| {
                                             let path = "src\\settings.rs";
-                                            let line = 133usize;
+                                            let line = 134usize;
                                             let col = 95usize;
-                                            let expr = " 133>    mode_toml_setting.to_owned().try_into()?\n    |";
+                                            let expr = " 134>    mode_toml_setting.to_owned().try_into()?\n    |";
                                             ::alloc::__export::must_use({
                                                 ::alloc::fmt::format(
                                                     format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
@@ -4987,9 +4989,9 @@ mod settings {
                                 .try_into()
                                 .with_context(|| {
                                     let path = "src\\settings.rs";
-                                    let line = 146usize;
+                                    let line = 147usize;
                                     let col = 82usize;
-                                    let expr = " 146>    mode_toml_setting.to_owned().try_into()?\n    |";
+                                    let expr = " 147>    mode_toml_setting.to_owned().try_into()?\n    |";
                                     ::alloc::__export::must_use({
                                         ::alloc::fmt::format(
                                             format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
@@ -5006,7 +5008,7 @@ mod settings {
                             format_args!(
                                 "[{0}:{1}:{2}] {3} = {4:#?}\n",
                                 "src\\settings.rs",
-                                150u32,
+                                151u32,
                                 9u32,
                                 "& settings",
                                 &&tmp as &dyn ::std::fmt::Debug,
@@ -5033,9 +5035,9 @@ mod settings {
                             .try_into()
                             .with_context(|| {
                                 let path = "src\\settings.rs";
-                                let line = 166usize;
+                                let line = 167usize;
                                 let col = 54usize;
-                                let expr = " 166>    notification_setting.try_into()?\n    |";
+                                let expr = " 167>    notification_setting.try_into()?\n    |";
                                 ::alloc::__export::must_use({
                                     ::alloc::fmt::format(
                                         format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
@@ -5069,9 +5071,9 @@ mod settings {
                     )
                     .with_context(|| {
                         let path = "src\\settings.rs";
-                        let line = 179usize;
+                        let line = 180usize;
                         let col = 13usize;
-                        let expr = " 179>    return Err(anyhow::Error::msg(\n 180|                format!(\"percentage may be empty. found:'{}'.\", &percentage).red(),\n 181|            ))\n    |";
+                        let expr = " 180>    return Err(anyhow::Error::msg(\n 181|                format!(\"percentage may be empty. found:'{}'.\", &percentage).red(),\n 182|            ))\n    |";
                         ::alloc::__export::must_use({
                             ::alloc::fmt::format(
                                 format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
@@ -5098,9 +5100,9 @@ mod settings {
                         )
                         .with_context(|| {
                             let path = "src\\settings.rs";
-                            let line = 187usize;
+                            let line = 188usize;
                             let col = 17usize;
-                            let expr = " 187>    return Err(anyhow::Error::msg(\n...\n 190|                        &percentage_symbol\n 191|                    )\n 192|                    .red(),\n 193|                ))\n    |";
+                            let expr = " 188>    return Err(anyhow::Error::msg(\n...\n 191|                        &percentage_symbol\n 192|                    )\n 193|                    .red(),\n 194|                ))\n    |";
                             ::alloc::__export::must_use({
                                 ::alloc::fmt::format(
                                     format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
@@ -5124,9 +5126,9 @@ mod settings {
                 })
                 .with_context(|| {
                     let path = "src\\settings.rs";
-                    let line = 201usize;
+                    let line = 202usize;
                     let col = 19usize;
-                    let expr = " 197>    percentage[0..percentage.len() - 1]\n 198|                .parse()\n 199|                .with_context(|| {\n 200|                    format!(\"Failed to interpret '{}' as percentage value.\", &percentage).red()\n 201|                })?\n    |";
+                    let expr = " 198>    percentage[0..percentage.len() - 1]\n 199|                .parse()\n 200|                .with_context(|| {\n 201|                    format!(\"Failed to interpret '{}' as percentage value.\", &percentage).red()\n 202|                })?\n    |";
                     ::alloc::__export::must_use({
                         ::alloc::fmt::format(
                             format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
@@ -5156,9 +5158,9 @@ mod settings {
                         )
                         .with_context(|| {
                             let path = "src\\settings.rs";
-                            let line = 210usize;
+                            let line = 211usize;
                             let col = 17usize;
-                            let expr = " 210>    return Err(anyhow::Error::msg(format!(\n 211|                    r#\"Failed to interpret power_supply:'{}'. Use \"Adequate\" , \"InAdequate\" or \"None\".\"#,\n 212|                    &notification_toml_setting.power_supply\n 213|                ).red()))\n    |";
+                            let expr = " 211>    return Err(anyhow::Error::msg(format!(\n 212|                    r#\"Failed to interpret power_supply:'{}'. Use \"Adequate\" , \"InAdequate\" or \"None\".\"#,\n 213|                    &notification_toml_setting.power_supply\n 214|                ).red()))\n    |";
                             ::alloc::__export::must_use({
                                 ::alloc::fmt::format(
                                     format_args!("[{0}:{1}:{2}]\n{3}", path, line, col, expr),
@@ -5896,14 +5898,14 @@ impl clap::Args for AppArgs {
             );
             let __clap_app = __clap_app;
             __clap_app
-                .version("0.4.0")
+                .version("0.4.1")
                 .about(
                     ::alloc::__export::must_use({
                         ::alloc::fmt::format(
                             format_args!(
                                 "\u{1b}[1m{0} version {1}\u{1b}[m\n{2}",
                                 "yy-battery-notifier-rs",
-                                "0.4.0",
+                                "0.4.1",
                                 "Check battery level & Notify you!",
                             ),
                         )
@@ -6011,14 +6013,14 @@ impl clap::Args for AppArgs {
                 .subcommand_required(false)
                 .arg_required_else_help(false);
             __clap_app
-                .version("0.4.0")
+                .version("0.4.1")
                 .about(
                     ::alloc::__export::must_use({
                         ::alloc::fmt::format(
                             format_args!(
                                 "\u{1b}[1m{0} version {1}\u{1b}[m\n{2}",
                                 "yy-battery-notifier-rs",
-                                "0.4.0",
+                                "0.4.1",
                                 "Check battery level & Notify you!",
                             ),
                         )

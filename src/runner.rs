@@ -1,11 +1,63 @@
 use anyhow::Context as _;
 use colored::Colorize;
 use hooq::hooq;
-
-use std::sync::{Arc, LazyLock, Mutex, OnceLock, RwLock};
+use std::sync::{PoisonError, RwLockWriteGuard};
+use std::{
+    ops::Deref,
+    sync::{Arc, LazyLock, Mutex, OnceLock, RwLock, RwLockReadGuard},
+};
 
 pub static MODE_NAMES: OnceLock<Vec<String>> = OnceLock::new();
-pub static MODE: LazyLock<RwLock<String>> = LazyLock::new(|| RwLock::new("".into())); // unset value is "" (modeless).
+pub static MODE: LazyLock<Mode> = LazyLock::new(Mode::default);
+
+#[derive(Default)]
+pub struct Mode(RwLock<Option<String>>);
+
+impl Mode {
+    pub fn get(&self) -> RwLockReadGuard<'_, Option<String>> {
+        self.0.read().unwrap_or_else(|e| e.into_inner())
+    }
+
+    pub fn set(&self, value: Option<String>) {
+        match self.0.write() {
+            Ok(mut guard) => {
+                *guard = value;
+                drop(guard); // explicit drop to ensure lock is released
+            }
+            Err(e) => {
+                eprintln!(
+                    "[{}:{}:{}] mode.lock() in {}::Mode::set\n{}",
+                    file!(),
+                    line!() - 9, // line of notification_action.lock(),
+                    29,          // column of notification_action.lock(),
+                    module_path!(),
+                    "poison error of RwLock of mode.".red()
+                );
+                eprintln!("ref: {:?}", e.get_ref());
+                let mut guard = e.into_inner();
+                *guard = value;
+                drop(guard); // explicit drop to ensure lock is released
+            }
+        }
+    }
+
+    pub fn check_write_lock_error(
+        &self,
+    ) -> Option<PoisonError<RwLockWriteGuard<'_, Option<String>>>> {
+        self.0.write().err()
+    }
+}
+
+/*
+PhantomInvariantLifetimeでどうにかできるかも
+impl Deref for Mode {
+    type Target = RwLockReadGuard<'_, Option<String>>;
+
+    fn deref(&self) -> RwLockReadGuard<'_, Option<String>> {
+        self.0.read().unwrap_or_else(|e| e.into_inner())
+    }
+}
+*/
 
 pub struct Runner {
     settings: crate::settings::Settings,
@@ -63,20 +115,16 @@ impl Runner {
             anyhow::Error::msg("MODE_NAMES is not initilized. This can not happen.".red())
         })?;
         let mode = &*MODE;
-        match mode.write() {
-            Ok(mut guard) => {
-                *guard = self.settings.initial_mode.clone();
-            }
-            Err(e) => {
-                return Err(anyhow::Error::msg(
-                    format!(
-                        "Failed to lock MODE. Unknown poison error!\n Error: {:?}",
-                        e
-                    )
-                    .red(),
-                ));
-            }
-        };
+        if let Some(e) = mode.check_write_lock_error() {
+            return Err(anyhow::Error::msg(
+                format!(
+                    "Failed to lock MODE. Unknown poison error!\n Error: {:?}",
+                    e
+                )
+                .red(),
+            ));
+        }
+        mode.set(self.settings.initial_mode.clone());
         let notification_method = &self.settings.notification_method;
         let notification_action: Arc<Mutex<Option<NotificationAction>>> =
             Arc::new(Mutex::new(None));
@@ -157,26 +205,10 @@ impl Runner {
                             format!(r#"change mode to "{}" action triggered."#, mode_to_change)
                                 .yellow()
                         );
-                        if mode_names.contains(&*mode.read().unwrap_or_else(|e| e.into_inner())) {
-                            match mode.write() {
-                                Ok(mut mode_guard) => {
-                                    *mode_guard = mode_to_change.clone();
-                                    drop(mode_guard); // explicit drop to ensure lock is released
-                                }
-                                Err(e) => {
-                                    eprintln!(
-                                        "[{}:{}:{}] mode.lock() in cli::Cli::run\n{}",
-                                        file!(),
-                                        line!() - 8, // line of notification_action.lock(),
-                                        47,          // column of notification_action.lock(),
-                                        "poison error of RwLock of mode.".red()
-                                    );
-                                    eprintln!("ref: {:?}", e.get_ref());
-                                    let mut mode_guard = e.into_inner();
-                                    *mode_guard = mode_to_change.clone();
-                                    drop(mode_guard); // explicit drop to ensure lock is released
-                                }
-                            }
+                        if let Some(current_mode) = &*mode.get()
+                            && mode_names.contains(current_mode)
+                        {
+                            mode.set(Some(mode_to_change.clone()));
                         }
                     }
                     NotificationAction::Error(e) => {
@@ -188,10 +220,7 @@ impl Runner {
                 *action_guard = None; // clear action for next check
             }
             drop(action_guard); // Release the lock before checking battery
-            println!(
-                "mode: {:?}",
-                mode.read().unwrap_or_else(|e| e.into_inner(),)
-            );
+            println!("mode: {:?}", mode.get().deref());
             #[hooq::method(
                 .with_context(||{
                     let path = $path;
@@ -231,10 +260,8 @@ impl Runner {
                         mode_names,
                     )
                 })?;
-            if let Some(mode_setting) = self
-                .settings
-                .modes
-                .get(&*mode.read().unwrap_or_else(|e| e.into_inner()))
+            if let Some(mode) = mode.get().deref()
+                && let Some(mode_setting) = self.settings.modes.get(mode)
             {
                 mode_setting
                     .notifications
@@ -256,7 +283,7 @@ impl Runner {
                             mode_names,
                         )
                     })?;
-            };
+            }
             println!("check battery and notifying");
             std::thread::sleep(duration);
         }

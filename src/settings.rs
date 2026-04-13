@@ -40,7 +40,7 @@ pub struct ModeTOMLSetting {
 pub struct Settings {
     pub check_interval: u64,
     pub notification_method: NotificationMethod,
-    pub initial_mode: String,
+    pub initial_mode: Option<String>,
     pub abort_on_error_except_initialize: bool,
     pub notify_battery_during_change_mode: bool,
     pub select_mode_when_starts: bool,
@@ -78,19 +78,20 @@ impl TryFrom<TOMLSettings> for Settings {
         let mut settings = Settings {
             check_interval: toml_settings.check_interval,
             notification_method: toml_settings.notification_method.unwrap_or_default(),
-            initial_mode: toml_settings
-                .initial_mode
-                .map_or_else(String::default, |initial_mode| {
+            initial_mode: toml_settings.initial_mode.map_or_else(
+                Default::default,
+                |initial_mode| {
                     if let Some(modes) = toml_settings.modes.as_ref() {
                         if modes.keys().any(|key| key == &initial_mode) {
-                            initial_mode
+                            Some(initial_mode)
                         } else {
-                            String::default()
+                            None
                         }
                     } else {
-                        String::default()
+                        None
                     }
-                }),
+                },
+            ),
             abort_on_error_except_initialize: toml_settings
                 .abort_on_error_except_initialize
                 .unwrap_or(false),

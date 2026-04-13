@@ -47,19 +47,16 @@ pub(super) fn battery_notify_winrt_toast_reborn(
         .duration(ToastDuration::Short)
         .action(Action::new("silent for 5 mins", "silent 5 mins", ""))
         .action(Action::new("silent for 10 mins", "silent 10 mins", ""));
-    let mode_guard = match crate::runner::MODE.read() {
-        Ok(mode) => mode,
-        Err(e) => e.into_inner(),
-    };
+    let mode_guard = crate::runner::MODE.get();
     match input_type {
         NotificationInputType::ModeSelector if !mode_names.is_empty() => {
             toast.input(
                 Input::new("mode_selection", InputType::Selection)
                     .with_title("select mode")
-                    .with_default_input(if mode_guard.is_empty() {
-                        "mode_no_mode".into()
+                    .with_default_input(if let Some(mode) = mode_guard.as_deref() {
+                        format!("mode:{}", mode)
                     } else {
-                        format!("mode:{}", mode_guard)
+                        "mode_no_mode".into()
                     }),
             );
             toast.selection(Selection::new("mode_no_mode", "<no mode>"));
@@ -188,20 +185,17 @@ pub(super) fn mode_change_notify_winrt_toast_reborn(
 ) -> anyhow::Result<()> {
     let toast_manager = ToastManager::new(crate::aumid::AUMID);
     let mut toast = Toast::new();
-    let mode_guard = match crate::runner::MODE.read() {
-        Ok(mode) => mode,
-        Err(e) => e.into_inner(),
-    };
+    let mode_guard = crate::runner::MODE.get();
     toast
         .text1("Notify Mode Change")
         .duration(ToastDuration::Long)
         .input(
             Input::new("mode_selection", InputType::Selection)
                 .with_title("select mode")
-                .with_default_input(if mode_guard.is_empty() {
-                    "mode_no_mode".into()
+                .with_default_input(if let Some(mode) = mode_guard.as_deref() {
+                    format!("mode:{}", mode)
                 } else {
-                    format!("mode:{}", mode_guard)
+                    "mode_no_mode".into()
                 }),
         )
         .selection(Selection::new("mode_no_mode", "<no mode>"));
