@@ -13,6 +13,7 @@ mod registry;
 mod runner;
 mod settings;
 mod startup;
+mod taskbar_icon;
 
 #[allow(unused_imports)]
 use registry::{CURRENT_USER, LOCAL_MACHINE};
