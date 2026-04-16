@@ -73,6 +73,9 @@ TOML のフォーマットについてはググってください...
 > [!NOTE]
 > `TauriWinrtToast` メソッドは input 要素を実装していないため、`notification_method` が `TauriWinrtToast` のとき、それぞれの notification setting に対しての"input_type" フィールドは無視されます。
 
+> [!IMPORTANT]
+> `taskbar_icon` 機能はバージョン 0.5.0 以降で利用可能。
+
 ### [ja/default_settings.toml](https://github.com/yy-tromb/yy-battery-notifier-rs/blob/main/docs/ja/default_settings.toml)
 
 ```ja/default_settings.toml
@@ -81,6 +84,11 @@ check_interval = 60
 
 # ==================================================
 # 任意のフィールドここから
+
+taskbar_icon = true
+# 任意のフィールド
+# タスクバーにトレイアイコンを表示するかを定義。
+# 選択肢: true(デフォルト), false
 
 notification_method = "TauriWinrtToast"
 # 任意のフィールド
@@ -300,4 +308,7 @@ message = "The battery level of Your PC is lower than 60%. Plug in."
 - [x] ~モード変更ボタン~
 - [x] ~起動時のモード選択~
 - [ ] win32_notif クレートを使用した通知
-- [ ] tray_icon クレートを使用してタスクバーにアイコンを表示
+- [x] ~tray_icon クレートを使用してタスクバーにアイコンを表示~
+- [ ] アイコンを作る
+- [ ] メインイベントループを `sleep` を用いたものから flume channelを用いたものにリファクタリングする
+- [ ] tray_controls クレートを利用してタスクバーアイコンにラジオコントロールを実装する

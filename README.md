@@ -307,6 +307,7 @@ message = "The battery level of Your PC is lower than 60%. Plug in."
 - [x] ~Add mode change button~
 - [x] ~Show mode selector button when this program starts~
 - [ ] Implement notification with win32_notif
-- [x] Implement icon in taskbar with tray_icon
+- [x] ~Implement icon in taskbar with tray_icon~
+- [ ] Create Icon
 - [ ] Refactor main event loop from sleep to flume channel
 - [ ] Implement radio control in taskbar icon with tray_controls
