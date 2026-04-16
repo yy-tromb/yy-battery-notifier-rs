@@ -27,7 +27,7 @@ pub enum NotificationAction {
     Silent10Mins,
     SilentSpecifiedMins(u64),
     RequireChangeMode,
-    ChangeMode(String),
+    ChangeMode(Option<String>),
     Error(anyhow::Error),
 }
 

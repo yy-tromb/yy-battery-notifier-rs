@@ -157,12 +157,12 @@ fn handle_battery_notify_activated_action(
                         };
                         if mode_to_change == "mode_no_mode" {
                             println!("change to no mode");
-                            *guard = Some(NotificationAction::ChangeMode(String::default()));
+                            *guard = Some(NotificationAction::ChangeMode(None));
                         } else {
                             println!(r#"change mode to id="{}""#, mode_to_change);
-                            *guard = Some(NotificationAction::ChangeMode(
+                            *guard = Some(NotificationAction::ChangeMode(Some(
                                 mode_to_change.get(5..).unwrap_or_default().to_string(),
-                            ));
+                            )));
                         }
                     } else {
                         println!("No input value found for change mode.");
@@ -237,12 +237,12 @@ fn handle_mode_change_notify_winrt_toast_reborn(
                         };
                         if mode_to_change == "mode_no_mode" {
                             println!("change to no mode");
-                            *guard = Some(NotificationAction::ChangeMode(String::default()));
+                            *guard = Some(NotificationAction::ChangeMode(None));
                         } else {
                             println!(r#"change mode to id="{}""#, mode_to_change);
-                            *guard = Some(NotificationAction::ChangeMode(
+                            *guard = Some(NotificationAction::ChangeMode(Some(
                                 mode_to_change.get(5..).unwrap_or_default().to_string(),
-                            ));
+                            )));
                         }
                     } else {
                         println!("No input value found for change mode.");

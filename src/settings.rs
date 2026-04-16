@@ -11,6 +11,7 @@ use crate::notification::NotificationMethod;
 #[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
 pub struct TOMLSettings {
     pub check_interval: u64,
+    pub taskbar_icon: Option<bool>,
     pub notification_method: Option<NotificationMethod>,
     pub mode_names: Option<Vec<String>>,
     pub initial_mode: Option<String>,
@@ -39,6 +40,7 @@ pub struct ModeTOMLSetting {
 #[derive(Debug, Clone)]
 pub struct Settings {
     pub check_interval: u64,
+    pub taskbar_icon: bool,
     pub notification_method: NotificationMethod,
     pub initial_mode: Option<String>,
     pub abort_on_error_except_initialize: bool,
@@ -77,6 +79,7 @@ impl TryFrom<TOMLSettings> for Settings {
     fn try_from(toml_settings: TOMLSettings) -> anyhow::Result<Self> {
         let mut settings = Settings {
             check_interval: toml_settings.check_interval,
+            taskbar_icon: toml_settings.taskbar_icon.unwrap_or(true),
             notification_method: toml_settings.notification_method.unwrap_or_default(),
             initial_mode: toml_settings.initial_mode.map_or_else(
                 Default::default,

@@ -134,7 +134,7 @@ fn handle_mode_change_notify_activated_action(
                 Ok(guard) => guard,
                 Err(e) => e.into_inner(),
             };
-            *guard = Some(NotificationAction::ChangeMode(String::default()));
+            *guard = Some(NotificationAction::ChangeMode(None));
         }
         Some(action) => {
             println!(r#"change mode to id="{}""#, action);
@@ -142,9 +142,9 @@ fn handle_mode_change_notify_activated_action(
                 Ok(guard) => guard,
                 Err(e) => e.into_inner(),
             };
-            *guard = Some(NotificationAction::ChangeMode(
+            *guard = Some(NotificationAction::ChangeMode(Some(
                 action.get(5..).unwrap_or_default().to_string(),
-            ));
+            )));
         }
         None => {
             println!("Toast activated without action.");

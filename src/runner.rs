@@ -61,32 +61,51 @@ impl Deref for Mode {
 
 pub struct Runner {
     settings: crate::settings::Settings,
+    tx_to_main: flume::Sender<crate::notification::NotificationAction>,
+    rx_from_sub: flume::Receiver<crate::notification::NotificationAction>,
 }
 
 // auto insert .with_context() between Result (example: func()->Result<>:`func()`) and `?;`
 #[hooq(anyhow)]
 impl Runner {
     pub fn new(settings: crate::settings::Settings) -> Self {
-        Self { settings }
+        let (tx_to_main, rx_from_sub) = flume::unbounded();
+        Self {
+            settings,
+            tx_to_main,
+            rx_from_sub,
+        }
     }
 
     #[inline]
-    fn outset(
+    fn start(
         &self,
         notification_action: Arc<Mutex<Option<crate::notification::NotificationAction>>>,
     ) -> anyhow::Result<()> {
         if self.settings.select_mode_when_starts {
             crate::notification::mode_change_notify(
                 &self.settings.notification_method,
-                notification_action,
+                Arc::clone(&notification_action),
             )?;
         }
+
+        // temporary
+        if self.settings.taskbar_icon {
+            let (tx_to_sub, rx_from_main) = flume::unbounded();
+            crate::taskbar_icon::run(
+                self.tx_to_main.clone(),
+                rx_from_main,
+                Arc::clone(&notification_action),
+            )?;
+        }
+
         if let Some(wait_time) = self
             .settings
             .wait_seconds_after_select_mode_notify_when_starts
         {
             std::thread::sleep(std::time::Duration::from_secs(wait_time));
         }
+
         Ok(())
     }
 
@@ -128,7 +147,8 @@ impl Runner {
         let notification_method = &self.settings.notification_method;
         let notification_action: Arc<Mutex<Option<NotificationAction>>> =
             Arc::new(Mutex::new(None));
-        self.outset(Arc::clone(&notification_action))?;
+
+        self.start(Arc::clone(&notification_action))?;
 
         // auto insert below expression and .with_context between Result (example:`~~~()`) and `?;`
         // most function return Result<()>, so if to recovery, using Ok(())
@@ -202,13 +222,16 @@ impl Runner {
                     NotificationAction::ChangeMode(mode_to_change) => {
                         println!(
                             "{}",
-                            format!(r#"change mode to "{}" action triggered."#, mode_to_change)
+                            format!(r#"change mode to "{:?}" action triggered."#, mode_to_change)
                                 .yellow()
                         );
-                        if let Some(current_mode) = &*mode.get()
-                            && mode_names.contains(current_mode)
+
+                        if let Some(mode_to_change) = mode_to_change
+                            && mode_names.contains(mode_to_change)
                         {
                             mode.set(Some(mode_to_change.clone()));
+                        } else if mode_to_change.is_none() {
+                            mode.set(None);
                         }
                     }
                     NotificationAction::Error(e) => {
@@ -220,7 +243,11 @@ impl Runner {
                 *action_guard = None; // clear action for next check
             }
             drop(action_guard); // Release the lock before checking battery
-            println!("mode: {:?}", mode.get().deref());
+
+            {
+                println!("mode: {:?}", mode.get().deref());
+            }
+
             #[hooq::method(
                 .with_context(||{
                     let path = $path;
@@ -260,29 +287,31 @@ impl Runner {
                         mode_names,
                     )
                 })?;
-            if let Some(mode) = mode.get().deref()
-                && let Some(mode_setting) = self.settings.modes.get(mode)
             {
-                mode_setting
-                    .notifications
-                    .iter()
-                    .filter(|notification_setting| {
-                        crate::notification::judge_notification(
-                            notification_setting,
-                            &battery_report,
-                        )
-                    })
-                    .try_for_each(|notification_setting| {
-                        battery_notify(
-                            notification_method,
-                            &battery_report,
-                            &notification_setting.title,
-                            &notification_setting.message,
-                            Arc::clone(&notification_action),
-                            &notification_setting.input_type,
-                            mode_names,
-                        )
-                    })?;
+                if let Some(mode) = mode.get().deref()
+                    && let Some(mode_setting) = self.settings.modes.get(mode)
+                {
+                    mode_setting
+                        .notifications
+                        .iter()
+                        .filter(|notification_setting| {
+                            crate::notification::judge_notification(
+                                notification_setting,
+                                &battery_report,
+                            )
+                        })
+                        .try_for_each(|notification_setting| {
+                            battery_notify(
+                                notification_method,
+                                &battery_report,
+                                &notification_setting.title,
+                                &notification_setting.message,
+                                Arc::clone(&notification_action),
+                                &notification_setting.input_type,
+                                mode_names,
+                            )
+                        })?;
+                }
             }
             println!("check battery and notifying");
             std::thread::sleep(duration);
