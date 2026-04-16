@@ -72,6 +72,9 @@ About TOML format, try google this...
 > [!NOTE]
 > "TauriWinrtToast" method does not implement input element, so "input_type" field of each notification setting is not effective.
 
+> [!IMPORTANT]
+> `taskbar_icon` is available from version 0.5.0.
+
 ### [default_settings.toml](https://github.com/yy-tromb/yy-battery-notifier-rs/blob/main/default_settings.toml)
 
 ```default_settings.toml
@@ -80,6 +83,11 @@ check_interval = 60
 
 # ==================================================
 # Optional fields below:
+
+taskbar_icon = true
+# Optional field
+# This field defines whether to show taskbar icon.
+# Options: true(default), false
 
 notification_method = "TauriWinrtToast"
 # Optional field
@@ -299,4 +307,6 @@ message = "The battery level of Your PC is lower than 60%. Plug in."
 - [x] ~Add mode change button~
 - [x] ~Show mode selector button when this program starts~
 - [ ] Implement notification with win32_notif
-- [ ] Implement icon in taskbar with tray_icon
+- [x] Implement icon in taskbar with tray_icon
+- [ ] Refactor main event loop from sleep to flume channel
+- [ ] Implement radio control in taskbar icon with tray_controls

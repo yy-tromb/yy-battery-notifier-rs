@@ -4,6 +4,11 @@ check_interval = 60
 # ==================================================
 # Optional fields below:
 
+taskbar_icon = true
+# Optional field
+# This field defines whether to show taskbar icon.
+# Options: true(default), false
+
 notification_method = "TauriWinrtToast"
 # Optional field
 # This field defines notification method (notifier crate).
