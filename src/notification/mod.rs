@@ -31,6 +31,16 @@ pub enum NotificationAction {
     Error(anyhow::Error),
 }
 
+#[derive(Debug)]
+pub enum NotificationEvent {
+    Silent5Mins,
+    Silent10Mins,
+    SilentSpecifiedMins(u64),
+    RequireChangeMode,
+    ChangeMode(Option<String>),
+    Error(anyhow::Error),
+}
+
 #[inline]
 pub fn judge_notification(
     notification_setting: &crate::settings::NotificationSetting,

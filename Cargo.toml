@@ -8,6 +8,7 @@ edition = "2024"
 
 [dependencies]
 anyhow = {version="1.0.97",features = ["backtrace"]}
+chrono = "0.4.44"
 clap = { version = "4.5.35", features = ["derive", "string", "unicode"] }
 colored = "3.0.0"
 flume = "0.12.0"

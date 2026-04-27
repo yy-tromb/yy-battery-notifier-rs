@@ -1,5 +1,6 @@
 use anyhow::Context as _;
 use colored::Colorize;
+use flume::unbounded;
 use hooq::hooq;
 use std::sync::{PoisonError, RwLockWriteGuard};
 use std::{
@@ -10,7 +11,7 @@ use std::{
 pub static MODE_NAMES: OnceLock<Vec<String>> = OnceLock::new();
 pub static MODE: LazyLock<Mode> = LazyLock::new(Mode::default);
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Mode(RwLock<Option<String>>);
 
 impl Mode {
@@ -59,21 +60,127 @@ impl Deref for Mode {
 }
 */
 
+#[derive(Debug)]
+pub struct Status<'a> {
+    silent: Silent,
+    mode_index: Option<usize>,
+    mode_list: &'a Vec<String>,
+}
+
+impl<'a> Status<'a> {
+    pub fn new(
+        silent: Silent,
+        mode: Option<String>,
+        mode_list: &'a Vec<String>,
+    ) -> anyhow::Result<Self> {
+        if let Some(ref mode) = mode {
+            Ok(Self {
+                silent,
+                mode_index: mode_list.iter().position(|m| m == mode),
+                mode_list,
+            })
+        } else {
+            Ok(Self {
+                silent,
+                mode_index: None,
+                mode_list,
+            })
+        }
+    }
+
+    pub fn is_silent(&self) -> bool {
+        self.silent.is_silent()
+    }
+
+    pub fn get_mode(&self) -> Option<&String> {
+        self.mode_index.and_then(|index| self.mode_list.get(index))
+    }
+
+    pub fn set_mode_index(&mut self, mode_index: Option<usize>) {
+        if let Some(index) = mode_index {
+            if self.mode_list.get(index).is_some() {
+                self.mode_index = Some(index);
+            }
+        } else {
+            self.mode_index = None;
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct StatusMessage {
+    silent_remaining: Option<u64>,
+    silent_until: Option<chrono::DateTime<chrono::Local>>,
+}
+
+#[derive(Debug)]
+pub enum MainMessage {
+    ModeChanged(Option<String>),
+    StatusChanged(StatusMessage),
+    Error(anyhow::Error),
+}
+
+#[derive(Debug)]
+pub enum ShellMessage {
+    Silent5Mins,
+    Silent10Mins,
+    SilentSpecifiedMins(u64),
+    RequireChangeMode,
+    ChangeMode(Option<String>),
+    Error(anyhow::Error),
+}
+
+#[derive(Debug)]
+pub struct Silent {
+    instant: std::time::Instant,
+    to_silent: std::time::Duration,
+    pub silent_until: chrono::DateTime<chrono::Local>,
+}
+
+impl Silent {
+    pub fn new(to_silent_msec: u64) -> Self {
+        Self {
+            instant: std::time::Instant::now(),
+            to_silent: std::time::Duration::from_millis(to_silent_msec),
+            silent_until: chrono::Local::now()
+                + chrono::Duration::milliseconds(to_silent_msec as i64),
+        }
+    }
+
+    #[inline]
+    pub fn is_silent(&self) -> bool {
+        self.instant.elapsed() > self.to_silent
+    }
+
+    #[inline]
+    pub fn remaining(&self) -> std::time::Duration {
+        self.to_silent - self.instant.elapsed()
+    }
+}
+
+#[derive(Debug)]
 pub struct Runner {
     settings: crate::settings::Settings,
-    tx_to_main: flume::Sender<crate::notification::NotificationAction>,
-    rx_from_sub: flume::Receiver<crate::notification::NotificationAction>,
+    tx_to_main: flume::Sender<ShellMessage>,
+    rx_from_shell: flume::Receiver<ShellMessage>,
+    tx_to_shell: flume::Sender<MainMessage>,
+    rx_from_main: flume::Receiver<MainMessage>,
+    silent: Option<Silent>,
 }
 
 // auto insert .with_context() between Result (example: func()->Result<>:`func()`) and `?;`
 #[hooq(anyhow)]
 impl Runner {
     pub fn new(settings: crate::settings::Settings) -> Self {
-        let (tx_to_main, rx_from_sub) = flume::unbounded();
+        let (tx_to_main, rx_from_shell) = flume::unbounded();
+        let (tx_to_shell, rx_from_main) = flume::unbounded();
         Self {
             settings,
             tx_to_main,
-            rx_from_sub,
+            rx_from_shell,
+            tx_to_shell,
+            rx_from_main,
+            silent: None,
         }
     }
 
@@ -91,10 +198,9 @@ impl Runner {
 
         // temporary
         if self.settings.taskbar_icon {
-            let (tx_to_sub, rx_from_main) = flume::unbounded();
             crate::taskbar_icon::run(
                 self.tx_to_main.clone(),
-                rx_from_main,
+                self.rx_from_main.clone(),
                 Arc::clone(&notification_action),
             )?;
         }

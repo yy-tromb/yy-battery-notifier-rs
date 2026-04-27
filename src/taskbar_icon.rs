@@ -8,8 +8,8 @@ pub enum TaskbarMessage {
 }
 
 pub fn run(
-    tx_to_main: flume::Sender<crate::notification::NotificationAction>,
-    rx_from_main: flume::Receiver<TaskbarMessage>,
+    tx_to_main: flume::Sender<crate::runner::ShellMessage>,
+    rx_from_main: flume::Receiver<crate::runner::MainMessage>,
     notification_action: Arc<Mutex<Option<crate::notification::NotificationAction>>>,
 ) -> anyhow::Result<()> {
     use std::thread::spawn;
@@ -90,14 +90,13 @@ fn taskbar_icon_init() -> anyhow::Result<tray_icon::TrayIcon> {
     Ok(tray_icon)
 }
 
-fn channnel_receiver(rx: flume::Receiver<TaskbarMessage>) {
+fn channnel_receiver(rx: flume::Receiver<crate::runner::MainMessage>) {
     while let Ok(msg) = rx.recv() {
         println!("{:?}", msg);
         match msg {
-            TaskbarMessage::Terminate => {
-                return;
-            }
-            TaskbarMessage::ModeChanged => {}
+            crate::runner::MainMessage::ModeChanged(_) => {}
+            crate::runner::MainMessage::StatusChanged(_) => {}
+            crate::runner::MainMessage::Error(_) => {}
         }
     }
 }
