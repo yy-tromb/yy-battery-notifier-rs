@@ -31,16 +31,6 @@ pub enum NotificationAction {
     Error(anyhow::Error),
 }
 
-#[derive(Debug)]
-pub enum NotificationEvent {
-    Silent5Mins,
-    Silent10Mins,
-    SilentSpecifiedMins(u64),
-    RequireChangeMode,
-    ChangeMode(Option<String>),
-    Error(anyhow::Error),
-}
-
 #[inline]
 pub fn judge_notification(
     notification_setting: &crate::settings::NotificationSetting,
@@ -87,6 +77,39 @@ pub fn battery_notify(
                 mode_names,
             )
         }
+    }
+}
+
+#[allow(too_many_arguments)]
+#[inline]
+#[hooq(anyhow)]
+pub fn notify_battery_status(
+    method: &NotificationMethod,
+    battery_report: &crate::battery::BatteryReport,
+    title: &str,
+    message: &str,
+    input_type: &NotificationInputType,
+    mode_names: &[String],
+    tx_to_main: flume::Sender<crate::runner::ShellMessage>,
+    rx_from_main: flume::Receiver<crate::runner::MainMessage>,
+) -> anyhow::Result<()> {
+    match method {
+        NotificationMethod::TauriWinrtToast => tauri_winrt_toast::notify_battery_status(
+            battery_report,
+            title,
+            message,
+            tx_to_main,
+            rx_from_main,
+        ),
+        NotificationMethod::WinrtToastReborn => winrt_toast_reborn::notify_battery_status(
+            battery_report,
+            title,
+            message,
+            input_type,
+            mode_names,
+            tx_to_main,
+            rx_from_main,
+        ),
     }
 }
 

@@ -95,6 +95,95 @@ pub(super) fn battery_notify_winrt_toast_reborn(
     Ok(())
 }
 
+#[allow(clippy::too_many_arguments)]
+#[hooq(anyhow)]
+pub(super) fn notify_battery_status(
+    battery_report: &crate::battery::BatteryReport,
+    title: &str,
+    message: &str,
+    input_type: &NotificationInputType,
+    mode_names: &[String],
+    tx_to_main: flume::Sender<crate::runner::ShellMessage>,
+    rx_from_main: flume::Receiver<crate::runner::MainMessage>,
+) -> anyhow::Result<()> {
+    let toast_manager = ToastManager::new(crate::aumid::AUMID);
+
+    //let progress_value = battery_report.percentage as f32 / 100.0;
+    let battery_remaining_status = match battery_report.remaining_seconds {
+        Some(remaining_seconds) => format!(
+            "{}:{}:{} remaining",
+            remaining_seconds / 3600,
+            (remaining_seconds % 3600) / 60,
+            remaining_seconds % 60
+        ),
+        None => "Unknown time remaining.".to_string(),
+    };
+    //let progress_status = battery_remaining_status;
+
+    let mut toast = Toast::new();
+    toast.text1(title).text2(message).text3(format!(
+        "Battery level: {}%, {battery_remaining_status}",
+        battery_report.percentage
+    ));
+    /*toast.progress(
+        "tag",
+        "Now Battery Level:",
+        &progress_status,
+        progress_value,
+        &format!("{}%", battery_report.percentage),
+    );*/
+    toast
+        .duration(ToastDuration::Short)
+        .action(Action::new("silent for 5 mins", "silent 5 mins", ""))
+        .action(Action::new("silent for 10 mins", "silent 10 mins", ""));
+    let mode_guard = crate::runner::MODE.get();
+    match input_type {
+        NotificationInputType::ModeSelector if !mode_names.is_empty() => {
+            toast.input(
+                Input::new("mode_selection", InputType::Selection)
+                    .with_title("select mode")
+                    .with_default_input(if let Some(mode) = mode_guard.as_deref() {
+                        format!("mode:{}", mode)
+                    } else {
+                        "mode_no_mode".into()
+                    }),
+            );
+            toast.selection(Selection::new("mode_no_mode", "<no mode>"));
+            mode_names
+                .iter()
+                .map(|mode_name| Selection::new(format!("mode:{}", mode_name), mode_name))
+                .for_each(|selection| {
+                    toast.selection(selection);
+                });
+            toast.action(
+                Action::new("change mode", "change mode", "").with_input_id("mode_selection"),
+            );
+        }
+        NotificationInputType::ModeSelector | NotificationInputType::SilentSpecifiedMinutes => {
+            // if modes is empty, apply SilentSpecifiedMinutes
+            toast
+                .input(
+                    Input::new("silent_time", InputType::Text)
+                        .with_title("Input silent minites:")
+                        .with_default_input("5"),
+                )
+                .action(
+                    Action::new("mins: Keep silent", "silent specified mins", "")
+                        .with_input_id("silent_time"),
+                )
+                .action(Action::new("change mode", "require change mode", ""));
+        }
+    }
+    drop(mode_guard); // for fast unlock RwLockGuard
+
+    toast_manager
+        .on_activated(None, move |action| {
+            handle_battery_notify_activated_action(action, &notification_action);
+        })
+        .show(&toast)?;
+    Ok(())
+}
+
 fn handle_battery_notify_activated_action(
     action: Option<winrt_toast_reborn::ActivatedAction>,
     notification_action: &Arc<Mutex<Option<NotificationAction>>>,

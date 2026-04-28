@@ -60,16 +60,16 @@ impl Deref for Mode {
 }
 */
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Status<'a> {
-    silent: Silent,
+    silent: Option<Silent>,
     mode_index: Option<usize>,
     mode_list: &'a Vec<String>,
 }
 
 impl<'a> Status<'a> {
     pub fn new(
-        silent: Silent,
+        silent: Option<Silent>,
         mode: Option<String>,
         mode_list: &'a Vec<String>,
     ) -> anyhow::Result<Self> {
@@ -88,10 +88,14 @@ impl<'a> Status<'a> {
         }
     }
 
+    #[inline]
     pub fn is_silent(&self) -> bool {
-        self.silent.is_silent()
+        self.silent
+            .as_ref()
+            .map_or(false, |silent| silent.in_silent())
     }
 
+    #[inline]
     pub fn get_mode(&self) -> Option<&String> {
         self.mode_index.and_then(|index| self.mode_list.get(index))
     }
@@ -105,18 +109,22 @@ impl<'a> Status<'a> {
             self.mode_index = None;
         }
     }
-}
 
-#[derive(Debug)]
-pub struct StatusMessage {
-    silent_remaining: Option<u64>,
-    silent_until: Option<chrono::DateTime<chrono::Local>>,
+    #[inline]
+    pub fn update_silent(&mut self, silent: Option<Silent>) {
+        self.silent = silent;
+    }
+
+    #[inline]
+    pub fn update_mode_index(&mut self, mode_index: Option<usize>) {
+        self.mode_index = mode_index;
+    }
 }
 
 #[derive(Debug)]
 pub enum MainMessage {
     ModeChanged(Option<String>),
-    StatusChanged(StatusMessage),
+    SilentChanged(Option<Silent>),
     Error(anyhow::Error),
 }
 
@@ -130,7 +138,7 @@ pub enum ShellMessage {
     Error(anyhow::Error),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Silent {
     instant: std::time::Instant,
     to_silent: std::time::Duration,
@@ -148,7 +156,7 @@ impl Silent {
     }
 
     #[inline]
-    pub fn is_silent(&self) -> bool {
+    pub fn in_silent(&self) -> bool {
         self.instant.elapsed() > self.to_silent
     }
 
@@ -159,29 +167,51 @@ impl Silent {
 }
 
 #[derive(Debug)]
-pub struct Runner {
+pub struct Runner<'a> {
     settings: crate::settings::Settings,
     tx_to_main: flume::Sender<ShellMessage>,
     rx_from_shell: flume::Receiver<ShellMessage>,
     tx_to_shell: flume::Sender<MainMessage>,
     rx_from_main: flume::Receiver<MainMessage>,
-    silent: Option<Silent>,
+    status: Status<'a>,
 }
 
 // auto insert .with_context() between Result (example: func()->Result<>:`func()`) and `?;`
 #[hooq(anyhow)]
-impl Runner {
-    pub fn new(settings: crate::settings::Settings) -> Self {
+impl<'a> Runner<'a> {
+    pub fn new(settings: crate::settings::Settings) -> anyhow::Result<Self> {
         let (tx_to_main, rx_from_shell) = flume::unbounded();
         let (tx_to_shell, rx_from_main) = flume::unbounded();
-        Self {
+        let mode_names = MODE_NAMES.get();
+        MODE_NAMES
+            .set(
+                settings
+                    .modes
+                    .keys()
+                    .map(ToString::to_string)
+                    .collect::<Vec<String>>(),
+            )
+            .map_err(|_| {
+                anyhow::Error::msg(
+                    format!(
+                        "MODE_NAMES is initialized. Found: {:?} \nThis can not be happen.",
+                        mode_names
+                    )
+                    .red(),
+                )
+            })?;
+        let mode_names = MODE_NAMES.get().ok_or_else(|| {
+            anyhow::Error::msg("MODE_NAMES is not initilized. This can not happen.".red())
+        })?;
+        let mode = settings.initial_mode.clone();
+        Ok(Self {
             settings,
             tx_to_main,
             rx_from_shell,
             tx_to_shell,
             rx_from_main,
-            silent: None,
-        }
+            status: Status::new(None, mode, mode_names)?,
+        })
     }
 
     #[inline]

@@ -188,5 +188,5 @@ fn main() -> anyhow::Result<()> {
             )
             .red()
         })?;
-    crate::runner::Runner::new(toml_settings.try_into()?).run()
+    crate::runner::Runner::new(toml_settings.try_into()?)?.run()
 }

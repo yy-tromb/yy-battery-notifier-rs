@@ -95,7 +95,7 @@ fn channnel_receiver(rx: flume::Receiver<crate::runner::MainMessage>) {
         println!("{:?}", msg);
         match msg {
             crate::runner::MainMessage::ModeChanged(_) => {}
-            crate::runner::MainMessage::StatusChanged(_) => {}
+            crate::runner::MainMessage::SilentChanged(_) => {}
             crate::runner::MainMessage::Error(_) => {}
         }
     }
