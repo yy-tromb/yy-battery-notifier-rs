@@ -1,6 +1,5 @@
 use anyhow::Context as _;
 use colored::Colorize;
-use flume::unbounded;
 use hooq::hooq;
 use std::sync::{PoisonError, RwLockWriteGuard};
 use std::{
@@ -72,6 +71,7 @@ impl<'a> Status<'a> {
         silent: Option<Silent>,
         mode: Option<String>,
         mode_list: &'a Vec<String>,
+        report_error: bool,
     ) -> anyhow::Result<Self> {
         if let Some(ref mode) = mode {
             Ok(Self {
@@ -210,7 +210,7 @@ impl<'a> Runner<'a> {
             rx_from_shell,
             tx_to_shell,
             rx_from_main,
-            status: Status::new(None, mode, mode_names)?,
+            status: Status::new(None, mode, mode_names, false)?,
         })
     }
 
